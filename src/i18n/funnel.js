@@ -8,7 +8,7 @@ const en = {
   s3h: 'How should we ping you?', s3sub: 'Stock often lasts minutes. A phone notification is the fastest; email is the backup.',
   push: 'Phone notification', pushFine: 'On iPhone: Share › Add to Home Screen first, then open it from there.', telegram: 'Telegram', tgFine: 'You connect it in one tap after checkout.', line: 'LINE', lineFine: 'Connect it in one tap after checkout.', emailAlways: 'Email (always on, at most one per hour)',
   s4h: 'Pick your plan', per30: 'for 30 days', solo: '1 product, 1 store or area', multi: 'Several products and places, any product of a set',
-  renew: 'Renews every 30 days, cancel in 2 clicks from your account. Tax may be added at checkout depending on where you live. We alert, you buy from the retailer.', checkout: 'Go to secure checkout', freeName: 'Free', free: '1 product, one email a day with yesterday\'s restocks. Paid alerts arrive within seconds.', freeBtn: 'Start free',
+  renew: 'Renews every 30 days, cancel in 2 clicks from your account. Card, Apple Pay or Google Pay. Not happy? Write within 7 days of your first payment and we refund it. Tax may be added at checkout depending on where you live. We alert, you buy from the retailer.', checkout: 'Go to secure checkout', freeName: 'Free', free: '1 product, one email a day with yesterday\'s restocks. Paid alerts arrive within seconds.', freeBtn: 'Start free',
   title: 'Set up a restock alert',
 };
 const fr = { ...en,
@@ -20,7 +20,7 @@ const fr = { ...en,
   s3h: 'Comment vous prévenir ?', s3sub: 'Le stock dure souvent quelques minutes. La notification sur téléphone est la plus rapide ; l\'e-mail sert de secours.',
   push: 'Notification sur le téléphone', pushFine: 'Sur iPhone : Partager › Sur l\'écran d\'accueil, puis ouvrez-le depuis là.', tgFine: 'Vous le connectez en un clic après le paiement.', lineFine: 'À connecter en un clic après le paiement.', emailAlways: 'E-mail (toujours actif, au plus un par heure)',
   s4h: 'Choisissez votre formule', per30: 'pour 30 jours', solo: '1 produit, 1 magasin ou une ville', multi: 'Plusieurs produits et lieux, toute une extension',
-  renew: 'Renouvelé tous les 30 jours, résiliable en 2 clics. La TVA peut s\'ajouter selon votre pays. Nous alertons, vous achetez chez l\'enseigne.', checkout: 'Aller au paiement sécurisé', freeName: 'Gratuit', free: '1 produit, un e-mail par jour avec les réassorts de la veille. Les alertes payantes arrivent en quelques secondes.', freeBtn: 'Commencer gratuitement', title: 'Créer une alerte de réassort',
+  renew: 'Renouvelé tous les 30 jours, résiliable en 2 clics. Carte, Apple Pay ou Google Pay. Pas satisfait ? Écrivez-nous dans les 7 jours suivant le premier paiement : on vous rembourse. La TVA peut s\'ajouter selon votre pays. Nous alertons, vous achetez chez l\'enseigne.', checkout: 'Aller au paiement sécurisé', freeName: 'Gratuit', free: '1 produit, un e-mail par jour avec les réassorts de la veille. Les alertes payantes arrivent en quelques secondes.', freeBtn: 'Commencer gratuitement', title: 'Créer une alerte de réassort',
 };
 const de = { ...en,
   h1: 'Restock-Alarm einrichten', steps: ['E-Mail', 'Produkt', 'Alarme', 'Tarif'],

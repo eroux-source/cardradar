@@ -42,8 +42,9 @@ export async function planMinute(env) {
       const every = src.everyMinutes ?? 10;
       if (Math.floor(t / 60e3) % every === 0) for (const q of src.queries) tasks.push({ t: 'lottery', source: src.id, q });
     } else if (src.snapshot) {
-      const every = Math.max(1, Math.floor(src.queries.length / Math.max(1, budget)));
-      if (Math.floor(t / 60e3) % every === 0) for (const q of src.queries.slice(0, budget)) tasks.push({ t: 'snapshot', source: src.id, q });
+      // one query every `everyMinutes`, rotating through the list (gentle on small shops)
+      const every = src.everyMinutes ?? 1; const minute = Math.floor(t / 60e3);
+      if (src.queries.length && minute % every === 0) tasks.push({ t: 'snapshot', source: src.id, q: src.queries[Math.floor(minute / every) % src.queries.length] });
     } else {
       const room = Math.max(0, budget - tasks.length);
       const picked = new Set();

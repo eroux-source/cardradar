@@ -19,6 +19,22 @@ export default {
   card: { live: 'Directo', tracker: 'Rastreador', inStock: 'en stock', stores: 'tiendas', online: 'Online', soldOut: 'Agotado', lastRestock: 'Última reposición', typicalStay: 'Duración habitual', storesTracked: 'Tiendas', retailersN: (n) => `${n} cadenas`, productsN: (n) => `${n} productos`, storesFrac: (a, b) => `${a}/${b} tiendas` },
   rarity: { rare: 'Rara: en ninguna tienda ahora', uncommon: 'Infrecuente: en pocas tiendas', common: 'Común: en muchas tiendas' },
   hud: { title: 'Radar en directo por tienda', allOut: 'todo agotado', warming: 'arrancando' },
+  intro: {
+    h1: 'Encuentra cartas Pokémon en stock',
+    what: (shops) => `Revisamos ${shops} cada pocos minutos y mostramos dónde hay cartas Pokémon selladas en stock ahora mismo. Mirar es gratis. Recibe un aviso cuando tu producto vuelva.`,
+    now: (a, b, ago) => `Ahora: <strong>${a} de ${b} tiendas</strong> tienen cartas Pokémon en stock · revisado ${ago}`,
+    seeStock: 'Ver qué hay en stock', freeAlert: 'Crear un aviso gratis',
+    howH: 'Cómo funciona',
+    steps: ['Elige tu producto: caja de Entrenador Élite, caja de sobres, lata…', 'Revisamos cada tienda cada pocos minutos, día y noche.', 'En cuanto vuelve, recibes un aviso con el enlace para comprarlo.'],
+    productsH: 'Productos que seguimos', productsSub: 'Verde = en stock en algún sitio ahora. Toca un producto para ver las tiendas.',
+    latestH: 'Recién repuestos', allTimes: 'Cuándo reponen las tiendas', placesH: 'Por tienda',
+    faqH: 'Preguntas',
+    faq: (shops, solo) => [
+      { q: '¿Qué es Card Restock Tracker?', a: `Una web gratuita que revisa ${shops} cada pocos minutos y muestra dónde hay cartas Pokémon selladas en stock.` },
+      { q: '¿Es gratis?', a: `Sí. Mirar es gratis y sin cuenta, y el plan gratuito te envía un e-mail al día sobre un producto. Los avisos instantáneos cuestan ${solo} por 30 días, cancelables en 2 clics.` },
+      { q: '¿Vendéis cartas?', a: 'No. Solo te decimos dónde están; compras en la tienda, a su precio.' },
+    ],
+  },
   home: {
     title: (brand) => `Reposición cartas Pokémon — stock en directo cerca de ti | ${brand}`,
     desc: (shops) => `Rastreador de reposiciones Pokémon: stock de cartas Pokémon en directo en ${shops}, horarios reales y alertas al instante.`,

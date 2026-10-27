@@ -117,7 +117,7 @@ export default {
   pricing: {
     title: (b) => `Pricing — ${b}`, h1: 'Pricing', lede: 'Live stock pages are free. The free plan emails you once a day about one product. Instant alerts are paid, for 30 days, cancel in 2 clicks.', free: '1 product, one email a day with yesterday\'s restocks',
     solo: '1 product in 1 store, 1 city or online', multi: 'Several products and places, or any sealed product of a set',
-    tax: 'Taxes may be added at checkout depending on your country. We alert, you buy from the retailer: we never buy for you.',
+    tax: 'Secure checkout: card, Apple Pay or Google Pay. 7-day guarantee: write within 7 days of your first payment and we refund it, no back-and-forth. Taxes may be added at checkout depending on your country. We alert, you buy from the retailer: we never buy for you.',
   },
   cta: {
     kicker: 'Item card · Restock Alert', item: 'Item', name: 'Restock Alert', flavor: 'Play when stock is scarce. Never miss a restock again.',

@@ -17,6 +17,7 @@ import { jpHome, jpSet, jpShop } from './web/pages/lottery.js';
 import { bestTrackers, versus, howItWorks } from './web/pages/compare.js';
 import { lineWebhook } from './alerts/channels/line.js';
 import { COUNTRIES } from './data/countries.js';
+import { setEnv } from './sources/index.js';
 import { ownerLottery } from './owner/lottery.js';
 import { applyReading } from './crawler/state.js';
 import { publishRestocks } from './alerts/pipeline.js';
@@ -41,7 +42,11 @@ async function route(req, env, ctx) {
   // --- machine endpoints ---
   if (p === '/api/health') {
     const last = await one(env, 'SELECT MAX(seen_at) t FROM stock');
-    return json({ ok: true, last_read: last?.t ?? null, age_s: last?.t ? Math.round((now() - last.t) / 1000) : null });
+    // public, harmless: which retailers answer (status only, no error text)
+    const src = await env.DB.prepare('SELECT source, status, last_ok_at FROM source_health').all();
+    const c = await one(env, 'SELECT (SELECT COUNT(*) FROM listings WHERE active = 1) listings, (SELECT COUNT(*) FROM stock) readings, (SELECT COUNT(*) FROM stock WHERE in_stock = 1) in_stock');
+    return json({ ok: true, last_read: last?.t ?? null, age_s: last?.t ? Math.round((now() - last.t) / 1000) : null, counts: c,
+      sources: Object.fromEntries(src.results.map((r) => [r.source, { status: r.status, last_ok_s: r.last_ok_at ? Math.round((now() - r.last_ok_at) / 1000) : null }])) });
   }
   if (p === '/api/billing/webhook' && m === 'POST') return billingWebhook(env, req);
   if (p === '/api/telegram/webhook' && m === 'POST') return telegramWebhook(env, req);
@@ -141,6 +146,7 @@ async function route(req, env, ctx) {
 
 export default {
   async fetch(req, env, ctx) {
+    setEnv(env);
     try {
       return await route(req, env, ctx);
     } catch (e) {
@@ -150,10 +156,12 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
+    setEnv(env);
     ctx.waitUntil(cron(env, event.scheduledTime));
   },
 
   async queue(batch, env) {
+    setEnv(env);
     const q = batch.queue;
     for (const msg of batch.messages) {
       try {

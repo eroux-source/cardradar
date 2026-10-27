@@ -19,6 +19,22 @@ export default {
   card: { live: 'Live', tracker: 'Restock-tracker', inStock: 'op voorraad', stores: 'winkels', online: 'Online', soldOut: 'Uitverkocht', lastRestock: 'Laatste restock', typicalStay: 'Gebruikelijke duur', storesTracked: 'Winkels', retailersN: (n) => `${n} winkels`, productsN: (n) => `${n} producten`, storesFrac: (a, b) => `${a}/${b} winkels` },
   rarity: { rare: 'Zeldzaam: nu in geen enkele winkel', uncommon: 'Ongewoon: in weinig winkels', common: 'Gewoon: in veel winkels' },
   hud: { title: 'Live radar per winkel', allOut: 'alles uitverkocht', warming: 'start op' },
+  intro: {
+    h1: 'Vind Pokémon-kaarten op voorraad',
+    what: (shops) => `We controleren ${shops} om de paar minuten en tonen waar verzegelde Pokémon-kaarten nu op voorraad zijn. Kijken is gratis. Krijg een melding zodra je product terug is.`,
+    now: (a, b, ago) => `Nu: <strong>${a} van ${b} winkels</strong> hebben Pokémon-kaarten op voorraad · gecontroleerd ${ago}`,
+    seeStock: 'Bekijk de voorraad', freeAlert: 'Gratis melding instellen',
+    howH: 'Zo werkt het',
+    steps: ['Kies je product: Elite Trainer Box, booster box, tin…', 'We controleren elke winkel om de paar minuten, dag en nacht.', 'Zodra het terug is, krijg je een melding met een link om te kopen.'],
+    productsH: 'Producten die we volgen', productsSub: 'Groen = nu ergens op voorraad. Tik op een product voor de winkels.',
+    latestH: 'Net aangevuld', allTimes: 'Wanneer winkels aanvullen', placesH: 'Per winkel',
+    faqH: 'Vragen',
+    faq: (shops, solo) => [
+      { q: 'Wat is Card Restock Tracker?', a: `Een gratis website die ${shops} om de paar minuten controleert en toont waar verzegelde Pokémon-kaarten op voorraad zijn.` },
+      { q: 'Is het gratis?', a: `Ja. Kijken is gratis en zonder account, en het gratis abonnement mailt je één keer per dag over één product. Directe meldingen kosten ${solo} voor 30 dagen, opzegbaar in 2 klikken.` },
+      { q: 'Verkopen jullie kaarten?', a: 'Nee. We vertellen je alleen waar ze zijn; je koopt bij de winkel, tegen hun prijs.' },
+    ],
+  },
   home: {
     title: (brand) => `Pokémon kaarten restock — live voorraad bij jou in de buurt | ${brand}`,
     desc: (shops) => `Pokémon restock-tracker: live voorraad van Pokémon-kaarten bij ${shops}, echte restocktijden en directe meldingen.`,

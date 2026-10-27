@@ -19,6 +19,22 @@ export default {
   card: { live: 'Live', tracker: 'Tracker restock', inStock: 'disponibili', stores: 'negozi', online: 'Online', soldOut: 'Esaurito', lastRestock: 'Ultimo restock', typicalStay: 'Durata abituale', storesTracked: 'Negozi', retailersN: (n) => `${n} catene`, productsN: (n) => `${n} prodotti`, storesFrac: (a, b) => `${a}/${b} negozi` },
   rarity: { rare: 'Rara: in nessun negozio ora', uncommon: 'Non comune: in pochi negozi', common: 'Comune: in molti negozi' },
   hud: { title: 'Radar live per negozio', allOut: 'tutto esaurito', warming: 'avvio' },
+  intro: {
+    h1: 'Trova carte Pokémon disponibili',
+    what: (shops) => `Controlliamo ${shops} ogni pochi minuti e mostriamo dove le carte Pokémon sigillate sono disponibili adesso. Guardare è gratis. Ricevi un avviso quando il tuo prodotto torna.`,
+    now: (a, b, ago) => `Adesso: <strong>${a} negozi su ${b}</strong> hanno carte Pokémon disponibili · controllato ${ago}`,
+    seeStock: 'Vedi cosa è disponibile', freeAlert: 'Crea un avviso gratis',
+    howH: 'Come funziona',
+    steps: ['Scegli il prodotto: Set Allenatore Fuoriclasse, box di buste, tin…', 'Controlliamo ogni negozio ogni pochi minuti, giorno e notte.', 'Appena torna, ricevi un avviso con il link per comprarlo.'],
+    productsH: 'Prodotti che seguiamo', productsSub: 'Verde = disponibile da qualche parte adesso. Tocca un prodotto per vedere i negozi.',
+    latestH: 'Appena tornati', allTimes: 'Quando i negozi riassortiscono', placesH: 'Per negozio',
+    faqH: 'Domande',
+    faq: (shops, solo) => [
+      { q: 'Cos\'è Card Restock Tracker?', a: `Un sito gratuito che controlla ${shops} ogni pochi minuti e mostra dove le carte Pokémon sigillate sono disponibili.` },
+      { q: 'È gratis?', a: `Sì. Guardare è gratis e senza account, e il piano gratuito ti invia una e-mail al giorno per un prodotto. Gli avvisi istantanei costano ${solo} per 30 giorni, disdici in 2 clic.` },
+      { q: 'Vendete carte?', a: 'No. Ti diciamo solo dove sono; compri dal negozio, al suo prezzo.' },
+    ],
+  },
   home: {
     title: (brand) => `Restock carte Pokémon — disponibilità live vicino a te | ${brand}`,
     desc: (shops) => `Tracker restock Pokémon: disponibilità live delle carte Pokémon da ${shops}, orari reali di restock e avvisi istantanei.`,

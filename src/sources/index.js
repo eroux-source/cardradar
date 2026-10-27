@@ -5,24 +5,31 @@
 //   lottery sources (Japan): lotteries(env, query) → [{ uid, title, opensAt, closesAt, ... }]
 // Every adapter declares its `country`. Sources not validated from a local network
 // stay switched off (enabled() false) until their proxies are set and the bake-off passes.
-import target from './target.js';
+import target, { targetOnline } from './target.js';
 import bestbuy from './bestbuy.js';
 import gamestop from './gamestop.js';
 import pokemoncenter, { pokemonCenterUK, pokemonCenterCA, pokemonCenterAU } from './pokemoncenter.js';
 import costco from './costco.js';
 import bestbuyCA from './bestbuy_ca.js';
 import kmartAU from './kmart_au.js';
+import { shopify } from './shopify.js';
+import { SHOPS } from './shops.js';
 
 /** Foreign sources run only once proxies for that country exist (retailers geo-block foreign IPs). */
 const needsLocalProxy = (src) => ({ ...src, enabled: (env) => Boolean(env[`PROXY_LIST_${src.country.toUpperCase()}`]) && (src.enabled ? src.enabled(env) : true) });
 
 export const SOURCES = Object.fromEntries([
-  target, bestbuy, gamestop, pokemoncenter, costco,
+  target, targetOnline, bestbuy, gamestop, pokemoncenter, costco,
   needsLocalProxy(pokemonCenterUK),
-  needsLocalProxy(bestbuyCA), needsLocalProxy(pokemonCenterCA),
+  bestbuyCA, // its JSON APIs may answer without a Canadian address: tried directly, rests if blocked
+  needsLocalProxy(pokemonCenterCA),
   needsLocalProxy(kmartAU), needsLocalProxy(pokemonCenterAU),
+  ...SHOPS.map(shopify), // independent Shopify card shops, every country, no proxy needed
 ].map((s) => [s.id, s]));
 export const sourceList = Object.values(SOURCES);
 export const sourceName = (id) => SOURCES[id]?.name ?? id;
-export const sourcesOf = (cc) => sourceList.filter((s) => s.country === cc);
+// Pages only name retailers we can actually read: set once per request/cron from env (see src/index.js).
+let ENABLED = null;
+export const setEnv = (env) => { ENABLED = new Set(enabledSources(env).map((s) => s.id)); };
+export const sourcesOf = (cc) => sourceList.filter((s) => s.country === cc && (!ENABLED || ENABLED.has(s.id)));
 export const enabledSources = (env) => sourceList.filter((s) => (typeof s.enabled === 'function' ? s.enabled(env) : true));

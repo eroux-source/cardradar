@@ -107,7 +107,7 @@ export function cityGrid(T, totals, href) {
 
 export function retailerGrid(T) {
   const cc = T.cc.code;
-  return `<ul class="cities">${sourcesOf(cc).map((s) => `<li><a href="${base(cc)}/retailer/${s.id}"><strong>${e(s.name)}</strong><span>${e(s.kind === 'online' ? T.onlineStock : T.storeByStore)}</span></a></li>`).join('')}</ul>`;
+  return `<ul class="cities">${sourcesOf(cc).filter((s) => s.listed !== false).map((s) => `<li><a href="${base(cc)}/retailer/${s.id}"><strong>${e(s.name)}</strong><span>${e(s.kind === 'online' ? T.onlineStock : T.storeByStore)}</span></a></li>`).join('')}</ul>`;
 }
 
 /** Product grid: the retailer's own photo, the name, a plain status, the price. */

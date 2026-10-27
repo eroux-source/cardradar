@@ -19,6 +19,22 @@ export default {
   card: { live: 'Live', tracker: 'Restock-Tracker', inStock: 'verfügbar', stores: 'Filialen', online: 'Online', soldOut: 'Ausverkauft', lastRestock: 'Letzter Restock', typicalStay: 'Übliche Dauer', storesTracked: 'Filialen', retailersN: (n) => `${n} Händler`, productsN: (n) => `${n} Produkte`, storesFrac: (a, b) => `${a}/${b} Filialen` },
   rarity: { rare: 'Selten: gerade in keiner Filiale', uncommon: 'Ungewöhnlich: in wenigen Filialen', common: 'Häufig: in vielen Filialen' },
   hud: { title: 'Live-Radar nach Händler', allOut: 'alles ausverkauft', warming: 'startet' },
+  intro: {
+    h1: 'Pokémon-Karten auf Lager finden',
+    what: (shops) => `Wir prüfen ${shops} alle paar Minuten und zeigen, wo versiegelte Pokémon-Karten gerade lieferbar sind. Nachsehen ist kostenlos. Lass dich benachrichtigen, sobald dein Produkt wieder da ist.`,
+    now: (a, b, ago) => `Gerade: <strong>${a} von ${b} Shops</strong> haben Pokémon-Karten auf Lager · geprüft ${ago}`,
+    seeStock: 'Verfügbarkeit ansehen', freeAlert: 'Kostenlosen Alarm einrichten',
+    howH: 'So funktioniert es',
+    steps: ['Wähle dein Produkt: Top-Trainer-Box, Display, Tin…', 'Wir prüfen jeden Shop alle paar Minuten, Tag und Nacht.', 'Sobald es wieder da ist, bekommst du einen Alarm mit Link zum Kaufen.'],
+    productsH: 'Diese Produkte verfolgen wir', productsSub: 'Grün = gerade irgendwo lieferbar. Tippe auf ein Produkt für die Shops.',
+    latestH: 'Gerade wieder da', allTimes: 'Wann die Shops nachfüllen', placesH: 'Nach Shop',
+    faqH: 'Fragen',
+    faq: (shops, solo) => [
+      { q: 'Was ist Card Restock Tracker?', a: `Eine kostenlose Website, die ${shops} alle paar Minuten prüft und zeigt, wo versiegelte Pokémon-Karten lieferbar sind.` },
+      { q: 'Ist das kostenlos?', a: `Ja. Nachsehen ist kostenlos und ohne Konto, der Gratis-Tarif schickt dir einmal am Tag eine E-Mail zu einem Produkt. Sofort-Alarme kosten ${solo} für 30 Tage, mit 2 Klicks kündbar.` },
+      { q: 'Verkauft ihr Karten?', a: 'Nein. Wir sagen dir nur, wo sie sind; du kaufst beim Shop zu dessen Preis.' },
+    ],
+  },
   home: {
     title: (brand) => `Pokémon Karten Restock — Live-Bestand in deiner Nähe | ${brand}`,
     desc: (shops) => `Pokémon Restock-Tracker: Live-Bestand von Pokémon-Karten bei ${shops}, echte Restock-Zeiten und sofortige Alarme.`,

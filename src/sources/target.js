@@ -42,3 +42,28 @@ export default {
     }).filter((x) => x?.store.id);
   },
 };
+
+/**
+ * Target online (ship to home), read from the same search call, which Target serves to
+ * datacenter addresses (the store-by-store call does not). Each search returns ~24 products
+ * with their shipping status, so this runs as a snapshot source. No verdict = item skipped.
+ */
+export const targetOnline = {
+  id: 'target_online', name: 'Target', kind: 'online', country: 'us', listed: false, // shown under Target
+  queries: ['pokemon trading card game', 'pokemon elite trainer box', 'pokemon booster bundle', 'pokemon booster box', 'pokemon tin', 'pokemon collection'],
+  async snapshot(env, keyword) {
+    const json = await call(env, 'plp_search_v2', { keyword, count: '24', offset: '0', page: `/s/${keyword}`, pricing_store_id: '1771', store_ids: '1771,2768,1375', zip: '55403' });
+    return (json?.data?.search?.products ?? []).map((p) => {
+      const ship = p.fulfillment?.shipping_options?.availability_status;
+      if (!ship) return null;
+      return {
+        item: {
+          sourceSku: String(p.tcin), title: decodeEntities(p.item?.product_description?.title ?? ''),
+          price: p.price?.current_retail ?? null, url: p.item?.enrichment?.buy_url ?? `https://www.target.com/p/-/A-${p.tcin}`,
+          image: JSON.stringify(p.item?.enrichment ?? {}).match(/https:\/\/target\.scene7\.com\/is\/image\/Target\/[A-Za-z0-9_-]+/)?.[0] ?? null,
+        },
+        inStock: ship === 'IN_STOCK' || ship === 'LIMITED_STOCK',
+      };
+    }).filter(Boolean);
+  },
+};
