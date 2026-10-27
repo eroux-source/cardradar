@@ -12,4 +12,5 @@ jobs:
           j=$(curl -s --max-time 30 "https://$D/api/health")
           echo "$j" | head -c 3000
           s=$(echo "$j" | node -e "let t='';process.stdin.on('data',d=>t+=d).on('end',()=>{const j=JSON.parse(t);const sh=Object.entries(j.sources||{}).filter(([k])=>k.startsWith('shop_'));console.log(JSON.stringify({audience:j.audience,restocks:j.restocks_24h,counts:j.counts,age_s:j.age_s,shops_ok:sh.filter(([,v])=>v.last_ok_s!=null&&v.last_ok_s<1800).length+'/'+sh.length,shops_blocked:sh.filter(([,v])=>v.status==='blocked').length,proxy_err:(sh.find(([,v])=>v.status==='blocked')||[])[1]?.err?.slice(0,160)}))})")
-          echo "::notice title=health::$s"
+          echo "::notice title=health::${s:-EMPTY}"
+          echo "::notice title=raw::$(echo "$j" | head -c 900 | tr -d '\n')"
