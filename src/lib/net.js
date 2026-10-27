@@ -77,7 +77,7 @@ async function viaProxy(proxy, url, { method, headers, body, timeoutMs }) {
     const reader = socket.readable.getReader();
     const head = await readHead(reader);
     reader.releaseLock();
-    if (!/^HTTP\/1\.[01] 200/.test(head.text)) return new Response(null, { status: 502, statusText: `proxy: ${head.text.split('\r\n')[0]}` });
+    if (!/^HTTP\/1\.[01] 200/.test(head.text)) throw new Error(`proxy CONNECT refused: ${head.text.split('\r\n')[0].slice(0, 80) || 'no answer'}`);
 
     const tls = socket.startTls({ expectedServerHostname: target.hostname });
     w = tls.writable.getWriter();
@@ -110,6 +110,7 @@ async function readResponse(reader) {
   const head = await readHead(reader);
   const [statusLine, ...hdrLines] = head.text.split('\r\n');
   const status = Number(statusLine.split(' ')[1]);
+  if (!(status >= 200 && status <= 599)) throw new Error(`proxy: unreadable response (head "${statusLine.slice(0, 60)}", ${head.text.length} chars, ${head.rest.length} body bytes)`);
   const headers = new Headers();
   for (const l of hdrLines) { const i = l.indexOf(':'); if (i > 0) headers.append(l.slice(0, i).trim(), l.slice(i + 1).trim()); }
   let bodyBytes = head.rest;
