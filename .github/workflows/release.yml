@@ -70,6 +70,7 @@ jobs:
             --var "CODES_FROM:$B <hello@$DOMAIN>" --var "ALERTS_FROM:$B alerts <alerts@notify.$DOMAIN>" \
             --var "TELEGRAM_BOT_NAME:${{ vars.TELEGRAM_BOT_NAME }}" 2>&1); rc=$?; echo "$out"
           [ $rc -eq 0 ] || { echo "::error title=deploy::$(echo "$out" | tail -15 | tr '\n' ' ' | cut -c1-900)"; exit 1; }
+          echo "::notice title=containers::$(echo "$out" | grep -i -E 'contain|applicat|image|registry|durable' | tr '\n' ' ' | cut -c1-1500)"
 
       - name: Copy app secrets from GitHub to Cloudflare (only the ones you added)
         env:
