@@ -83,6 +83,7 @@ class_name = "Relay"
 image = "./relay/Dockerfile"
 max_instances = 2
 instance_type = "lite"
+scheduling_policy = "durable_object"
 
 [[durable_objects.bindings]]
 name = "RELAY"
