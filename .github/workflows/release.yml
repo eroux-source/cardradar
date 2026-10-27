@@ -27,28 +27,47 @@ jobs:
       - name: Check that the code builds
         run: npx wrangler deploy --dry-run --outdir dist
 
+      - name: Check the Cloudflare token
+        run: |
+          out=$(npx wrangler whoami 2>&1) || true; echo "$out"
+          echo "::notice title=whoami::$(echo "$out" | grep -iE 'account|logged|token|permission|scope|error' | tr '\n' ' ' | cut -c1-900)"
+
       - name: Create queues and database if missing
         run: |
-          for q in cardradar-crawl cardradar-alerts cardradar-deliver cardradar-dead; do npx wrangler queues create "$q" >/dev/null 2>&1 || true; done
-          ID=$(npx wrangler d1 list --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const r=JSON.parse(s).find(d=>d.name==='cardradar');console.log(r?r.uuid:'')})")
+          set +e
+          # every failure becomes a readable annotation on the run
+          try() { out=$("$@" 2>&1); rc=$?; echo "$out"; if [ $rc -ne 0 ]; then echo "::error title=$2 $3::$(echo "$out" | tail -12 | tr '\n' ' ' | cut -c1-900)"; fi; return $rc; }
+          for q in cardradar-crawl cardradar-alerts cardradar-deliver cardradar-dead; do
+            out=$(npx wrangler queues create "$q" 2>&1) || { echo "$out" | grep -qi "already" || echo "::warning title=queue $q::$(echo "$out" | tail -6 | tr '\n' ' ' | cut -c1-600)"; }
+          done
+          try npx wrangler d1 list --json > d1.json || exit 1
+          ID=$(node -e "const a=JSON.parse(require('fs').readFileSync('d1.json','utf8').replace(/^[^\[]*/s,''));const r=a.find(d=>d.name==='cardradar');console.log(r?(r.uuid||r.id):'')")
           if [ -z "$ID" ]; then
-            npx wrangler d1 create cardradar >/dev/null
-            ID=$(npx wrangler d1 list --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).find(d=>d.name==='cardradar').uuid))")
+            try npx wrangler d1 create cardradar || exit 1
+            npx wrangler d1 list --json > d1.json
+            ID=$(node -e "const a=JSON.parse(require('fs').readFileSync('d1.json','utf8').replace(/^[^\[]*/s,''));const r=a.find(d=>d.name==='cardradar');console.log(r?(r.uuid||r.id):'')")
           fi
+          [ -n "$ID" ] || { echo "::error title=d1::database id not found"; exit 1; }
+          echo "::notice title=d1::database $ID"
           sed -i "s/^database_id = .*/database_id = \"$ID\"/" wrangler.toml
           if [ -n "$DOMAIN" ]; then sed -i "/^compatibility_flags/a routes = [{ pattern = \"$DOMAIN\", custom_domain = true }]" wrangler.toml; fi
 
       - name: Apply database migrations
-        run: npx wrangler d1 migrations apply cardradar --remote
+        run: |
+          set +e
+          out=$(npx wrangler d1 migrations apply cardradar --remote 2>&1); rc=$?; echo "$out"
+          [ $rc -eq 0 ] || { echo "::error title=migrations::$(echo "$out" | tail -12 | tr '\n' ' ' | cut -c1-900)"; exit 1; }
 
       - name: Deploy
         run: |
+          set +e
           B="${{ vars.BRAND_NAME }}"; B="${B:-Card Restock Tracker}"
           S="${{ vars.SUPPORT_EMAIL }}"; S="${S:-hello@$DOMAIN}"
-          npx wrangler deploy \
+          out=$(npx wrangler deploy \
             --var "BASE_URL:https://$DOMAIN" --var "BRAND_NAME:$B" --var "SUPPORT_EMAIL:$S" \
             --var "CODES_FROM:$B <hello@$DOMAIN>" --var "ALERTS_FROM:$B alerts <alerts@notify.$DOMAIN>" \
-            --var "TELEGRAM_BOT_NAME:${{ vars.TELEGRAM_BOT_NAME }}"
+            --var "TELEGRAM_BOT_NAME:${{ vars.TELEGRAM_BOT_NAME }}" 2>&1); rc=$?; echo "$out"
+          [ $rc -eq 0 ] || { echo "::error title=deploy::$(echo "$out" | tail -15 | tr '\n' ' ' | cut -c1-900)"; exit 1; }
 
       - name: Copy app secrets from GitHub to Cloudflare (only the ones you added)
         env:
