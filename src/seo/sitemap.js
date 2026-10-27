@@ -36,9 +36,11 @@ export async function sitemap(env) {
       ...skus.map((k) => `${P}/${k.slug}`),
       ...ok(skuR).map((r) => `${P}/${r.slug}/restocks`),
       ...ok(srcR).map((r) => `${P}/retailer/${r.slug}`));
-    if (hasStores) {
+    // product × city pages only where we really read stores (no empty pages in the sitemap)
+    const readMetros = new Set((await all(env, 'SELECT DISTINCT s.metro FROM stock k JOIN stores s ON s.id = k.store_id WHERE s.online = 0 AND s.country = ?', cc)).map((r) => r.metro));
+    if (hasStores && readMetros.size) {
       urls.push(`${P}/cities`,
-        ...skus.flatMap((k) => metros.map((m) => `${P}/${k.slug}/${m.slug}`)),
+        ...skus.flatMap((k) => metros.filter((m) => readMetros.has(m.id)).map((m) => `${P}/${k.slug}/${m.slug}`)),
         ...stores.map((s) => `${P}/store/${s.slug}`),
         ...ok(storeR).map((r) => `${P}/store/${r.slug}/restocks`),
         ...ok(cityR).map((r) => `${P}/restocks/${metros.find((m) => m.id === r.id)?.slug ?? r.id}`));
