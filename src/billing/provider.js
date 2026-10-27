@@ -72,7 +72,11 @@ async function verified(env, request, raw) {
 /** POST /api/billing/webhook */
 export async function billingWebhook(env, request) {
   const raw = await request.text();
-  if (!(await verified(env, request, raw))) return new Response('bad signature', { status: 401 });
+  const ok = await verified(env, request, raw);
+  // diagnosis without secrets: which headers came, whether a secret is set (shown in /api/health)
+  await run(env, "INSERT INTO settings (key, value, updated_at) VALUES ('billing.last_webhook', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at",
+    JSON.stringify({ ok, secret_set: !!env.WHOP_WEBHOOK_SECRET, secret_prefix: String(env.WHOP_WEBHOOK_SECRET ?? '').slice(0, 3), headers: [...request.headers.keys()].filter((k) => /webhook|whop|signature|svix/i.test(k)), sig_format: String(request.headers.get('webhook-signature') ?? '').replace(/,.*/, ',…') }), now()).catch(() => {});
+  if (!ok) return new Response('bad signature', { status: 401 });
 
   const evt = JSON.parse(raw);
   const type = evt.action ?? evt.type ?? evt.event;
