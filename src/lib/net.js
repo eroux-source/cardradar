@@ -12,7 +12,7 @@ export class SourceError extends Error {
     super(`${source} ${status} ${String(url).split('?')[0]}${detail ? ` ${detail}` : ''}`);
     this.source = source; this.status = status;
   }
-  get blocked() { return [401, 403, 412, 429, 435, 503].includes(this.status); // 435 = Target refusing datacenter IPs }
+  get blocked() { return [401, 403, 412, 429, 435, 503].includes(this.status); } // 435 = Target refusing datacenter IPs
 }
 
 /** "host:port:user:pass" or "http://user:pass@host:port", one per line or comma. */
