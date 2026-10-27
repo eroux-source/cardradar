@@ -43,10 +43,12 @@ async function route(req, env, ctx) {
   if (p === '/api/health') {
     const last = await one(env, 'SELECT MAX(seen_at) t FROM stock');
     // public, harmless: which retailers answer (status only, no error text)
-    const src = await env.DB.prepare('SELECT source, status, last_ok_at, last_error FROM source_health').all();
+    const src = await env.DB.prepare(`SELECT h.source, h.status, h.last_ok_at, h.last_error,
+      (SELECT COUNT(*) FROM listings l WHERE l.source = h.source AND l.active = 1) AS listings,
+      (SELECT COUNT(*) FROM stock k JOIN stores s ON s.id = k.store_id WHERE s.source = h.source) AS readings FROM source_health h`).all();
     const c = await one(env, 'SELECT (SELECT COUNT(*) FROM listings WHERE active = 1) listings, (SELECT COUNT(*) FROM stock) readings, (SELECT COUNT(*) FROM stock WHERE in_stock = 1) in_stock');
     return json({ ok: true, last_read: last?.t ?? null, age_s: last?.t ? Math.round((now() - last.t) / 1000) : null, counts: c,
-      sources: Object.fromEntries(src.results.map((r) => [r.source, { status: r.status, http: Number(/\s(\d{3})\s/.exec(r.last_error ?? '')?.[1]) || null, last_ok_s: r.last_ok_at ? Math.round((now() - r.last_ok_at) / 1000) : null }])) });
+      sources: Object.fromEntries(src.results.map((r) => [r.source, { status: r.status, http: Number(/\s(\d{3})\s/.exec(r.last_error ?? '')?.[1]) || null, listings: r.listings, readings: r.readings, last_ok_s: r.last_ok_at ? Math.round((now() - r.last_ok_at) / 1000) : null }])) });
   }
   if (p === '/api/billing/webhook' && m === 'POST') return billingWebhook(env, req);
   if (p === '/api/telegram/webhook' && m === 'POST') return telegramWebhook(env, req);

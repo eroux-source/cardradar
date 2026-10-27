@@ -3,7 +3,7 @@
 //   /search/suggest.json?q=…&resources[type]=product  → title, handle, price, image, and `available`
 // One call returns up to 10 products WITH their stock state, so these sources run as
 // "snapshot" sources: each query is both discovery and a stock reading (no per-product calls).
-// They need no proxy (they are the shops' own public storefront API, read a few times an hour).
+// Shopify answers 429 to Cloudflare's shared addresses, so these go through any proxy we have (a US one is fine: Shopify is global).
 import { sourceJson } from '../lib/net.js';
 
 const Q = {
@@ -26,7 +26,7 @@ export function shopify({ id, name, domain, country, lang = 'en' }) {
 
     async snapshot(env, q) {
       const u = `https://${domain}/search/suggest.json?${new URLSearchParams({ q, 'resources[type]': 'product', 'resources[limit]': '10', 'resources[options][unavailable_products]': 'last' })}`;
-      const json = await sourceJson(env, id, u, { headers: { accept: 'application/json' }, useProxy: false });
+      const json = await sourceJson(env, id, u, { headers: { accept: 'application/json' } });
       return (json?.resources?.results?.products ?? []).filter((p) => p.handle && p.title && typeof p.available === 'boolean').map((p) => ({
         item: {
           sourceSku: p.handle, title: p.title, price: Number(p.price) || null,
