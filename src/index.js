@@ -1,0 +1,141 @@
+// Worker entry: HTTP routes, the minute cron, and the four queue consumers.
+import { now, run, one } from './lib/db.js';
+import { currentUser } from './auth/session.js';
+import { googleStart, googleCallback } from './auth/google.js';
+import { billingWebhook, fakeCheckout } from './billing/provider.js';
+import { telegramWebhook } from './alerts/channels/telegram.js';
+import { runTask } from './crawler/run.js';
+import { matchRestocks } from './alerts/pipeline.js';
+import { deliver } from './alerts/deliver.js';
+import { scheduled as cron } from './jobs/index.js';
+import { api, json, clientIp, netKey } from './web/api.js';
+import * as pub from './web/pages/public.js';
+import { alertsPage, signinPage, accountPage } from './web/pages/funnel.js';
+import { sitemap, robots, llms } from './seo/sitemap.js';
+import { ownerAllowed, monitor, marketing, ownerSettings, bakeoff } from './owner/index.js';
+import { page } from './web/html.js';
+import { applyReading } from './crawler/state.js';
+import { publishRestocks } from './alerts/pipeline.js';
+
+const notFound = (env) => {
+  const r = page(env, { title: 'Page not found', description: '', path: '/404', noindex: true, body: '<div class="answer"><h1>This page does not exist</h1><p class="lede">The product or store may have been renamed. <a href="/">See live stock for every product</a>.</p></div>' });
+  return new Response(r.body, { status: 404, headers: r.headers });
+};
+const tooMany = () => new Response('Too many requests from your network. Wait a minute.', { status: 429, headers: { 'retry-after': '60' } });
+
+async function limited(env, req) {
+  if (!env.PAGE_RL) return false;
+  const { success } = await env.PAGE_RL.limit({ key: netKey(clientIp(req)) });
+  return !success;
+}
+
+async function route(req, env, ctx) {
+  const url = new URL(req.url);
+  const p = url.pathname.replace(/\/+$/, '') || '/';
+  const m = req.method;
+
+  // canonical: no trailing slash
+  if (url.pathname !== p && m === 'GET') return Response.redirect(`${env.BASE_URL}${p}${url.search}`, 301);
+
+  // --- machine endpoints ---
+  if (p === '/api/health') {
+    const last = await one(env, 'SELECT MAX(seen_at) t FROM stock');
+    return json({ ok: true, last_read: last?.t ?? null, age_s: last?.t ? Math.round((now() - last.t) / 1000) : null });
+  }
+  if (p === '/api/billing/webhook' && m === 'POST') return billingWebhook(env, req);
+  if (p === '/api/telegram/webhook' && m === 'POST') return telegramWebhook(env, req);
+  if (p === '/dev/fake-checkout') return fakeCheckout(env, url);
+  if (p === '/dev/restock' && env.DEV_TOOLS === '1') {
+    // local test only: makes one listing go sold out → in stock at one store, like a real restock
+    const row = await one(env, `SELECT k.listing_id, k.store_id, l.sku_id, l.source FROM stock k JOIN listings l ON l.id = k.listing_id JOIN skus s ON s.id = l.sku_id
+      JOIN stores st ON st.id = k.store_id WHERE s.slug = ? AND (st.metro = ? OR (? = '' AND st.online = 1)) ORDER BY k.in_stock LIMIT 1`, url.searchParams.get('sku'), url.searchParams.get('metro') ?? '', url.searchParams.get('metro') ?? '');
+    if (!row) return json({ ok: false });
+    await run(env, 'UPDATE stock SET in_stock = 0, flips = \'\', quarantined_until = NULL WHERE listing_id = ? AND store_id = ?', row.listing_id, row.store_id);
+    const id = await applyReading(env, { listingId: row.listing_id, skuId: row.sku_id, source: row.source, storeId: row.store_id, inStock: true, qty: 3, at: now() });
+    if (id) await publishRestocks(env, [id]);
+    return json({ ok: true, restock: id, sent: await one(env, 'SELECT * FROM alert_sent WHERE restock_id = ?', id) });
+  }
+  if (p === '/api/stock' && await limited(env, req)) return tooMany();
+  if (p.startsWith('/api/')) return api(env, req, url, ctx);
+  if (p === '/auth/google') return googleStart(env, url.searchParams.get('next') ?? '/account');
+  if (p === '/auth/google/callback') return googleCallback(env, url);
+
+  // --- SEO files ---
+  if (p === '/sitemap.xml') return sitemap(env);
+  if (p === '/robots.txt') return robots(env);
+  if (p === '/llms.txt') return llms(env);
+  if (env.INDEXNOW_KEY && p === `/${env.INDEXNOW_KEY}.txt`) return new Response(env.INDEXNOW_KEY, { headers: { 'content-type': 'text/plain' } });
+
+  // --- owner ---
+  if (p.startsWith('/owner')) {
+    if (!ownerAllowed(env, req, url)) return new Response('Accès réservé.', { status: 403 });
+    if (p === '/owner/monitor') return monitor(env, url);
+    if (p === '/owner/marketing') return marketing(env, url);
+    if (p === '/owner/bakeoff') return bakeoff(env, url);
+    if (p === '/owner/settings' && m === 'POST') return ownerSettings(env, req, url);
+    return Response.redirect(`${env.BASE_URL}/owner/monitor${url.search}`, 302);
+  }
+
+  if (m !== 'GET' && m !== 'HEAD') return new Response('Method not allowed', { status: 405 });
+
+  // --- funnel & account (need the session) ---
+  if (p === '/alerts') return alertsPage(env, url, await currentUser(env, req));
+  if (p === '/signin') return signinPage(env, url);
+  if (p === '/account') return accountPage(env, url, await currentUser(env, req));
+
+  // --- public pages ---
+  if (p === '/') return pub.home(env);
+  if (p === '/pricing') return pub.pricing(env);
+  if (p === '/press') return pub.press(env);
+  if (p === '/terms' || p === '/privacy') return pub.legal(env, p.slice(1));
+  const seg = p.split('/').filter(Boolean);
+  if (seg[0] === 'us') {
+    let res = null;
+    if (seg[1] === 'restocks') res = seg[2] ? await pub.cityRestocks(env, seg[2]) : await pub.allRestocks(env);
+    else if (seg[1] === 'cities' && seg.length === 2) res = await pub.cities(env);
+    else if (seg[1] === 'retailers' && seg.length === 2) res = await pub.retailers(env);
+    else if (seg[1] === 'retailer' && seg[2]) res = await pub.retailerPage(env, seg[2]);
+    else if (seg[1] === 'store' && seg[2]) {
+      if (await limited(env, req)) return tooMany(); // store pages: 20 reads / min / network
+      res = seg[3] === 'restocks' ? await pub.storeRestocks(env, seg[2]) : seg.length === 3 ? await pub.store(env, seg[2]) : null;
+    } else if (seg[1] && seg.length === 2) res = await pub.sku(env, seg[1]);
+    else if (seg[1] && seg[2] === 'restocks' && seg.length === 3) res = await pub.skuRestocks(env, seg[1]);
+    else if (seg[1] && seg[2] && seg.length === 3) res = await pub.sku(env, seg[1], seg[2]);
+    if (res) return res;
+  }
+  return notFound(env);
+}
+
+export default {
+  async fetch(req, env, ctx) {
+    try {
+      return await route(req, env, ctx);
+    } catch (e) {
+      console.error(e);
+      return new Response('Something went wrong on our side. Try again in a minute.', { status: 500 });
+    }
+  },
+
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(cron(env, event.scheduledTime));
+  },
+
+  async queue(batch, env) {
+    const q = batch.queue;
+    for (const msg of batch.messages) {
+      try {
+        if (q.endsWith('-crawl')) await runTask(env, msg.body);
+        else if (q.endsWith('-alerts')) await matchRestocks(env, msg.body.restockIds, { late: !!msg.body.late });
+        else if (q.endsWith('-deliver')) await deliver(env, msg.body);
+        else if (q.endsWith('-dead')) {
+          await run(env, 'INSERT INTO dead_letters (queue, body, error, at) VALUES (?, ?, ?, ?)', q, JSON.stringify(msg.body).slice(0, 4000), msg.body?.error ?? null, now());
+          if (msg.body?.alertId) await run(env, "UPDATE alert_sent SET status = 'failed' WHERE alert_id = ? AND restock_id = ? AND status = 'claimed'", msg.body.alertId, msg.body.restockId);
+        }
+        msg.ack();
+      } catch (e) {
+        console.error(q, e);
+        msg.retry();
+      }
+    }
+  },
+};

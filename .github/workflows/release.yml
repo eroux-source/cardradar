@@ -1,0 +1,83 @@
+# The ONLY way to production (playbook rule: one release route, no manual deploys).
+# Push to main → build check → create Cloudflare resources if missing → database migrations
+# → deploy → copy secrets from GitHub to Cloudflare → Telegram webhook → health check.
+#
+# GitHub › Settings › Secrets and variables › Actions
+#   Variables: DOMAIN (e.g. mysite.com, no https), BRAND_NAME, SUPPORT_EMAIL, TELEGRAM_BOT_NAME
+#   Secrets:   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID (required) + every app secret below (optional, add as you go)
+name: release
+on:
+  push: { branches: [main] }
+  workflow_dispatch:
+concurrency: release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      DOMAIN: ${{ vars.DOMAIN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+
+      - name: Check that the code builds
+        run: npx wrangler deploy --dry-run --outdir dist
+
+      - name: Create queues and database if missing
+        run: |
+          for q in cardradar-crawl cardradar-alerts cardradar-deliver cardradar-dead; do npx wrangler queues create "$q" >/dev/null 2>&1 || true; done
+          ID=$(npx wrangler d1 list --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const r=JSON.parse(s).find(d=>d.name==='cardradar');console.log(r?r.uuid:'')})")
+          if [ -z "$ID" ]; then
+            npx wrangler d1 create cardradar >/dev/null
+            ID=$(npx wrangler d1 list --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).find(d=>d.name==='cardradar').uuid))")
+          fi
+          sed -i "s/^database_id = .*/database_id = \"$ID\"/" wrangler.toml
+          if [ -n "$DOMAIN" ]; then sed -i "/^compatibility_flags/a routes = [{ pattern = \"$DOMAIN\", custom_domain = true }]" wrangler.toml; fi
+
+      - name: Apply database migrations
+        run: npx wrangler d1 migrations apply cardradar --remote
+
+      - name: Deploy
+        run: |
+          B="${{ vars.BRAND_NAME }}"; B="${B:-CardRadar}"
+          S="${{ vars.SUPPORT_EMAIL }}"; S="${S:-hello@$DOMAIN}"
+          npx wrangler deploy \
+            --var "BASE_URL:https://$DOMAIN" --var "BRAND_NAME:$B" --var "SUPPORT_EMAIL:$S" \
+            --var "CODES_FROM:$B <hello@$DOMAIN>" --var "ALERTS_FROM:$B alerts <alerts@notify.$DOMAIN>" \
+            --var "TELEGRAM_BOT_NAME:${{ vars.TELEGRAM_BOT_NAME }}"
+
+      - name: Copy app secrets from GitHub to Cloudflare (only the ones you added)
+        env:
+          WHOP_API_KEY: ${{ secrets.WHOP_API_KEY }}
+          WHOP_WEBHOOK_SECRET: ${{ secrets.WHOP_WEBHOOK_SECRET }}
+          WHOP_PLAN_SOLO: ${{ secrets.WHOP_PLAN_SOLO }}
+          WHOP_PLAN_MULTI: ${{ secrets.WHOP_PLAN_MULTI }}
+          POSTMARK_TOKEN: ${{ secrets.POSTMARK_TOKEN }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+          VAPID_PRIVATE_JWK: ${{ secrets.VAPID_PRIVATE_JWK }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          BESTBUY_API_KEY: ${{ secrets.BESTBUY_API_KEY }}
+          PROXY_LIST: ${{ secrets.PROXY_LIST }}
+          ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        run: |
+          node -e "const k='WHOP_API_KEY WHOP_WEBHOOK_SECRET WHOP_PLAN_SOLO WHOP_PLAN_MULTI POSTMARK_TOKEN RESEND_API_KEY TELEGRAM_BOT_TOKEN TELEGRAM_WEBHOOK_SECRET VAPID_PRIVATE_JWK GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET BESTBUY_API_KEY PROXY_LIST ADMIN_KEY SESSION_SECRET'.split(' ');const o={};for(const n of k)if(process.env[n])o[n]=process.env[n];require('fs').writeFileSync('secrets.json',JSON.stringify(o));console.log('secrets to copy:',Object.keys(o).join(', ')||'none')"
+          if [ "$(cat secrets.json)" != "{}" ]; then npx wrangler secret bulk secrets.json; fi
+          rm -f secrets.json
+
+      - name: Point the Telegram bot at the site
+        if: ${{ env.TG != '' }}
+        env:
+          TG: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TGS: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+        run: curl -fsS "https://api.telegram.org/bot$TG/setWebhook" -d "url=https://$DOMAIN/api/telegram/webhook" -d "secret_token=$TGS" -d 'allowed_updates=["message"]' >/dev/null
+
+      - name: Health check (fails the release if the site does not answer)
+        run: sleep 25 && curl -fsS "https://$DOMAIN/api/health"

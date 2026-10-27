@@ -1,0 +1,9 @@
+{
+  "name": "Card restock alerts",
+  "short_name": "Restocks",
+  "start_url": "/account?utm_source=homescreen",
+  "display": "standalone",
+  "background_color": "#f4f6fa",
+  "theme_color": "#1a1f3a",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
