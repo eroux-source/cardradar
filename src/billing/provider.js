@@ -44,17 +44,40 @@ export function checkoutUrl(env, { plan, email, currency = 'USD' }) {
 
 const pick = (o, paths) => { for (const p of paths) { const v = p.split('.').reduce((x, k) => x?.[k], o); if (v != null) return v; } return null; };
 
+const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+async function hmacB64(keyBytes, msg) {
+  const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return b64(await crypto.subtle.sign('HMAC', key, enc.encode(msg)));
+}
+/** Standard Webhooks (what Whop uses): webhook-id, webhook-timestamp, webhook-signature "v1,<base64>". */
+export async function standardSignature(secret, id, ts, raw) {
+  // Whop's "ws_…" secret is used as-is (its bytes); also accept the base64 form some tools expect
+  const keys = [enc.encode(secret)];
+  try { keys.push(Uint8Array.from(atob(secret.replace(/^(ws|whsec)_/, '')), (c) => c.charCodeAt(0))); } catch {}
+  return Promise.all(keys.map((k) => hmacB64(k, `${id}.${ts}.${raw}`)));
+}
+async function verified(env, request, raw) {
+  const secret = env.WHOP_WEBHOOK_SECRET; if (!secret) return false;
+  const id = request.headers.get('webhook-id'); const ts = request.headers.get('webhook-timestamp'); const sig = request.headers.get('webhook-signature');
+  if (id && ts && sig) {
+    if (Math.abs(Date.now() / 1000 - Number(ts)) > 300) return false;
+    const want = await standardSignature(secret, id, ts, raw);
+    return sig.split(' ').map((x) => x.split(',')[1]).some((g) => want.includes(g));
+  }
+  // older Whop scheme: hex HMAC of the body
+  const given = String(request.headers.get(env.WHOP_SIGNATURE_HEADER || 'x-whop-signature') ?? '').replace(/^sha256=/, '');
+  return !!given && given === await hmacHex(secret, raw);
+}
+
 /** POST /api/billing/webhook */
 export async function billingWebhook(env, request) {
   const raw = await request.text();
-  const header = env.WHOP_SIGNATURE_HEADER || 'x-whop-signature';
-  const given = String(request.headers.get(header) ?? '').replace(/^sha256=/, '');
-  if (!env.WHOP_WEBHOOK_SECRET || given !== await hmacHex(env.WHOP_WEBHOOK_SECRET, raw)) return new Response('bad signature', { status: 401 });
+  if (!(await verified(env, request, raw))) return new Response('bad signature', { status: 401 });
 
   const evt = JSON.parse(raw);
   const type = evt.action ?? evt.type ?? evt.event;
   const data = evt.data ?? {};
-  const email = pick(data, ['user.email', 'email', 'customer.email', 'membership.user.email']);
+  const email = pick(data, ['user.email', 'email', 'customer.email', 'membership.user.email', 'member.user.email', 'member.email']);
   const planId = pick(data, ['plan.id', 'plan_id', 'membership.plan_id']);
   const ref = String(pick(data, ['id', 'payment_id', 'membership_id']) ?? '');
   const amount = Number(pick(data, ['final_amount', 'amount', 'subtotal']) ?? 0);
@@ -64,11 +87,11 @@ export async function billingWebhook(env, request) {
   await run(env, 'INSERT OR IGNORE INTO payments (provider, provider_ref, user_id, amount, currency, kind, at, raw) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     'whop', `${type}:${ref}`, user.id, amount, pick(data, ['currency']) ?? 'usd', type, now(), raw.slice(0, 4000));
 
-  if (/went_valid|payment\.succeeded|renewed/.test(type)) {
+  if (/went_valid|activated|payment\.succeeded|renewed/.test(type)) {
     await grantPass(env, { userId: user.id, plan: planFromId(env, planId) ?? 'solo', provider: 'whop', ref: `${type}:${ref}` });
     await run(env, "UPDATE leads SET step = 'paid', updated_at = ? WHERE email = ?", now(), user.email);
     await run(env, 'INSERT INTO events (at, name, props) VALUES (?, ?, ?)', now(), 'paid', JSON.stringify({ plan: planFromId(env, planId), amount }));
-  } else if (/went_invalid|cancel/.test(type)) {
+  } else if (/went_invalid|deactivated|cancel/.test(type)) {
     await stopRenewal(env, user.id); // access runs until the end of the paid period
   }
   return new Response('ok');
@@ -104,7 +127,8 @@ export async function fakeCheckout(env, url) {
   if (env.BILLING_PROVIDER !== 'fake') return new Response('not found', { status: 404 });
   const plan = url.searchParams.get('plan'); const email = url.searchParams.get('email');
   const body = JSON.stringify({ action: 'payment.succeeded', data: { id: `fake_${crypto.randomUUID()}`, user: { email }, plan: { id: plan === 'multi' ? env.WHOP_PLAN_MULTI : env.WHOP_PLAN_SOLO }, final_amount: plan === 'multi' ? Number(env.PRICE_MULTI) : Number(env.PRICE_SOLO), currency: 'usd' } });
-  const sig = await hmacHex(env.WHOP_WEBHOOK_SECRET, body);
-  await billingWebhook(env, new Request('http://x/api/billing/webhook', { method: 'POST', body, headers: { [env.WHOP_SIGNATURE_HEADER || 'x-whop-signature']: sig } }));
+  const id = `msg_${crypto.randomUUID()}`; const ts = String(Math.floor(Date.now() / 1000));
+  const [sig] = await standardSignature(env.WHOP_WEBHOOK_SECRET, id, ts, body);
+  await billingWebhook(env, new Request('http://x/api/billing/webhook', { method: 'POST', body, headers: { 'webhook-id': id, 'webhook-timestamp': ts, 'webhook-signature': `v1,${sig}` } }));
   return Response.redirect(`${env.BASE_URL}/account?paid=1`, 302);
 }
