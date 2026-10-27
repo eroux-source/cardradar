@@ -63,7 +63,42 @@ export async function sourceText(env, source, url, opts = {}) {
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
-async function viaProxy(proxy, url, { method, headers, body, timeoutMs }) {
+// Workers' startTls after CONNECT returns an empty stream in production (works locally).
+// So we first ask the proxy to make the HTTPS request itself ("absolute-form" request over
+// plain HTTP, which most residential providers accept), and fall back to CONNECT+TLS.
+const MODE = {}; // proxy host → 'absolute' | 'connect'
+async function viaProxy(proxy, url, opts) {
+  const m = MODE[proxy.host];
+  if (m !== 'connect') {
+    try { const r = await viaProxyAbsolute(proxy, url, opts); MODE[proxy.host] = 'absolute'; return r; }
+    catch (e) { if (m === 'absolute') throw e; }
+  }
+  const r = await viaProxyConnect(proxy, url, opts); MODE[proxy.host] = 'connect'; return r;
+}
+
+async function viaProxyAbsolute(proxy, url, { method, headers, body, timeoutMs }) {
+  const { connect } = await import('cloudflare:sockets');
+  const target = new URL(url);
+  const socket = connect({ hostname: proxy.host, port: proxy.port }, { allowHalfOpen: false });
+  const timer = setTimeout(() => socket.close(), timeoutMs);
+  try {
+    const w = socket.writable.getWriter();
+    const payload = body ? (typeof body === 'string' ? enc.encode(body) : body) : null;
+    const lines = [`${method} ${target.href} HTTP/1.1`, `Host: ${target.host}`, 'Connection: close', 'Proxy-Connection: close'];
+    if (proxy.user) lines.push(`Proxy-Authorization: Basic ${btoa(`${proxy.user}:${proxy.pass}`)}`);
+    for (const [k, v] of Object.entries(headers)) lines.push(`${k}: ${v}`);
+    if (payload) lines.push(`Content-Length: ${payload.byteLength}`);
+    await w.write(enc.encode(`${lines.join('\r\n')}\r\n\r\n`));
+    if (payload) await w.write(payload);
+    w.releaseLock();
+    return await readResponse(socket.readable.getReader());
+  } finally {
+    clearTimeout(timer);
+    socket.close().catch(() => {});
+  }
+}
+
+async function viaProxyConnect(proxy, url, { method, headers, body, timeoutMs }) {
   const { connect } = await import('cloudflare:sockets');
   const target = new URL(url);
   const port = Number(target.port || 443);
