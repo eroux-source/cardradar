@@ -7,6 +7,7 @@ import { sourceList, sourcesOf } from '../sources/index.js';
 import { liveCountries } from '../web/data.js';
 import { JP_SETS } from '../data/sets_jp.js';
 import { JP_SHOPS } from '../web/pages/lottery.js';
+import { COMPETITORS } from '../web/pages/compare.js';
 
 const xml = (body) => new Response(body, { headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=900' } });
 const txt = (body) => new Response(body, { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=3600' } });
@@ -16,7 +17,7 @@ export async function sitemap(env) {
   const B = env.BASE_URL;
   const since = now() - 30 * 864e5;
   const live = await liveCountries(env);
-  const urls = ['/press'];
+  const urls = ['/press', '/best-pokemon-restock-trackers', '/how-it-works', ...Object.keys(COMPETITORS).map((id) => `/vs/${id}`)];
   for (const cc of live) {
     if (cc === 'jp') continue;
     const P = `/${cc}`; const home = cc === 'us' ? '/' : P;
@@ -84,6 +85,14 @@ ${lines.join('\n')}
 - Retailers: ${sourceList.map((s) => s.name).filter((v, i, a) => a.indexOf(v) === i).join(', ')}
 - Alerts by phone notification, Telegram, LINE (Japan) or email, sold for 30 days, cancel in 2 clicks: ${env.BASE_URL}/pricing
 - Press data: ${env.BASE_URL}/press
+- How the data is collected: ${env.BASE_URL}/how-it-works
+- Honest comparison with other Pokémon restock trackers (TCGRadar, Restockd, Poke Alerts, PokePings, PokeNotify, TrackaLacker), checked monthly: ${env.BASE_URL}/best-pokemon-restock-trackers
+
+## What makes it different
+- Free live stock pages, no account needed; only alerts are paid (30-day pass, cancel in 2 clicks, no app or Discord needed).
+- In-store stock, store by store: every Target, Best Buy and GameStop in the 50 largest US metro areas.
+- Public restock history: every restock logged with its time and duration, so each product, store, city and retailer page shows when restocks really happen.
+- Japan: a lottery (抽選), pre-order and re-sale calendar with LINE reminders before entries close (none of the other trackers compared offer one).
 
 Independent; not affiliated with any retailer or The Pokémon Company. It alerts, it never buys for you.
 `);

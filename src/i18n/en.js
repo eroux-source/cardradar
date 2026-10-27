@@ -35,8 +35,8 @@ export default {
   hud: { title: 'Live radar by retailer', allOut: 'all sold out', warming: 'warming up' },
   // home
   home: {
-    title: (brand) => `Pokémon Restock Tracker — Pokémon Cards In Stock Near You, Live | ${brand}`,
-    desc: (shops) => `Pokémon restock tracker: live Pokémon card stock at ${shops}, real restock times and instant alerts.`,
+    title: (brand) => `Pokémon Restock Tracker: Free Live Stock & Restock Alerts | ${brand}`,
+    desc: (shops) => `Free Pokémon restock tracker: live in-store and online stock at ${shops}, real restock times store by store, and alerts by phone, Telegram or email.`,
     h1: 'Pokémon cards in stock near you, live',
     lede: (a, b) => `Right now <strong>${a} of ${b} stores</strong> we track have Pokémon cards on the shelf.`,
     latest: (name, place, ago) => ` Latest restock: <strong>${name}</strong> at ${place}, ${ago}.`,

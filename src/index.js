@@ -14,6 +14,7 @@ import { alertsPage, signinPage, accountPage } from './web/pages/funnel.js';
 import { sitemap, robots, llms } from './seo/sitemap.js';
 import { ownerAllowed, monitor, marketing, ownerSettings, bakeoff } from './owner/index.js';
 import { jpHome, jpSet, jpShop } from './web/pages/lottery.js';
+import { bestTrackers, versus, howItWorks } from './web/pages/compare.js';
 import { lineWebhook } from './alerts/channels/line.js';
 import { COUNTRIES } from './data/countries.js';
 import { ownerLottery } from './owner/lottery.js';
@@ -105,6 +106,9 @@ async function route(req, env, ctx) {
   if (p === '/us') return Response.redirect(`${env.BASE_URL}/`, 301);
   if (p === '/pricing') return pub.pricing(env, COUNTRIES[url.searchParams.get('c')] ? url.searchParams.get('c') : 'us');
   if (p === '/press') return pub.press(env);
+  if (p === '/best-pokemon-restock-trackers') return bestTrackers(env);
+  if (p === '/how-it-works') return howItWorks(env);
+  if (p.startsWith('/vs/')) return (await versus(env, p.slice(4))) ?? notFound(env);
   if (p === '/terms' || p === '/privacy') return pub.legal(env, p.slice(1));
   const seg = p.split('/').filter(Boolean);
   const cc = seg[0];

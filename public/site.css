@@ -126,6 +126,13 @@ table { width: 100%; border-collapse: collapse; font-size: 16px; }
 th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
 th { font-size: 14px; color: var(--soft); font-weight: 600; background: var(--tint); }
 
+/* ---------- comparison tables ---------- */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--rule); border-radius: var(--r); }
+table.compare { min-width: 860px; font-size: 14px; }
+table.compare th[scope=row] { background: var(--tint); white-space: nowrap; }
+table.compare td:nth-child(2) { background: #fff8dc; }
+.picks { padding-left: 20px; } .picks li { margin: 8px 0; max-width: 75ch; }
+
 /* ---------- city / retailer / set grids ---------- */
 .cities { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 @media (max-width: 480px) { .cities { grid-template-columns: 1fr 1fr; gap: 8px; } .cities a { padding: 10px 12px; } table { font-size: 14px; } th, td { padding: 8px 6px; } }

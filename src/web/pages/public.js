@@ -41,7 +41,13 @@ export async function home(env, cc) {
   ${sourcesOf(cc).some((x) => x.kind === 'stores') ? `<section aria-labelledby="c-h"><h2 id="c-h">${e(T.home.byCity)}</h2>${cityGrid(T, await d.metroTotals(env, cc), (m) => `${base(cc)}/restocks/${m.slug}`)}</section>` : ''}
   ${await factsBlock(env, T)}`;
   return page(env, T, { title: T.home.title(env.BRAND_NAME), description: T.home.desc(shops), path: homePath(cc), body, noindex: !hasData, alternates: homeAlternates(live), live,
-    jsonLd: [{ '@context': 'https://schema.org', '@type': 'WebSite', name: env.BRAND_NAME, url: `${env.BASE_URL}${homePath(cc)}`, inLanguage: T.cc.locale }] });
+    jsonLd: [{ '@context': 'https://schema.org', '@type': 'WebSite', name: env.BRAND_NAME, url: `${env.BASE_URL}${homePath(cc)}`, inLanguage: T.cc.locale },
+      { '@context': 'https://schema.org', '@type': 'Organization', name: env.BRAND_NAME, url: env.BASE_URL, logo: `${env.BASE_URL}/icon.svg`, email: env.SUPPORT_EMAIL },
+      { '@context': 'https://schema.org', '@type': 'WebApplication', name: env.BRAND_NAME, url: `${env.BASE_URL}${homePath(cc)}`, applicationCategory: 'ShoppingApplication', operatingSystem: 'Any (web browser)',
+        description: T.home.desc(shops), inLanguage: T.cc.locale,
+        offers: [{ '@type': 'Offer', name: 'Live stock pages', price: '0', priceCurrency: T.cc.currency },
+          { '@type': 'Offer', name: 'Solo alerts, 30 days', price: T.cc.prices.solo, priceCurrency: T.cc.currency },
+          { '@type': 'Offer', name: 'Multi alerts, 30 days', price: T.cc.prices.multi, priceCurrency: T.cc.currency }] }] });
 }
 
 /* ---------- product ---------- */

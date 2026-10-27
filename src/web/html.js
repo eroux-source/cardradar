@@ -45,7 +45,7 @@ ${jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).repl
   </nav></div></header>
 <main class="wrap">${body}</main>
 <footer class="site-foot"><div class="wrap">
-  <nav aria-label="Footer"><a href="${home(cc)}">${e(T.nav.live)}</a>${cc === 'jp' ? '' : `<a href="${b}/restocks">${e(T.nav.restocks)}</a><a href="${b}/retailers">${e(T.nav.retailers)}</a><a href="${b}/cities">${e(T.nav.cities)}</a>`}<a href="/pricing?c=${cc}">${e(T.nav.pricing)}</a><a href="/press">${e(T.nav.press)}</a><a href="/terms">${e(T.nav.terms)}</a><a href="/privacy">${e(T.nav.privacy)}</a><a href="mailto:${e(env.SUPPORT_EMAIL)}">${e(T.nav.contact)}</a></nav>
+  <nav aria-label="Footer"><a href="${home(cc)}">${e(T.nav.live)}</a>${cc === 'jp' ? '' : `<a href="${b}/restocks">${e(T.nav.restocks)}</a><a href="${b}/retailers">${e(T.nav.retailers)}</a><a href="${b}/cities">${e(T.nav.cities)}</a>`}<a href="/pricing?c=${cc}">${e(T.nav.pricing)}</a><a href="/press">${e(T.nav.press)}</a><a href="/best-pokemon-restock-trackers">Compare trackers</a><a href="/how-it-works">How it works</a><a href="/terms">${e(T.nav.terms)}</a><a href="/privacy">${e(T.nav.privacy)}</a><a href="mailto:${e(env.SUPPORT_EMAIL)}">${e(T.nav.contact)}</a></nav>
   <nav class="countries" aria-label="${e(T.nav.countries)}"><span>${e(T.countryPicker)}:</span> ${countries}</nav>
   <p>${e(T.disclaimer(env.BRAND_NAME, shops))}</p>
 </div></footer>
