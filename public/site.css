@@ -289,3 +289,7 @@ body.owner textarea { width: 100%; font: 13px/1.5 ui-monospace, monospace; paddi
 .tcg-num small { margin-right: 2px; }
 .tcg.holo:hover::after { opacity: .55; }
 @media (max-width: 860px) { .hero-card { max-width: 260px; } }
+.brand-word { white-space: nowrap; }
+@media (max-width: 640px) { .brand-word { font-size: 19px; } .brand-mark { width: 24px; height: 34px; } .brand-mark svg { width: 17px; } .site-nav { gap: 10px; } }
+@media (max-width: 480px) { .site-nav a[href="/account"] { display: none; } }
+@media (max-width: 360px) { .site-nav a[href="/us/restocks"] { display: none; } }

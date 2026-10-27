@@ -1,5 +1,5 @@
 {
-  "name": "Card restock alerts",
+  "name": "Card Restock Tracker",
   "short_name": "Restocks",
   "start_url": "/account?utm_source=homescreen",
   "display": "standalone",

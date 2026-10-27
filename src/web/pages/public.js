@@ -57,7 +57,7 @@ export async function home(env) {
   const lede = c.stores
     ? `Right now <strong>${c.stores_in} of ${c.stores} stores</strong> we track have Pokémon cards on the shelf.${last ? ` Latest restock: <strong>${e(last.sku_name)}</strong> at ${e(placeLabel(last))}, ${timeAgo(last.started_at)}.` : ''}${sum.typical ? ` A restock typically lasts <strong>${formatDuration(sum.typical)}</strong>.` : ''}`
     : 'Live Pokémon TCG stock at Target, Best Buy, GameStop, Costco and Pokémon Center, with restock times and instant alerts.';
-  const hero = tcgCard({ stage: 'Live', name: 'Restock Radar', num: c.stores_in ?? 0, numLabel: 'in stock', art: 'art-tiles', cls: 'hero-card',
+  const hero = tcgCard({ stage: 'Live', name: 'Restock Tracker', num: c.stores_in ?? 0, numLabel: 'in stock', art: 'art-tiles', cls: 'hero-card',
     moves: [
       { cost: 1, label: 'Latest restock', value: last ? `${timeAgo(last.started_at)}` : '—' },
       { cost: 2, label: 'Typical stay', value: sum.typical ? formatDuration(sum.typical) : '—' },
