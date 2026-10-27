@@ -13,7 +13,7 @@ import { t } from '../../i18n/index.js';
 import * as d from '../data.js';
 import { page, home as homePath, base, chip, crumbs, answers, hourChart, placeRows, latestTable, cityGrid, retailerGrid, alertCta, placeLabel, shopsText, productGrid } from '../html.js';
 import { factsBlock } from '../facts.js';
-import { stockPage } from './stock.js';
+import { stockPage, homeList } from './stock.js';
 
 const asOf = (T, ts) => (ts ? T.asOf(T.f.when(ts)) : T.waiting);
 
@@ -34,10 +34,7 @@ export async function home(env, cc) {
         { '@type': 'Offer', name: 'Solo alerts, 30 days', price: T.cc.prices.solo, priceCurrency: T.cc.currency },
         { '@type': 'Offer', name: 'Multi alerts, 30 days', price: T.cc.prices.multi, priceCurrency: T.cc.currency }] }];
   // Like InStock Radar: the home IS the live stock of the product people chase most (hardest to find first)
-  if (skus.length) {
-    const k = await d.skuBySlug(env, skus[0].slug);
-    return stockPage(env, T, cc, k, { isHome: true, live, alternates: homeAlternates(live), extraLd: ld });
-  }
+  if (skus.length) return homeList(env, T, cc, { live, alternates: homeAlternates(live), extraLd: ld });
   const body = `<div class="answer"><h1>${e(T.home.h1)}</h1><p class="lede">${T.home.soon(T.cc.name)}</p></div>${await factsBlock(env, T)}`;
   return page(env, T, { title: T.home.title(env.BRAND_NAME), description: T.home.desc(shops), path: homePath(cc), body, noindex: true, alternates: homeAlternates(live), live, jsonLd: ld });
 }

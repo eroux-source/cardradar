@@ -7,7 +7,7 @@
 import { escapeHtml as e } from '../../lib/util.js';
 import { sourceName, sourcesOf } from '../../sources/index.js';
 import * as d from '../data.js';
-import { page, home as homePath, base, crumbs, answers, hourChart, latestTable, shopsText, productGrid, placeLabel } from '../html.js';
+import { page, home as homePath, base, crumbs, answers, hourChart, latestTable, shopsText, productGrid, placeLabel, alertCta } from '../html.js';
 import { factsBlock } from '../facts.js';
 
 const maps = (s) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([sourceName(s.source), s.address, s.city, s.state, s.zip].filter(Boolean).join(' '))}`;
@@ -116,4 +116,45 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
   const title = isHome ? T.home.title(env.BRAND_NAME) : T.sku.title(k.name, metro?.name);
   const description = isHome ? T.home.desc(shops) : T.sku.desc(k.name, inNow.filter((r) => !r.online).length, rows.filter((r) => !r.online).length, metro?.name ?? T.cc.name, inNow.some((r) => r.online) ? T.f.list([...new Set(inNow.filter((r) => r.online).map((r) => sourceName(r.source)))]) : null);
   return page(env, T, { title, description, path, body, live, alternates, jsonLd: [c.ld, faq.ld, productLd, ...extraLd], noindex: !isHome && !rows.length && !rs.length });
+}
+
+/**
+ * Country home, product-first: "what is in stock right now?"
+ *   H1 + one sentence (N products in stock across M shops) + search
+ *   category chips (ETB, booster boxes, bundles, tins…) filter the grid in the page
+ *   grid of products IN STOCK (photo, name, "in stock at N shops", lowest price) → product page
+ *   the sold-out products folded below, each with an alert link
+ */
+export async function homeList(env, T, cc, { live = null, alternates = null, extraLd = [] } = {}) {
+  const H = T.hl; const S = T.sv;
+  const skus = await d.allSkus(env, cc);
+  const shopsN = new Set(sourcesOf(cc).map((s) => s.id)).size;
+  const inNow = skus.filter((k) => k.places_in > 0).sort((a, b) => b.places_in - a.places_in || (b.last_restock ?? 0) - (a.last_restock ?? 0));
+  const out = skus.filter((k) => !(k.places_in > 0));
+  const types = [...new Set(skus.map((k) => k.type ?? 'other'))].filter((x) => H.types[x]);
+  const order = Object.keys(H.types);
+  types.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  const card = (k, isIn) => `<li data-type="${e(k.type ?? 'other')}"><a class="product${isIn ? ' is-in' : ''}" href="${base(cc)}/${e(k.slug)}">
+      <span class="ph">${k.image ? `<img src="${e(k.image)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '<span class="ph-empty" aria-hidden="true"></span>'}</span>
+      <span class="pname">${e(k.name)}</span>
+      <span class="pstatus">${isIn ? `<span class="chip in">${e(H.at(k.places_in))}</span>` : `<span class="chip out">${e(T.chip.out)}</span>`}</span>
+      <span class="pmeta">${isIn && k.price_in ? `<strong>${e(H.from(T.f.money(k.price_in)))}</strong>` : k.min_price ? e(T.f.money(k.min_price)) : ''}${!isIn && k.last_restock ? ` · ${e(T.lastRestockAgo(T.f.ago(k.last_restock)))}` : ''}</span>
+      <span class="pgo">${e(isIn ? H.see : S.alertBtn)} →</span></a></li>`;
+  const body = `<section class="hl-head">
+    <h1>${e(H.h1(T.cc.name))}</h1>
+    <p class="lede">${e(inNow.length ? H.lede(inNow.length, shopsN) : H.ledeNone(shopsN))}</p>
+    <form class="find" action="${base(cc)}/search" method="get" role="search">
+      <input name="q" list="sku-list" autocomplete="off" placeholder="${e(S.findPh)}" aria-label="${e(S.findPh)}" data-find>
+      <datalist id="sku-list">${skus.map((x) => `<option value="${e(x.name)}" data-href="${base(cc)}/${e(x.slug)}"></option>`).join('')}</datalist>
+      <button class="btn small" type="submit">${e(S.findBtn)}</button></form>
+    ${types.length > 1 ? `<div class="pills" data-filter>${[`<button type="button" class="pill on" data-t="">${e(H.all)}</button>`, ...types.map((x) => `<button type="button" class="pill" data-t="${x}">${e(H.types[x])}</button>`)].join('')}</div>` : ''}
+  </section>
+  <section aria-labelledby="in-h"><h2 id="in-h"><span class="live"><span class="dot" aria-hidden="true"></span></span> ${e(H.inH)} <span class="count">${inNow.length}</span></h2>
+    ${inNow.length ? `<ul class="products" data-grid>${inNow.map((k) => card(k, true)).join('')}</ul><p class="empty" data-none hidden>${e(H.none)}</p>` : `<p class="empty">${e(H.ledeNone(shopsN))}</p>`}</section>
+  ${alertCta(env, T)}
+  ${out.length ? `<section aria-labelledby="out-h"><h2 id="out-h">${e(H.outH)} <span class="count">${out.length}</span></h2><p class="sub">${e(H.outSub)}</p>
+    <details class="out-list"><summary>${e(H.showOut(out.length))}</summary><ul class="products small" data-grid>${out.map((k) => card(k, false)).join('')}</ul></details></section>` : ''}
+  ${await factsBlock(env, T)}`;
+  const ld = { '@context': 'https://schema.org', '@type': 'ItemList', name: H.inH, itemListElement: inNow.slice(0, 50).map((k, i) => ({ '@type': 'ListItem', position: i + 1, name: k.name, url: `${env.BASE_URL}${base(cc)}/${k.slug}` })) };
+  return page(env, T, { title: T.home.title(env.BRAND_NAME), description: T.home.desc(shopsText(T, cc)), path: homePath(cc), body, live, alternates, jsonLd: [ld, ...extraLd] });
 }

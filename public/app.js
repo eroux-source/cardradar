@@ -40,6 +40,14 @@
   }));
   $$('select[data-nav]').forEach((sel) => sel.addEventListener('change', () => { location.href = sel.value; }));
 
+  /* ---------- home: category chips filter the product grids ---------- */
+  $$('[data-filter]').forEach((bar) => bar.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-t]'); if (!b) return;
+    $$('[data-t]', bar).forEach((x) => x.classList.toggle('on', x === b));
+    const t = b.dataset.t;
+    $$('[data-grid]').forEach((g) => { let shown = 0; $$('li[data-type]', g).forEach((li) => { const ok = !t || li.dataset.type === t; li.hidden = !ok; if (ok) shown++; }); const none = g.parentElement.querySelector('[data-none]'); if (none) none.hidden = shown > 0; });
+  }));
+
   /* ---------- phone notifications ---------- */
   const b64 = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (s.length % 4)) % 4)), (c) => c.charCodeAt(0));
   async function enablePush(vapid) {

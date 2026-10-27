@@ -19,6 +19,15 @@ export default {
   card: { live: 'Live', tracker: 'Restock-Tracker', inStock: 'verfügbar', stores: 'Filialen', online: 'Online', soldOut: 'Ausverkauft', lastRestock: 'Letzter Restock', typicalStay: 'Übliche Dauer', storesTracked: 'Filialen', retailersN: (n) => `${n} Händler`, productsN: (n) => `${n} Produkte`, storesFrac: (a, b) => `${a}/${b} Filialen` },
   rarity: { rare: 'Selten: gerade in keiner Filiale', uncommon: 'Ungewöhnlich: in wenigen Filialen', common: 'Häufig: in vielen Filialen' },
   hud: { title: 'Live-Radar nach Händler', allOut: 'alles ausverkauft', warming: 'startet' },
+  hl: {
+    h1: (country) => `Pokémon-Karten jetzt auf Lager in ${country}`,
+    lede: (n, shops) => `${n} versiegelte Produkte sind gerade lieferbar bei ${shops} Shops, die wir alle paar Minuten prüfen. Tippe auf ein Produkt, um zu sehen, welche Shops es haben.`,
+    ledeNone: (shops) => `Gerade ist bei den ${shops} geprüften Shops nichts lieferbar. Richte einen Alarm ein: wir melden uns, sobald etwas da ist.`,
+    all: 'Alle', inH: 'Jetzt lieferbar', outH: 'Gerade ausverkauft', outSub: 'Richte für jedes davon einen Alarm ein: du erfährst es, sobald es zurück ist.',
+    at: (n) => `lieferbar bei ${n} Shop${n > 1 ? 's' : ''}`, from: (p) => `ab ${p}`, see: 'Wo?', none: 'Aus dieser Kategorie ist gerade nichts lieferbar.',
+    types: { etb: 'Top-Trainer-Boxen', booster_box: 'Displays', booster_bundle: 'Booster-Bundles', tin: 'Tins', upc: 'Premium-Kollektionen', collection: 'Kollektionen', blister: 'Blister', deck: 'Decks', booster: 'Booster', other: 'Sonstiges' },
+    showOut: (n) => `Die ${n} ausverkauften Produkte zeigen`,
+  },
   sv: {
     findPh: 'Produkt suchen: Top-Trainer-Box, Display…', findBtn: 'Suchen', noMatch: (q) => `Noch kein Produkt passt zu „${q}“. Das verfolgen wir:`, matches: (q) => `Produkte zu „${q}“`,
     homeH1: (country) => `Pokémon-Karten live auf Lager in jedem Laden in ${country}`,

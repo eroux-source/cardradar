@@ -19,6 +19,15 @@ export default {
   card: { live: 'Directo', tracker: 'Rastreador', inStock: 'en stock', stores: 'tiendas', online: 'Online', soldOut: 'Agotado', lastRestock: 'Última reposición', typicalStay: 'Duración habitual', storesTracked: 'Tiendas', retailersN: (n) => `${n} cadenas`, productsN: (n) => `${n} productos`, storesFrac: (a, b) => `${a}/${b} tiendas` },
   rarity: { rare: 'Rara: en ninguna tienda ahora', uncommon: 'Infrecuente: en pocas tiendas', common: 'Común: en muchas tiendas' },
   hud: { title: 'Radar en directo por tienda', allOut: 'todo agotado', warming: 'arrancando' },
+  hl: {
+    h1: (country) => `Cartas Pokémon en stock ahora en ${country}`,
+    lede: (n, shops) => `${n} productos sellados están en stock ahora en ${shops} tiendas que revisamos cada pocos minutos. Toca un producto para ver qué tiendas lo tienen.`,
+    ledeNone: (shops) => `Ahora no hay nada en stock en las ${shops} tiendas que revisamos. Crea un aviso.`,
+    all: 'Todo', inH: 'En stock ahora', outH: 'Agotado ahora', outSub: 'Crea un aviso: te enteras en cuanto vuelva.',
+    at: (n) => `en stock en ${n} tienda${n > 1 ? 's' : ''}`, from: (p) => `desde ${p}`, see: '¿Dónde?', none: 'Nada de esta categoría está en stock ahora.',
+    types: { etb: 'Cajas Entrenador Élite', booster_box: 'Cajas de sobres', booster_bundle: 'Bundles de sobres', tin: 'Latas', upc: 'Colecciones premium', collection: 'Colecciones', blister: 'Blísteres', deck: 'Mazos', booster: 'Sobres', other: 'Otros' },
+    showOut: (n) => `Ver los ${n} productos agotados`,
+  },
   sv: {
     findPh: 'Busca un producto: caja Entrenador Élite, caja de sobres…', findBtn: 'Buscar', noMatch: (q) => `Ningún producto coincide con “${q}” por ahora. Esto es lo que seguimos:`, matches: (q) => `Productos para “${q}”`,
     homeH1: (country) => `Stock en directo de cartas Pokémon en cada tienda de ${country}`,

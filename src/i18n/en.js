@@ -34,6 +34,15 @@ export default {
   rarity: { rare: 'Rare: in no store right now', uncommon: 'Uncommon: in few stores', common: 'Common: in many stores' },
   hud: { title: 'Live radar by retailer', allOut: 'all sold out', warming: 'warming up' },
   // home intro: what the site is, for someone arriving for the first time
+  hl: {
+    h1: (country) => `Pokémon cards in stock now in ${country === 'United States' ? 'the US' : country === 'United Kingdom' ? 'the UK' : country}`,
+    lede: (n, shops) => `${n} sealed products are in stock right now across ${shops} shops we check every few minutes. Tap a product to see which shops have it and buy it there.`,
+    ledeNone: (shops) => `Nothing is in stock right now at the ${shops} shops we check every few minutes. Set an alert and we tell you the moment something lands.`,
+    all: 'All', inH: 'In stock now', outH: 'Sold out right now', outSub: 'Set an alert on any of these: you hear about it the second it is back.',
+    at: (n) => `in stock at ${n} shop${n > 1 ? 's' : ''}`, from: (p) => `from ${p}`, see: 'See where', none: 'Nothing in this category is in stock right now.',
+    types: { etb: 'Elite Trainer Boxes', booster_box: 'Booster boxes', booster_bundle: 'Booster bundles', tin: 'Tins', upc: 'Premium collections', collection: 'Collections', blister: 'Blisters', deck: 'Decks', booster: 'Booster packs', other: 'Other' },
+    showOut: (n) => `Show the ${n} sold-out products`,
+  },
   sv: {
     findPh: 'Search a product: Prismatic Evolutions ETB, booster box…', findBtn: 'Find', noMatch: (q) => `No product matches “${q}” yet. Here is everything we track:`, matches: (q) => `Products matching “${q}”`,
     homeH1: (country) => `Live Pokémon card stock at every store in ${country === 'United States' ? 'the US' : country === 'United Kingdom' ? 'the UK' : country}`,

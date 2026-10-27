@@ -19,6 +19,15 @@ export default {
   card: { live: 'Live', tracker: 'Restock-tracker', inStock: 'op voorraad', stores: 'winkels', online: 'Online', soldOut: 'Uitverkocht', lastRestock: 'Laatste restock', typicalStay: 'Gebruikelijke duur', storesTracked: 'Winkels', retailersN: (n) => `${n} winkels`, productsN: (n) => `${n} producten`, storesFrac: (a, b) => `${a}/${b} winkels` },
   rarity: { rare: 'Zeldzaam: nu in geen enkele winkel', uncommon: 'Ongewoon: in weinig winkels', common: 'Gewoon: in veel winkels' },
   hud: { title: 'Live radar per winkel', allOut: 'alles uitverkocht', warming: 'start op' },
+  hl: {
+    h1: (country) => `Pokémon-kaarten nu op voorraad in ${country}`,
+    lede: (n, shops) => `${n} verzegelde producten zijn nu op voorraad bij ${shops} winkels die we om de paar minuten controleren. Tik op een product om te zien welke winkels het hebben.`,
+    ledeNone: (shops) => `Nu is niets op voorraad bij de ${shops} winkels die we controleren. Stel een melding in.`,
+    all: 'Alles', inH: 'Nu op voorraad', outH: 'Nu uitverkocht', outSub: 'Stel een melding in: je hoort het zodra het terug is.',
+    at: (n) => `op voorraad bij ${n} winkel${n > 1 ? 's' : ''}`, from: (p) => `vanaf ${p}`, see: 'Waar?', none: 'Niets uit deze categorie is nu op voorraad.',
+    types: { etb: 'Elite Trainer Boxes', booster_box: 'Booster boxes', booster_bundle: 'Booster bundles', tin: 'Tins', upc: 'Premium collecties', collection: 'Collecties', blister: 'Blisters', deck: 'Decks', booster: 'Boosters', other: 'Overig' },
+    showOut: (n) => `Toon de ${n} uitverkochte producten`,
+  },
   sv: {
     findPh: 'Zoek een product: Elite Trainer Box, booster box…', findBtn: 'Zoeken', noMatch: (q) => `Nog geen product voor “${q}”. Dit volgen we:`, matches: (q) => `Producten voor “${q}”`,
     homeH1: (country) => `Live voorraad Pokémon-kaarten in elke winkel in ${country}`,

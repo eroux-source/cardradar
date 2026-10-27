@@ -112,6 +112,21 @@ p { margin: 0 0 .8em; }
 @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .side { position: static; order: 2; } .main { order: 1; } }
 @media (max-width: 480px) { .controls { top: 58px; } .places { grid-template-columns: 1fr; } }
 
+/* ---------- home: products in stock ---------- */
+.hl-head { padding-top: 28px; }
+.hl-head h1 { font-size: clamp(32px, 5vw, 52px); max-width: 22ch; }
+.hl-head .find { margin-top: 18px; }
+.hl-head .pills { margin-top: 6px; }
+button.pill { font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; padding: 7px 14px; }
+h2 .count { font: 700 15px/1 var(--body); color: var(--soft); background: var(--tint); border-radius: 999px; padding: 4px 10px; vertical-align: middle; margin-left: 6px; }
+h2 .live { vertical-align: middle; margin-right: 4px; }
+.product.is-in { border-color: #8fd6ab; }
+.pgo { padding: 0 14px 14px; font-size: 14px; font-weight: 700; color: var(--navy); }
+.products.small { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+.products.small .ph { padding: 10px; }
+.out-list > summary { margin: 6px 0 14px; }
+li[hidden] { display: none; }
+
 /* ---------- header ---------- */
 .site-head { border-bottom: 1px solid var(--rule); background: #fff; position: sticky; top: 0; z-index: 10; }
 .site-head .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; }

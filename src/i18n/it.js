@@ -19,6 +19,15 @@ export default {
   card: { live: 'Live', tracker: 'Tracker restock', inStock: 'disponibili', stores: 'negozi', online: 'Online', soldOut: 'Esaurito', lastRestock: 'Ultimo restock', typicalStay: 'Durata abituale', storesTracked: 'Negozi', retailersN: (n) => `${n} catene`, productsN: (n) => `${n} prodotti`, storesFrac: (a, b) => `${a}/${b} negozi` },
   rarity: { rare: 'Rara: in nessun negozio ora', uncommon: 'Non comune: in pochi negozi', common: 'Comune: in molti negozi' },
   hud: { title: 'Radar live per negozio', allOut: 'tutto esaurito', warming: 'avvio' },
+  hl: {
+    h1: (country) => `Carte Pokémon disponibili ora in ${country}`,
+    lede: (n, shops) => `${n} prodotti sigillati sono disponibili ora in ${shops} negozi che controlliamo ogni pochi minuti. Tocca un prodotto per vedere quali negozi ce l'hanno.`,
+    ledeNone: (shops) => `Ora non c'è niente disponibile nei ${shops} negozi che controlliamo. Crea un avviso.`,
+    all: 'Tutti', inH: 'Disponibili ora', outH: 'Esauriti ora', outSub: 'Crea un avviso: lo saprai appena torna.',
+    at: (n) => `disponibile in ${n} negoz${n > 1 ? 'i' : 'io'}`, from: (p) => `da ${p}`, see: 'Dove?', none: 'Niente di questa categoria è disponibile ora.',
+    types: { etb: 'Set Allenatore Fuoriclasse', booster_box: 'Box di buste', booster_bundle: 'Bundle di buste', tin: 'Tin', upc: 'Collezioni premium', collection: 'Collezioni', blister: 'Blister', deck: 'Mazzi', booster: 'Buste', other: 'Altro' },
+    showOut: (n) => `Mostra i ${n} prodotti esauriti`,
+  },
   sv: {
     findPh: 'Cerca un prodotto: Set Allenatore Fuoriclasse, box…', findBtn: 'Cerca', noMatch: (q) => `Nessun prodotto per “${q}” per ora. Ecco cosa seguiamo:`, matches: (q) => `Prodotti per “${q}”`,
     homeH1: (country) => `Disponibilità live delle carte Pokémon in ogni negozio in ${country}`,

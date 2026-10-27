@@ -74,7 +74,10 @@ export const allSkus = (env, cc) => all(env, `
     (SELECT COUNT(*) FROM stock x JOIN listings l ON l.id = x.listing_id JOIN stores s ON s.id = x.store_id WHERE l.sku_id = k.id AND s.online = 0 AND s.country = ?1 AND x.in_stock = 1) AS stores_in,
     (SELECT GROUP_CONCAT(DISTINCT s.source) FROM stock x JOIN listings l ON l.id = x.listing_id JOIN stores s ON s.id = x.store_id WHERE l.sku_id = k.id AND s.online = 1 AND s.country = ?1 AND x.in_stock = 1) AS online_in,
     (SELECT MAX(r.started_at) FROM restocks r JOIN stores s ON s.id = r.store_id WHERE r.sku_id = k.id AND s.country = ?1) AS last_restock,
-    (SELECT MIN(price) FROM listings l WHERE l.sku_id = k.id AND l.price > 0 AND l.country = ?1) AS min_price
+    (SELECT MIN(price) FROM listings l WHERE l.sku_id = k.id AND l.price > 0 AND l.country = ?1) AS min_price,
+    (SELECT COUNT(*) FROM stock x JOIN listings l ON l.id = x.listing_id JOIN stores s ON s.id = x.store_id WHERE l.sku_id = k.id AND s.country = ?1) AS places,
+    (SELECT COUNT(*) FROM stock x JOIN listings l ON l.id = x.listing_id JOIN stores s ON s.id = x.store_id WHERE l.sku_id = k.id AND s.country = ?1 AND x.in_stock = 1) AS places_in,
+    (SELECT MIN(l.price) FROM stock x JOIN listings l ON l.id = x.listing_id JOIN stores s ON s.id = x.store_id WHERE l.sku_id = k.id AND s.country = ?1 AND x.in_stock = 1 AND l.price > 0) AS price_in
   FROM skus k LEFT JOIN sets st ON st.id = k.set_id
   WHERE k.active = 1 AND EXISTS (SELECT 1 FROM listings l WHERE l.sku_id = k.id AND l.country = ?1 AND l.active = 1)
   ORDER BY (stores_in * 1.0 / MAX(stores, 1)) + (online_in IS NOT NULL) ASC, last_restock DESC NULLS LAST, k.name`, cc);

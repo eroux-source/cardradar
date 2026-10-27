@@ -31,7 +31,7 @@ export async function upsertListing(env, source, item, metroSlugs = (COUNTRIES[c
     c.skuSlug || slugify(item.title), c.name, setId, c.type, item.price ?? null, t);
   const sku = await one(env, 'SELECT id FROM skus WHERE slug = ?', c.skuSlug || slugify(item.title));
   await run(env, `INSERT INTO listings (sku_id, source, source_sku, title, url, price, active, last_seen, country, image) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
-    ON CONFLICT(source, source_sku) DO UPDATE SET title = excluded.title, url = COALESCE(excluded.url, listings.url),
+    ON CONFLICT(source, source_sku) DO UPDATE SET sku_id = excluded.sku_id, title = excluded.title, url = COALESCE(excluded.url, listings.url),
       price = COALESCE(excluded.price, listings.price), image = COALESCE(excluded.image, listings.image), active = 1, last_seen = excluded.last_seen`,
     sku.id, source, String(item.sourceSku), item.title, item.url ?? null, item.price ?? null, t, countryOf(source), item.image ?? null);
   const listing = await one(env, 'SELECT id FROM listings WHERE source = ? AND source_sku = ?', source, String(item.sourceSku));
