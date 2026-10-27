@@ -12,7 +12,12 @@ export class Relay extends Container {
     const c = ctx.container;
     if (c && typeof c.start === 'function') {
       const start = c.start.bind(c);
-      c.start = (cfg = {}) => start({ ...cfg, ...(c.images?.relay ? { image: c.images.relay } : {}) });
+      c.start = (cfg = {}) => {
+        const imgs = c.images ?? {};
+        const image = imgs.relay ?? Object.values(imgs)[0];
+        if (!image) throw new Error(`no image (images: ${JSON.stringify(Object.keys(imgs))}, type ${typeof c.images})`);
+        return start({ ...cfg, image });
+      };
     }
   }
 }
