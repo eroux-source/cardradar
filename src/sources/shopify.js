@@ -21,7 +21,7 @@ export function shopify({ id, name, domain, country, lang = 'en' }) {
   return {
     id, name, kind: 'online', country, platform: 'shopify', domain,
     queries: Q[lang] ?? Q.en,
-    everyMinutes: 2, // one search every 2 min → each query re-read about every 12 min
+    everyMinutes: 3, // one search every 3 min → each query re-read about every 18 min (proxy data is paid per GB)
     titleNeedsPokemon: lang === 'ja' ? false : undefined,
 
     async snapshot(env, q) {
