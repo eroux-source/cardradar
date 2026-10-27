@@ -1,6 +1,17 @@
 // Independent card shops on Shopify, per country (checked 27/10/2026: product URLs /products/<handle>).
 // id must end with _<cc> for non-US shops (proxy routing and country detection rely on it).
 export const SHOPS = [
+  // United States (checked 27/10/2026)
+  { id: 'shop_flipsidegaming_us', name: 'Flipside Gaming', domain: 'flipsidegaming.com', country: 'us', lang: 'en' },
+  { id: 'shop_sweetsandgeeks_us', name: 'Sweets & Geeks', domain: 'www.sweetsandgeeks.com', country: 'us', lang: 'en' },
+  { id: 'shop_cardcaverntradingcards_us', name: 'Card Cavern', domain: 'www.cardcaverntradingcards.com', country: 'us', lang: 'en' },
+  { id: 'shop_pokeboxusa_us', name: 'PokeBox USA', domain: 'www.pokeboxusa.com', country: 'us', lang: 'en' },
+  { id: 'shop_giantsportscards_us', name: 'Giant Sports Cards', domain: 'giantsportscards.com', country: 'us', lang: 'en' },
+  { id: 'shop_pokemonplug_us', name: 'Pokemon Plug', domain: 'pokemonplug.com', country: 'us', lang: 'en' },
+  { id: 'shop_thehobbybin_us', name: 'The Hobby Bin', domain: 'thehobbybin.com', country: 'us', lang: 'en' },
+  { id: 'shop_941sportscards_us', name: '941 Sports Cards', domain: '941sportscards.com', country: 'us', lang: 'en' },
+  { id: 'shop_thesportsroompdx_us', name: 'The Sports Room PDX', domain: 'thesportsroompdx.com', country: 'us', lang: 'en' },
+  { id: 'shop_theawesomecardshop_us', name: 'The Awesome Card Shop', domain: 'theawesomecardshop.com', country: 'us', lang: 'en' },
   { id: 'shop_zatu_uk', name: 'Zatu Games', domain: 'zatu.com', country: 'uk', lang: 'en' },
   { id: 'shop_totalcards_uk', name: 'Total Cards', domain: 'totalcards.net', country: 'uk', lang: 'en' },
   { id: 'shop_titancards_uk', name: 'Titan Cards', domain: 'titancards.co.uk', country: 'uk', lang: 'en' },
