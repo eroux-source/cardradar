@@ -12,7 +12,7 @@ const call = (env, endpoint, params) => sourceJson(env, 'target',
   { headers: HEADERS });
 
 export default {
-  id: 'target', name: 'Target', kind: 'stores',
+  id: 'target', name: 'Target', kind: 'stores', country: 'us',
   queries: ['pokemon trading card game', 'pokemon elite trainer box', 'pokemon booster bundle', 'pokemon booster box', 'pokemon tin', 'pokemon collection'],
 
   async search(env, keyword) {
@@ -20,6 +20,7 @@ export default {
     return (json?.data?.search?.products ?? []).map((p) => ({
       sourceSku: String(p.tcin), title: decodeEntities(p.item?.product_description?.title ?? ''),
       price: p.price?.current_retail ?? null, url: p.item?.enrichment?.buy_url ?? `https://www.target.com/p/-/A-${p.tcin}`,
+      image: JSON.stringify(p.item?.enrichment ?? {}).match(/https:\/\/target\.scene7\.com\/is\/image\/Target\/[A-Za-z0-9_-]+/)?.[0] ?? null,
     }));
   },
 

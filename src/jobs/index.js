@@ -3,6 +3,7 @@ import { all, one, run, now, report } from '../lib/db.js';
 import { planMinute } from '../crawler/plan.js';
 import { flushOutbox, queueEmail } from '../email/outbox.js';
 import { heal } from '../alerts/pipeline.js';
+import { announce } from '../crawler/lotteries.js';
 
 const HOUR = 3600e3;
 
@@ -10,6 +11,7 @@ export async function everyMinute(env) {
   const out = {};
   out.plan = await planMinute(env).catch((e) => ({ error: e.message }));
   out.emails = await flushOutbox(env).catch((e) => ({ error: e.message }));
+  out.lotteries = await announce(env).then(() => 'ok').catch((e) => ({ error: e.message })); // Japan: opening / closing-soon notices
   // heartbeat + visible errors for the owner page
   await run(env, "INSERT INTO settings (key, value, updated_at) VALUES ('cron.last', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at", JSON.stringify(out).slice(0, 500), now());
   // stuck stock rows: a pending sold-out never confirmed (source went quiet) → drop the pending mark after 15 min

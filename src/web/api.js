@@ -4,7 +4,8 @@ import { currentUser, startSession, endSession, userByEmail, EMAIL_RE } from '..
 import { requestCode, verifyCode } from '../auth/codes.js';
 import { activePass, PLANS, stopRenewal } from '../billing/pass.js';
 import { checkoutUrl, cancelRenewal } from '../billing/provider.js';
-import { metroBySlug } from '../data/metros.js';
+import { COUNTRIES, metroInCountry } from '../data/countries.js';
+import { jpSetBySlug } from '../data/sets_jp.js';
 import { sendTelegram } from '../alerts/channels/telegram.js';
 import { sendPush } from '../alerts/channels/push.js';
 import { alertText } from '../alerts/deliver.js';
@@ -37,8 +38,9 @@ export async function api(env, req, url, ctx) {
     const b = await body(req);
     const email = String(b.email ?? '').trim().toLowerCase();
     if (!EMAIL_RE.test(email)) return bad('Enter a valid email address.');
-    const sku = b.sku && !String(b.sku).startsWith('set:') ? await skuBySlug(env, b.sku) : null;
-    await lead(env, email, { step: 'email', skuId: sku?.id, metro: metroBySlug[b.metro] ? b.metro : null, source: b.via ?? null });
+    const cc = COUNTRIES[b.country] ? b.country : 'us';
+    const sku = b.sku && !/^(set|jpset):/.test(String(b.sku)) ? await skuBySlug(env, b.sku) : null;
+    await lead(env, email, { step: 'email', skuId: sku?.id, metro: metroInCountry(cc, b.metro)?.id ?? null, source: b.via ?? null });
     if (user?.email === email) return json({ ok: true, state: 'signed_in' });
     const existing = await userByEmail(env, email);
     if (existing) {
@@ -64,27 +66,35 @@ export async function api(env, req, url, ctx) {
   if (p === '/api/funnel/alert' && m === 'POST') {
     if (!user) return bad('Your session expired. Enter your email again.', 401);
     const b = await body(req);
+    const cc = COUNTRIES[b.country] ? b.country : 'us';
     const plan = PLANS[b.plan] ? b.plan : 'solo';
-    let skuId = null; let setId = null;
-    if (String(b.sku).startsWith('set:')) setId = Number(String(b.sku).slice(4)) || null;
-    else skuId = (await skuBySlug(env, b.sku))?.id ?? null;
-    if (!skuId && !setId) return bad('Pick a product.');
-    const kind = b.kind === 'online' ? 'online' : 'stores';
-    if (kind === 'stores' && !metroBySlug[b.metro]) return bad('Pick your city.');
+    let skuId = null; let setId = null; let setSlug = null;
+    let kind = b.kind === 'online' ? 'online' : b.kind === 'lottery' ? 'lottery' : 'stores';
+    if (kind === 'lottery') {
+      const slug = String(b.sku ?? '').replace(/^jpset:/, '');
+      setSlug = slug && slug !== '*' && jpSetBySlug(slug) ? slug : null;
+    } else {
+      if (String(b.sku).startsWith('set:')) setId = Number(String(b.sku).slice(4)) || null;
+      else skuId = (await skuBySlug(env, b.sku))?.id ?? null;
+      if (!skuId && !setId) return bad('Pick a product.');
+    }
+    const metro = kind === 'stores' ? metroInCountry(cc, b.metro) : null;
+    if (kind === 'stores' && !metro) return bad('Pick your city.');
     const pass = await activePass(env, user.id);
     const effPlan = pass?.plan ?? plan;
-    if (setId && effPlan !== 'multi') return bad('"Anything from a set" needs the Multi plan.');
+    if ((setId || (kind === 'lottery' && !setSlug)) && effPlan !== 'multi') return bad('"Anything from a set" needs the Multi plan.');
     const count = (await one(env, "SELECT COUNT(*) n FROM alerts WHERE user_id = ? AND status != 'deleted'", user.id)).n;
     if (pass && count >= PLANS[pass.plan].maxAlerts) return bad(`Your ${PLANS[pass.plan].name} plan covers ${PLANS[pass.plan].maxAlerts} alert${PLANS[pass.plan].maxAlerts > 1 ? 's' : ''}. Delete one or switch to Multi.`);
-    const channels = ['email', ...(b.push ? ['push'] : []), ...(b.telegram ? ['telegram'] : [])];
+    const channels = ['email', ...(b.push ? ['push'] : []), ...(b.telegram ? ['telegram'] : []), ...(b.line ? ['line'] : [])];
     const t = now();
     // Solo without a pass: keep a single pending alert (replace the previous draft)
     if (!pass) await run(env, "UPDATE alerts SET status = 'deleted', delete_reason = 'replaced_draft', updated_at = ? WHERE user_id = ? AND status = 'active'", t, user.id);
-    await run(env, 'INSERT INTO alerts (user_id, kind, sku_id, set_id, metro, store_ids, channels, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      user.id, kind, skuId, setId, kind === 'stores' ? b.metro : null, '[]', JSON.stringify(channels), 'active', t, t);
-    await lead(env, user.email, { step: pass ? 'paid' : 'checkout', skuId, metro: kind === 'stores' ? b.metro : null });
-    await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', t, b.visit ?? null, 'checkout_start', JSON.stringify({ plan, kind }));
-    return json({ ok: true, next: pass ? '/account' : checkoutUrl(env, { plan, email: user.email }) });
+    await run(env, 'INSERT INTO alerts (user_id, kind, sku_id, set_id, set_slug, metro, store_ids, channels, status, created_at, updated_at, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      user.id, kind, skuId, setId, setSlug, metro?.id ?? null, '[]', JSON.stringify(channels), 'active', t, t, cc);
+    await run(env, 'UPDATE users SET country = COALESCE(country, ?) WHERE id = ?', cc, user.id);
+    await lead(env, user.email, { step: pass ? 'paid' : 'checkout', skuId, metro: metro?.id ?? null });
+    await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', t, b.visit ?? null, 'checkout_start', JSON.stringify({ plan, kind, cc }));
+    return json({ ok: true, next: pass ? '/account' : checkoutUrl(env, { plan, email: user.email, currency: COUNTRIES[cc].currency }) });
   }
 
   // --- account ---
@@ -95,6 +105,8 @@ export async function api(env, req, url, ctx) {
       const r = await one(env, `SELECT r.*, k.name AS sku_name, k.slug AS sku_slug, l.url, s.name AS store_name, s.city, s.online FROM alert_sent x
         JOIN alerts a ON a.id = x.alert_id JOIN restocks r ON r.id = x.restock_id JOIN skus k ON k.id = r.sku_id JOIN listings l ON l.id = r.listing_id JOIN stores s ON s.id = r.store_id
         WHERE a.user_id = ? ORDER BY x.claimed_at DESC LIMIT 1`, user.id);
+      const lot = await one(env, `SELECT l.*, x.moment, x.at FROM lottery_sent x JOIN alerts a ON a.id = x.alert_id JOIN lotteries l ON l.id = x.lottery_id WHERE a.user_id = ? ORDER BY x.at DESC LIMIT 1`, user.id);
+      if (lot && (!r || lot.at > (r.started_at ?? 0))) return json({ title: `${lot.moment === 'open' ? '【受付開始】' : '【締切間近】'}${lot.title}`, body: lot.title, url: lot.url ?? '/jp' });
       if (!r) return json({ title: env.BRAND_NAME, body: 'Notifications are on. You will hear about the next restock here.', url: '/account' });
       const msg = alertText(env, r);
       return json({ title: msg.title, body: msg.line, url: msg.url ?? msg.page });
@@ -105,6 +117,11 @@ export async function api(env, req, url, ctx) {
       await run(env, 'UPDATE users SET push_endpoint = ?, push_keys = ? WHERE id = ?', sub.endpoint, JSON.stringify(sub.keys ?? {}), user.id);
       await run(env, `UPDATE alerts SET channels = json_insert(channels, '$[#]', 'push') WHERE user_id = ? AND status != 'deleted' AND NOT EXISTS (SELECT 1 FROM json_each(alerts.channels) WHERE value = 'push')`, user.id);
       return json({ ok: true });
+    }
+    if (p === '/api/me/line' && m === 'POST') {
+      const code = [...crypto.getRandomValues(new Uint8Array(6))].map((x) => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[x % 32]).join('');
+      await run(env, 'UPDATE users SET line_link_token = ? WHERE id = ?', code, user.id);
+      return json({ ok: true, code, url: `https://line.me/R/ti/p/${env.LINE_BOT_ID ?? ''}` });
     }
     if (p === '/api/me/telegram' && m === 'POST') {
       const token = crypto.randomUUID().replace(/-/g, '');
@@ -139,8 +156,9 @@ export async function api(env, req, url, ctx) {
   if (p === '/api/stock') {
     const k = await skuBySlug(env, url.searchParams.get('sku') ?? '');
     if (!k) return bad('Unknown product.', 404);
-    const metro = metroBySlug[url.searchParams.get('metro')] ? url.searchParams.get('metro') : null;
-    const rows = await availability(env, k.id, metro);
+    const cc = COUNTRIES[url.searchParams.get('c')] ? url.searchParams.get('c') : 'us';
+    const metro = metroInCountry(cc, url.searchParams.get('metro'))?.id ?? null;
+    const rows = await availability(env, cc, k.id, metro);
     return json({ product: k.name, checked: rows.map((r) => ({ retailer: r.source, store: r.online ? null : r.name, city: r.city, state: r.state, in_stock: !!r.in_stock, qty: r.qty, checked_at: r.seen_at })) });
   }
 

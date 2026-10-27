@@ -33,24 +33,6 @@
     charts.forEach((c) => io.observe(c));
   } else charts.forEach((c) => c.classList.add('seen'));
 
-  /* ---------- cards: dealt in on scroll, tilt + holo glare under the pointer ---------- */
-  const grids = $$('.card-grid');
-  if ('IntersectionObserver' in window) {
-    const io2 = new IntersectionObserver((es) => es.forEach((x) => { if (x.isIntersecting) { x.target.classList.add('dealt'); io2.unobserve(x.target); } }), { threshold: .15 });
-    grids.forEach((g) => io2.observe(g));
-  } else grids.forEach((g) => g.classList.add('dealt'));
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    $$('.tcg.holo').forEach((c) => {
-      c.addEventListener('pointermove', (ev) => {
-        const r = c.getBoundingClientRect(); const x = (ev.clientX - r.left) / r.width; const y = (ev.clientY - r.top) / r.height;
-        c.style.setProperty('--mx', `${x * 100}%`); c.style.setProperty('--my', `${y * 100}%`);
-        c.style.setProperty('--ry', `${(x - .5) * 16}deg`); c.style.setProperty('--rx', `${(.5 - y) * 16}deg`);
-        c.style.transition = 'transform .05s linear, box-shadow .25s';
-      });
-      c.addEventListener('pointerleave', () => { c.style.removeProperty('--rx'); c.style.removeProperty('--ry'); c.style.transition = ''; });
-    });
-  }
-
   /* ---------- phone notifications ---------- */
   const b64 = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (s.length % 4)) % 4)), (c) => c.charCodeAt(0));
   async function enablePush(vapid) {
@@ -73,7 +55,8 @@
       $(`.step[data-step="${n}"] input, .step[data-step="${n}"] select`, f)?.focus();
     };
     const err = (n, m) => { $(`.step[data-step="${n}"] .err`, f).textContent = m || ''; };
-    const metroField = () => { const k = $('input[name=kind]:checked', f)?.value; $('#f-metro').closest('label') ; $('#f-metro').required = k === 'stores'; $('#f-metro').disabled = k !== 'stores'; };
+    const kindOf = () => $('input[name=kind]:checked', f)?.value || $('input[name=kind][type=hidden]', f)?.value || 'online';
+    const metroField = () => { const m = $('#f-metro'); if (!m) return; const k = kindOf(); m.required = k === 'stores'; m.disabled = k !== 'stores'; };
     $$('input[name=kind]', f).forEach((r) => r.addEventListener('change', metroField)); metroField();
     show(f.dataset.signed === '1' ? 2 : 1);
     let email = '';
@@ -82,7 +65,7 @@
       e.preventDefault(); err(1); busy(e.target, true);
       email = e.target.email.value.trim();
       try {
-        const r = await post('/api/funnel/start', { email, sku: state.sku, metro: state.metro, via: source });
+        const r = await post('/api/funnel/start', { email, sku: state.sku, metro: state.metro, via: source, country: f.dataset.country });
         if (r.state === 'code') { e.target.hidden = true; $('[data-form=code]', f).hidden = false; $('#f-code').focus(); }
         else show(2);
       } catch (x) { err(1, x.message); } finally { busy(e.target, false); }
@@ -93,21 +76,21 @@
     });
     $('[data-form=product]', f).addEventListener('submit', (e) => {
       e.preventDefault(); err(2);
-      state.sku = e.target.sku.value; state.kind = $('input[name=kind]:checked', f).value; state.metro = e.target.metro.value;
+      state.sku = e.target.sku.value; state.kind = kindOf(); state.metro = e.target.metro?.value || '';
       if (state.kind === 'stores' && !state.metro) return err(2, 'Pick your city.');
       if (state.sku.startsWith('set:')) { $('input[name=plan][value=multi]', f).checked = true; }
       show(3);
     });
     $('[data-form=channels]', f).addEventListener('submit', async (e) => {
       e.preventDefault(); err(3);
-      state.push = e.target.push.checked; state.telegram = e.target.telegram.checked;
+      state.push = e.target.push.checked; state.telegram = e.target.telegram.checked; state.line = !!e.target.line?.checked;
       if (state.push) { try { await enablePush(f.dataset.vapid); } catch (x) { state.push = false; e.target.push.checked = false; return err(3, x.message); } }
       if (f.dataset.pass) return submitAlert(f.dataset.pass, e.target);
       show(4);
     });
     async function submitAlert(plan, form) {
       busy(form, true); err(4);
-      try { const r = await post('/api/funnel/alert', { ...state, plan, visit }); location.href = r.next; }
+      try { const r = await post('/api/funnel/alert', { ...state, plan, visit, country: f.dataset.country }); location.href = r.next; }
       catch (x) { err(f.dataset.pass ? 3 : 4, x.message); busy(form, false); }
     }
     $('[data-form=plan]', f).addEventListener('submit', (e) => { e.preventDefault(); submitAlert($('input[name=plan]:checked', f).value, e.target); });
@@ -142,6 +125,7 @@
           d.addEventListener('close', async () => { if (d.returnValue === 'ok') { await post(`/api/me/alerts/${id}`, { act: 'delete', reason: $('input[name=reason]:checked', d).value }); location.reload(); } }, { once: true });
         } else if (act === 'push') { await enablePush(acc.dataset.vapid); location.reload(); }
         else if (act === 'telegram') { const r = await post('/api/me/telegram'); location.href = r.url; }
+        else if (act === 'line') { const r = await post('/api/me/line'); b.closest('.row').querySelector('.meta').textContent = `LINEで友だち追加して、このコードを送ってください: ${r.code}`; window.open(r.url, '_blank', 'noopener'); }
         else if (act === 'test') { await post('/api/me/test', { ch: b.dataset.ch }); b.textContent = 'Sent ✓'; }
         else if (act === 'cancel') { if (confirm('Stop renewal? Your alerts keep working until the end of the period you paid for.')) { await post('/api/me/cancel'); location.reload(); } }
         else if (act === 'signout') { await post('/api/signout'); location.href = '/'; }

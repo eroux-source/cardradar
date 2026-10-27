@@ -6,6 +6,7 @@ import { one, run, now, isFlagOn } from '../lib/db.js';
 import { sourceName } from '../sources/index.js';
 import { sendTelegram } from './channels/telegram.js';
 import { sendPush } from './channels/push.js';
+import { sendLine } from './channels/line.js';
 import { queueEmail } from '../email/outbox.js';
 
 export function alertText(env, r) {
@@ -15,15 +16,15 @@ export function alertText(env, r) {
     title: `In stock: ${r.sku_name}`,
     line: `${r.sku_name} is in stock at ${where}${qty}.`,
     url: r.url,
-    page: `${env.BASE_URL}/us/${r.sku_slug}`,
+    page: `${env.BASE_URL}/${r.country ?? 'us'}/${r.sku_slug}`,
   };
 }
 
 export async function deliver(env, { alertId, restockId }) {
   const claim = await one(env, 'SELECT * FROM alert_sent WHERE alert_id = ? AND restock_id = ?', alertId, restockId);
   if (!claim || claim.status === 'sent' || claim.status === 'held') return;
-  const a = await one(env, 'SELECT a.*, u.email, u.telegram_chat_id, u.push_endpoint, u.push_keys, u.last_email_alert_at FROM alerts a JOIN users u ON u.id = a.user_id WHERE a.id = ?', alertId);
-  const r = await one(env, `SELECT r.*, k.name AS sku_name, k.slug AS sku_slug, l.url, s.name AS store_name, s.city, s.online
+  const a = await one(env, 'SELECT a.*, u.email, u.telegram_chat_id, u.push_endpoint, u.push_keys, u.last_email_alert_at, u.line_user_id FROM alerts a JOIN users u ON u.id = a.user_id WHERE a.id = ?', alertId);
+  const r = await one(env, `SELECT r.*, k.name AS sku_name, k.slug AS sku_slug, l.url, s.name AS store_name, s.city, s.online, s.country
     FROM restocks r JOIN skus k ON k.id = r.sku_id JOIN listings l ON l.id = r.listing_id JOIN stores s ON s.id = r.store_id WHERE r.id = ?`, restockId);
   if (!a || !r) return;
   const channels = JSON.parse(a.channels || '["email"]');
@@ -32,6 +33,7 @@ export async function deliver(env, { alertId, restockId }) {
   const tries = [];
   if (channels.includes('telegram') && a.telegram_chat_id) tries.push(sendTelegram(env, a.telegram_chat_id, msg).then((ok) => ok && 'telegram'));
   if (channels.includes('push') && a.push_endpoint) tries.push(sendPush(env, a).then((ok) => ok && 'push'));
+  if (channels.includes('line') && a.line_user_id) tries.push(sendLine(env, a.line_user_id, msg).then((ok) => ok && 'line'));
   const ok = (await Promise.allSettled(tries)).map((x) => (x.status === 'fulfilled' ? x.value : null)).filter(Boolean);
 
   let status = 'sent';

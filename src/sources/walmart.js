@@ -9,7 +9,7 @@ import { sourceText, nextData, SourceError } from '../lib/net.js';
 const BASE = 'https://www.walmart.com';
 
 export default {
-  id: 'walmart', name: 'Walmart', kind: 'online',
+  id: 'walmart', name: 'Walmart', kind: 'online', country: 'us',
   queries: ['pokemon trading card game', 'pokemon elite trainer box', 'pokemon booster bundle', 'pokemon collection'],
 
   /** listings + availability in one request */

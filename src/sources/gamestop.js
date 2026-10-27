@@ -22,7 +22,7 @@ async function storesAround(env, zip) {
 }
 
 export default {
-  id: 'gamestop', name: 'GameStop', kind: 'stores',
+  id: 'gamestop', name: 'GameStop', kind: 'stores', country: 'us',
   queries: ['pokemon trading card game', 'pokemon elite trainer box', 'pokemon booster'],
 
   async search(env, keyword) {
@@ -30,7 +30,7 @@ export default {
     const j = await sourceJson(env, 'gamestop', `https://ac.cnstrc.com/search/${encodeURIComponent(keyword)}?key=${key}&c=ciojs-client-2&i=cr&s=1&num_results_per_page=60`, { headers: { origin: BASE, referer: `${BASE}/` } });
     return (j?.response?.results ?? []).map((x) => {
       const path = x.data?.url ?? ''; const pid = path.match(/\/(\d{5,8})\.html/)?.[1];
-      return pid && { sourceSku: pid, title: decodeEntities(x.value ?? ''), price: x.data?.price ?? null, url: `${BASE}${path}` };
+      return pid && { sourceSku: pid, title: decodeEntities(x.value ?? ''), price: x.data?.price ?? null, url: `${BASE}${path}`, image: x.data?.image_url?.replace('$thumb$', '$pdp$') ?? null };
     }).filter(Boolean);
   },
 

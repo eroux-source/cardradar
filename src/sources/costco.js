@@ -7,7 +7,7 @@ import { sourceText, jsonLdProducts, offerAvailability } from '../lib/net.js';
 import { settings } from '../lib/db.js';
 
 export default {
-  id: 'costco', name: 'Costco', kind: 'online',
+  id: 'costco', name: 'Costco', kind: 'online', country: 'us',
   queries: [],
   async dynamicQueries(env) {
     return String((await settings(env))['costco.urls'] ?? '').split(',').map((s) => s.trim()).filter(Boolean);

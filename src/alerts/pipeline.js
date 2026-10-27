@@ -23,15 +23,15 @@ async function alertsFor(env, r) {
     JOIN passes p ON p.user_id = a.user_id AND p.status IN ('active','refunded_kept') AND p.ends_at > ?
     WHERE a.status = 'active'
       AND (a.sku_id = ? OR (a.sku_id IS NULL AND a.set_id = ?))
-      AND ((a.kind = 'online' AND ? = 1)
+      AND ((a.kind = 'online' AND ? = 1 AND a.country = ?)
         OR (a.kind = 'stores' AND ? = 0 AND (a.metro = ? OR EXISTS (SELECT 1 FROM json_each(a.store_ids) WHERE value = ?))))
-    GROUP BY a.id`, now(), r.sku_id, r.set_id, r.online, r.online, r.metro, r.store_id);
+    GROUP BY a.id`, now(), r.sku_id, r.set_id, r.online, r.country, r.online, r.metro, r.store_id);
 }
 
 export async function matchRestocks(env, restockIds, { late = false } = {}) {
   let claimed = 0;
   for (const id of restockIds) {
-    const r = await one(env, `SELECT r.*, k.set_id, s.online, s.metro FROM restocks r JOIN skus k ON k.id = r.sku_id JOIN stores s ON s.id = r.store_id WHERE r.id = ?`, id);
+    const r = await one(env, `SELECT r.*, k.set_id, s.online, s.metro, s.country FROM restocks r JOIN skus k ON k.id = r.sku_id JOIN stores s ON s.id = r.store_id WHERE r.id = ?`, id);
     if (!r || (late && r.matched_at)) continue;
     const jobs = [];
     for (const a of await alertsFor(env, r)) {

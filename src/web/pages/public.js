@@ -1,235 +1,208 @@
-// Public, indexable pages (§1, §7):
-//   /                       live overview
-//   /us/{sku}               product: live stock everywhere + answer line + facts + 3 answers
-//   /us/{sku}/{city}        product × city
-//   /us/{sku}/restocks      when it restocks (indexable only with real history)
-//   /us/store/{slug}        what is in stock in this store now + usual hour
-//   /us/store/{slug}/restocks
-//   /us/restocks/{city}     restock times in a city
-//   /us/retailer/{id}       when a retailer restocks
-import { escapeHtml as e, timeAgo, formatDuration, formatUtc, hourLabel } from '../../lib/util.js';
-import { typeLabel } from '../../lib/catalog.js';
-import { metros, metroBySlug } from '../../data/metros.js';
-import { SOURCES, sourceList, sourceName } from '../../sources/index.js';
+// Public, indexable pages, one country each (cc), in its language.
+//   /{cc}                    home (the US keeps "/")
+//   /{cc}/{sku}              product: live stock + answer line + facts + 3 answers
+//   /{cc}/{sku}/{city}       product × city
+//   /{cc}/{sku}/restocks     when it restocks (indexable only with real history)
+//   /{cc}/store/{slug}       a store
+//   /{cc}/restocks[/{city}]  restock times
+//   /{cc}/retailer/{id}      a retailer
+import { escapeHtml as e } from '../../lib/util.js';
+import { COUNTRIES, countryList, metroInCountry, metroById } from '../../data/countries.js';
+import { SOURCES, sourcesOf, sourceName } from '../../sources/index.js';
+import { t } from '../../i18n/index.js';
 import * as d from '../data.js';
-import { tcgCard, page, chip, crumbs, answers, hourChart, placeRows, latestTable, cityGrid, retailerGrid, alertCta, placeLabel, listJoin, DAYS } from '../html.js';
+import { page, home as homePath, base, chip, crumbs, answers, hourChart, placeRows, latestTable, cityGrid, retailerGrid, alertCta, placeLabel, shopsText, productGrid } from '../html.js';
 import { factsBlock } from '../facts.js';
 
-const asOf = (ts) => (ts ? `Last check ${formatUtc(ts)}.` : 'Waiting for the first check.');
+const asOf = (T, ts) => (ts ? T.asOf(T.f.when(ts)) : T.waiting);
 
-const ART = { etb: 'art-tiles', booster_box: 'art-leaf', booster_bundle: 'art-sky', tin: 'art-sun' };
-const rarityOf = (k, pct) => (pct === 0 && !k.online_in ? ['★', 'Rare: in no store right now'] : pct < 20 ? ['◆', 'Uncommon: in few stores'] : ['●', 'Common: in many stores']);
-
-/** Every product is a card: big number = stores with stock now, moves = what you need to know. */
-function skuList(skus, suffix = '') {
-  if (!skus.length) return '<p class="empty">Products appear after the first discovery run.</p>';
-  return `<ul class="card-grid">${skus.map((k, i) => {
-    const pct = k.stores ? Math.round((100 * k.stores_in) / k.stores) : 0;
-    const [glyph, label] = rarityOf(k, pct);
-    return `<li style="--i:${i}">${tcgCard({
-      stage: typeLabel(k.type), name: k.name.replace(` ${typeLabel(k.type)}`, ''), num: k.stores_in, numLabel: 'stores',
-      art: ART[k.type] ?? 'art-tiles', href: `/us/${e(k.slug)}${suffix}`,
-      moves: [
-        { cost: 1, label: 'Online', value: k.online_in ? k.online_in.split(',').map(sourceName).join(', ') : 'Sold out' },
-        { cost: 2, label: 'Last restock', value: k.last_restock ? timeAgo(k.last_restock) : '—' },
-      ],
-      footer: `<span class="rar" title="${label}">${glyph}<span class="vh"> ${label}</span></span><span>${k.stores_in}/${k.stores} stores</span><span>${k.min_price ? `$${Number(k.min_price).toFixed(2)}` : ''}</span>`,
-    })}</li>`;
-  }).join('')}</ul>`;
-}
-
-/* ---------- radar HUD: one slot per retailer, filled by the share of places with stock now ---------- */
-function hud(tally) {
-  const by = Object.fromEntries(tally.map((t) => [t.source, t]));
-  return `<section class="hud" aria-labelledby="hud-h"><h2 id="hud-h" class="vh">Live radar by retailer</h2><ul class="slots">${sourceList.map((s, i) => {
-    const t = by[s.id]; const n = t?.in_stock ?? 0; const pct = t?.checked ? Math.round((100 * n) / t.checked) : 0;
-    return `<li class="slot${n ? ' on' : ''}" style="--fill:${Math.max(pct, n ? 12 : 0)}%;--i:${i}"><a href="/us/retailer/${s.id}">
-      <span class="slot-bar" aria-hidden="true"><i></i></span><span class="slot-orb" aria-hidden="true">${e(s.name[0])}</span>
-      <strong>${e(s.name)}</strong><span>${t ? (n ? `${n} in stock` : 'all sold out') : 'warming up'}</span></a></li>`;
-  }).join('')}</ul></section>`;
-}
+/** hreflang alternates for the country homes that are live. */
+const homeAlternates = (live) => Object.fromEntries(countryList.filter((c) => live.has(c.code)).map((c) => [c.code, homePath(c.code)]));
 
 /* ---------- home ---------- */
-export async function home(env) {
-  const [c, skus, latest, all30, tally] = await Promise.all([d.counts(env), d.allSkus(env), d.restocks(env, '1=1', [], 30, 10), d.restocks(env), d.sourceTotals(env)]);
+export async function home(env, cc) {
+  const T = t(cc);
+  const live = await d.liveCountries(env);
+  const [c, skus, latest, all30] = await Promise.all([d.counts(env, cc), d.allSkus(env, cc), d.restocks(env, cc, '1=1', [], 30, 10), d.restocks(env, cc)]);
   const sum = d.summarize(all30);
   const last = latest[0];
-  const lede = c.stores
-    ? `Right now <strong>${c.stores_in} of ${c.stores} stores</strong> we track have Pokémon cards on the shelf.${last ? ` Latest restock: <strong>${e(last.sku_name)}</strong> at ${e(placeLabel(last))}, ${timeAgo(last.started_at)}.` : ''}${sum.typical ? ` A restock typically lasts <strong>${formatDuration(sum.typical)}</strong>.` : ''}`
-    : 'Live Pokémon TCG stock at Target, Best Buy, GameStop, Costco and Pokémon Center, with restock times and instant alerts.';
-  const hero = tcgCard({ stage: 'Live', name: 'Restock Tracker', num: c.stores_in ?? 0, numLabel: 'in stock', art: 'art-tiles', cls: 'hero-card',
-    moves: [
-      { cost: 1, label: 'Latest restock', value: last ? `${timeAgo(last.started_at)}` : '—' },
-      { cost: 2, label: 'Typical stay', value: sum.typical ? formatDuration(sum.typical) : '—' },
-      { cost: 3, label: 'Stores tracked', value: String(c.stores ?? 0) },
-    ],
-    footer: `<span>${sourceList.length} retailers</span><span>${c.skus ?? 0} products</span><span>#001</span>` });
-  const body = `<div class="hero"><div class="answer"><h1>Pokémon cards in stock near you, live</h1><p class="lede">${lede}</p><p class="asof">${asOf(c.last_check)}</p></div>${hero}</div>
-  ${hud(tally)}
-  ${alertCta(env)}
-  <section aria-labelledby="p-h"><h2 id="p-h">Every sealed product we track</h2><p class="sub">Hardest to find first.</p>${skuList(skus)}</section>
-  <section aria-labelledby="l-h"><h2 id="l-h">Latest restocks</h2>${latestTable(latest)}</section>
-  <section aria-labelledby="r-h"><h2 id="r-h">By retailer</h2>${retailerGrid()}</section>
-  <section aria-labelledby="c-h"><h2 id="c-h">By city</h2>${cityGrid(await d.metroTotals(env), (m) => `/us/restocks/${m.slug}`)}</section>
-  ${await factsBlock(env)}`;
-  return page(env, { title: `Pokémon Restock Tracker — Pokémon Cards In Stock Near You, Live | ${env.BRAND_NAME}`, description: 'Pokémon restock tracker: live Pokémon card stock at Target, Best Buy, GameStop, Costco and Pokémon Center, real restock times and instant alerts.', path: '/', body,
-    jsonLd: [{ '@context': 'https://schema.org', '@type': 'WebSite', name: env.BRAND_NAME, url: env.BASE_URL }] });
+  const shops = shopsText(T, cc);
+  const hasData = live.has(cc);
+  const lede = !hasData ? T.home.soon(T.cc.name)
+    : c.stores ? T.home.lede(c.stores_in, c.stores) + (last ? T.home.latest(e(last.sku_name), e(placeLabel(T, last)), T.f.ago(last.started_at)) : '') + (sum.typical ? T.home.typical(T.f.dur(sum.typical)) : '')
+      : T.home.fallback(shops);
+  const head = `<div class="answer"><h1>${e(T.home.h1)}</h1><p class="lede">${lede}</p><p class="asof">${e(asOf(T, c.last_check))}</p></div>`;
+  // Country not live yet: say so plainly, nothing else (no empty sections)
+  const body = !hasData ? `${head}${await factsBlock(env, T)}` : `${head}
+  ${alertCta(env, T)}
+  <section aria-labelledby="p-h"><h2 id="p-h">${e(T.home.every)}</h2><p class="sub">${e(T.home.hardest)}</p>${productGrid(T, skus)}</section>
+  <section aria-labelledby="l-h"><h2 id="l-h">${e(T.home.latestH)}</h2>${latestTable(T, latest)}</section>
+  <section aria-labelledby="r-h"><h2 id="r-h">${e(T.home.byRetailer)}</h2>${retailerGrid(T)}</section>
+  ${sourcesOf(cc).some((x) => x.kind === 'stores') ? `<section aria-labelledby="c-h"><h2 id="c-h">${e(T.home.byCity)}</h2>${cityGrid(T, await d.metroTotals(env, cc), (m) => `${base(cc)}/restocks/${m.slug}`)}</section>` : ''}
+  ${await factsBlock(env, T)}`;
+  return page(env, T, { title: T.home.title(env.BRAND_NAME), description: T.home.desc(shops), path: homePath(cc), body, noindex: !hasData, alternates: homeAlternates(live), live,
+    jsonLd: [{ '@context': 'https://schema.org', '@type': 'WebSite', name: env.BRAND_NAME, url: `${env.BASE_URL}${homePath(cc)}`, inLanguage: T.cc.locale }] });
 }
 
 /* ---------- product ---------- */
-export async function sku(env, slug, metroSlug = null) {
+export async function sku(env, cc, slug, metroSlug = null) {
+  const T = t(cc);
   const k = await d.skuBySlug(env, slug);
-  const metro = metroSlug ? metroBySlug[metroSlug] : null;
-  if (!k || (metroSlug && !metro)) return null;
+  const metro = metroSlug ? metroInCountry(cc, metroSlug) : null;
+  if (!k || (metroSlug && !metro) || !(await d.skuInCountry(env, k.id, cc))) return null;
   const [rows, rs, listings] = await Promise.all([
-    d.availability(env, k.id, metroSlug),
-    d.restocks(env, metro ? 'r.sku_id = ? AND (s.online = 1 OR s.metro = ?)' : 'r.sku_id = ?', metro ? [k.id, metro.slug] : [k.id]),
-    d.listingsOf(env, k.id),
+    d.availability(env, cc, k.id, metro?.id),
+    d.restocks(env, cc, metro ? 'r.sku_id = ? AND (s.online = 1 OR s.metro = ?)' : 'r.sku_id = ?', metro ? [k.id, metro.id] : [k.id]),
+    d.listingsOf(env, k.id, cc),
   ]);
   const sum = d.summarize(rs);
   const phys = rows.filter((r) => !r.online); const inStores = phys.filter((r) => r.in_stock); const online = rows.filter((r) => r.online && r.in_stock);
-  const place = metro ? `${metro.name}, ${metro.state}` : 'the US';
+  const place = metro ? metro.name : T.cc.name;
   const lastCheck = rows.reduce((m, r) => Math.max(m, r.seen_at ?? 0), 0);
   const minPrice = Math.min(...listings.map((l) => l.price || Infinity));
+  const onlineList = T.f.list(online.map((o) => sourceName(o.source)));
 
-  // Answer line: follows live restocks (§1)
   const parts = [];
-  if (phys.length) parts.push(inStores.length ? `<strong>in stock at ${inStores.length} of ${phys.length} stores</strong> in ${e(place)}, including ${e(placeLabel(inStores[0]))} in ${e(inStores[0].city)}` : `<strong>sold out at all ${phys.length} stores</strong> we track in ${e(place)}`);
-  parts.push(online.length ? `<strong>in stock online at ${e(listJoin(online.map((o) => sourceName(o.source))))}</strong>` : 'sold out online');
-  let lede = rows.length ? `${e(k.name)} is ${parts.join(', and ')}.` : `We just started tracking ${e(k.name)}. Live stock appears within the hour.`;
-  if (rs[0]) lede += ` Last restock: ${e(placeLabel(rs[0]))}, ${timeAgo(rs[0].started_at)}${rs[0].ended_at ? `; it lasted ${formatDuration(rs[0].ended_at - rs[0].started_at)}` : ''}.`;
+  if (phys.length) parts.push(inStores.length ? T.sku.inStores(inStores.length, phys.length, e(place), e(placeLabel(T, inStores[0])), e(inStores[0].city ?? '')) : T.sku.outStores(phys.length, e(place)));
+  parts.push(online.length ? T.sku.onlineAt(e(onlineList)) : T.sku.outOnline);
+  let lede = rows.length ? T.sku.is(e(k.name), parts.join(T.sku.joinParts)) : T.sku.new(e(k.name));
+  if (rs[0]) lede += T.sku.lastLine(e(placeLabel(T, rs[0])), T.f.ago(rs[0].started_at), rs[0].ended_at ? T.f.dur(rs[0].ended_at - rs[0].started_at) : null);
 
-  const path = metro ? `/us/${k.slug}/${metro.slug}` : `/us/${k.slug}`;
-  const c = crumbs(env, [{ name: 'Live stock', path: '/' }, ...(k.set_name ? [{ name: k.set_name, path: `/us/${k.slug}` }] : []), ...(metro ? [{ name: k.name, path: `/us/${k.slug}` }, { name: metro.name, path }] : [{ name: k.name, path }])]);
+  const path = metro ? `${base(cc)}/${k.slug}/${metro.slug}` : `${base(cc)}/${k.slug}`;
+  const c = crumbs(env, [{ name: T.sku.crumbLive, path: homePath(cc) }, ...(metro ? [{ name: k.name, path: `${base(cc)}/${k.slug}` }, { name: metro.name, path }] : [{ name: k.name, path }])]);
   const a = answers([
-    { q: `Where can I buy ${k.name} today?`, a: inStores.length || online.length ? `As of the last check: ${[...online.map((o) => `${sourceName(o.source)} online`), ...inStores.slice(0, 3).map((s) => `${placeLabel(s)} (${s.city})`)].join(', ')}. Buy or reserve on the retailer's site before you travel.` : `Sold out everywhere we track in ${place} right now. An alert tells you the second it restocks.` },
-    { q: `When does ${k.name} restock?`, a: sum.count ? `${sum.count} restocks in the last 30 days${metro ? ` in ${metro.name}` : ''}; most landed around ${hourLabel(sum.peakHour)}${sum.peakDay != null ? `, ${DAYS[sum.peakDay]} the busiest day` : ''}. No retailer publishes a schedule.` : 'No restock logged yet. Every restock is recorded from the first day we track a product.' },
-    { q: `How long does ${k.name} stay in stock?`, a: sum.typical ? `Typically ${formatDuration(sum.typical)}; the shortest restock we saw lasted ${formatDuration(sum.shortest)}. That is why alerts matter.` : 'Not enough data yet.' },
-  ]);
+    { q: T.sku.q1(k.name), a: inStores.length || online.length ? T.sku.a1yes([...online.map((o) => placeLabel(T, o)), ...inStores.slice(0, 3).map((s) => `${placeLabel(T, s)} (${s.city ?? ''})`)].join(', ')) : T.sku.a1no(place) },
+    { q: T.sku.q2(k.name), a: sum.count ? T.sku.a2yes(sum.count, metro?.name, T.f.hour(sum.peakHour), sum.peakDay != null ? T.f.day(sum.peakDay) : null) : T.sku.a2no },
+    { q: T.sku.q3(k.name), a: sum.typical ? T.sku.a3yes(T.f.dur(sum.typical), T.f.dur(sum.shortest)) : T.sku.a3no },
+  ], 'FAQ');
 
-  const byRetailer = sourceList.map((s) => {
+  const byRetailer = sourcesOf(cc).map((s) => {
     const mine = rows.filter((r) => r.source === s.id); if (!mine.length) return '';
     const n = mine.filter((r) => r.in_stock).length;
-    return `<tr><td><a href="/us/retailer/${s.id}">${e(s.name)}</a></td><td>${s.kind === 'online' ? (n ? '<strong>In stock online</strong>' : 'Sold out online') : `${n ? `<strong>${n}` : n} of ${mine.length} stores${n ? '</strong>' : ''}`}</td></tr>`;
+    return `<tr><td><a href="${base(cc)}/retailer/${s.id}">${e(s.name)}</a></td><td>${s.kind !== 'stores' ? (n ? `<strong>${e(T.sku.inOnline)}</strong>` : e(T.sku.outOnlineCell)) : `${n ? '<strong>' : ''}${e(T.sku.ofStores(n, mine.length))}${n ? '</strong>' : ''}`}</td></tr>`;
   }).join('');
+  const buy = listings.filter((l) => l.url).slice(0, 6).map((l) => `<a class="btn ghost small" href="${e(l.url)}" rel="nofollow noopener sponsored">${e(sourceName(l.source))}${l.price ? ` · ${e(T.f.money(l.price))}` : ''}</a>`).join(' ');
 
-  const pctIn = phys.length ? Math.round((100 * inStores.length) / phys.length) : 0;
-  const [glyph, rlabel] = rarityOf({ online_in: online.length }, pctIn);
-  const card = tcgCard({ stage: typeLabel(k.type), name: k.name.replace(` ${typeLabel(k.type)}`, ''), num: inStores.length, numLabel: 'stores', art: ART[k.type] ?? 'art-tiles', cls: 'hero-card',
-    moves: [
-      { cost: 1, label: 'Online', value: online.length ? online.map((o) => sourceName(o.source)).join(', ') : 'Sold out' },
-      { cost: 2, label: 'Last restock', value: rs[0] ? timeAgo(rs[0].started_at) : '—' },
-      { cost: 3, label: 'Typical stay', value: sum.typical ? formatDuration(sum.typical) : '—' },
-    ],
-    footer: `<span class="rar" title="${rlabel}">${glyph}<span class="vh"> ${rlabel}</span></span><span>${inStores.length}/${phys.length} stores${metro ? ` · ${e(metro.name)}` : ''}</span><span>${Number.isFinite(minPrice) ? `$${minPrice.toFixed(2)}` : ''}</span>` });
   const body = `${c.html}
-  <div class="hero"><div class="answer"><h1>${e(k.name)} in stock${metro ? ` in ${e(metro.name)}` : ''}</h1><p class="lede">${lede}</p>
-  <p class="asof">${asOf(lastCheck)}${Number.isFinite(minPrice) ? ` From $${minPrice.toFixed(2)}.` : ''}</p></div>${card}</div>
-  ${alertCta(env, { sku: k, metro: metroSlug ?? '' })}
-  ${byRetailer ? `<section aria-labelledby="b-h"><h2 id="b-h">By retailer</h2><table><thead><tr><th>Retailer</th><th>Right now</th></tr></thead><tbody>${byRetailer}</tbody></table></section>` : ''}
-  <section aria-labelledby="w-h"><h2 id="w-h">Where it is${metro ? ` in ${e(metro.name)}` : ''}</h2>${placeRows(rows, { limit: metro ? 150 : 30 })}</section>
-  <section aria-labelledby="h-h"><h2 id="h-h">When it restocks</h2>${hourChart(sum, k.name)}<p><a href="/us/${e(k.slug)}/restocks">Full restock history</a></p></section>
+  <div class="hero"><div class="answer"><h1>${e(T.sku.h1(k.name, metro?.name))}</h1><p class="lede">${lede}</p>
+  <p class="asof">${e(asOf(T, lastCheck))}${Number.isFinite(minPrice) ? e(T.sku.from(T.f.money(minPrice))) : ''}</p>${buy ? `<p class="buy">${buy}</p>` : ''}</div>
+  ${k.image ? `<figure class="hero-photo"><img src="${e(k.image)}" alt="${e(k.name)}" referrerpolicy="no-referrer"></figure>` : ''}</div>
+  ${alertCta(env, T, { sku: k, metro: metro?.slug ?? '' })}
+  ${byRetailer ? `<section aria-labelledby="b-h"><h2 id="b-h">${e(T.home.byRetailer)}</h2><table><thead><tr><th>${e(T.th.retailer)}</th><th>${e(T.th.rightNow)}</th></tr></thead><tbody>${byRetailer}</tbody></table></section>` : ''}
+  <section aria-labelledby="w-h"><h2 id="w-h">${e(T.sku.whereIs(metro?.name))}</h2>${placeRows(T, rows, { limit: metro ? 150 : 30 })}</section>
+  <section aria-labelledby="h-h"><h2 id="h-h">${e(T.sku.when)}</h2>${hourChart(T, sum, k.name)}<p><a href="${base(cc)}/${e(k.slug)}/restocks">${e(T.sku.history)}</a></p></section>
   ${a.html}
-  ${metro ? '' : `<section aria-labelledby="c-h"><h2 id="c-h">${e(k.name)} by city</h2><details><summary>See all 50 cities</summary>${cityGrid(await d.metroTotals(env, k.id), (m) => `/us/${k.slug}/${m.slug}`)}</details></section>`}
-  ${await factsBlock(env)}`;
-  return page(env, {
-    title: `${k.name} in stock${metro ? ` in ${metro.name}` : ''} — live stock + alerts`,
-    description: `${k.name}: ${inStores.length} of ${phys.length} stores in ${place} have it${online.length ? `, online at ${listJoin(online.map((o) => sourceName(o.source)))}` : ''}. Restock times and instant alerts.`,
-    path, body, jsonLd: [c.ld, a.ld],
-  });
+  ${metro ? '' : `<section aria-labelledby="c-h"><h2 id="c-h">${e(T.sku.byCity(k.name))}</h2><details><summary>${e(T.sku.allCities(T.cc.metros.length))}</summary>${cityGrid(T, await d.metroTotals(env, cc, k.id), (m) => `${base(cc)}/${k.slug}/${m.slug}`)}</details></section>`}
+  ${await factsBlock(env, T)}`;
+  const productLd = { '@context': 'https://schema.org', '@type': 'Product', name: k.name, ...(k.image ? { image: k.image } : {}),
+    ...(Number.isFinite(minPrice) ? { offers: { '@type': 'AggregateOffer', priceCurrency: T.cc.currency, lowPrice: minPrice, offerCount: listings.length, availability: inStores.length || online.length ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' } } : {}) };
+  return page(env, T, { title: T.sku.title(k.name, metro?.name), description: T.sku.desc(k.name, inStores.length, phys.length, place, online.length ? onlineList : null), path, body, jsonLd: [c.ld, a.ld, productLd], noindex: !rows.length && !rs.length });
 }
 
 /* ---------- restock-time pages ---------- */
-async function restockPage(env, { title, h1, path, rows, back, label }) {
+async function restockPage(env, T, { title, h1, path, rows, back, label, extra = '' }) {
   const sum = d.summarize(rows);
-  const lede = sum.count
-    ? `${sum.count} restocks logged in 30 days. Most land around <strong>${hourLabel(sum.peakHour)}</strong>${sum.peakDay != null ? `, <strong>${DAYS[sum.peakDay]}</strong> the busiest day` : ''}. Stock typically lasts <strong>${formatDuration(sum.typical)}</strong> (shortest ${formatDuration(sum.shortest)}, longest ${formatDuration(sum.longest)}).`
-    : 'No retailer publishes a restock schedule. We log every restock; the real pattern shows here once there is enough history.';
-  const body = `<p class="crumbs"><a href="${back.path}">${e(back.name)}</a> › Restock times</p>
+  const lede = sum.count ? T.rp.lede(sum.count, T.f.hour(sum.peakHour), sum.peakDay != null ? T.f.day(sum.peakDay) : null, T.f.dur(sum.typical), T.f.dur(sum.shortest), T.f.dur(sum.longest)) : T.rp.none;
+  const body = `<p class="crumbs"><a href="${back.path}">${e(back.name)}</a> › ${e(T.rp.crumb)}</p>
   <div class="answer"><h1>${e(h1)}</h1><p class="lede">${lede}</p></div>
-  ${alertCta(env)}
-  <section><h2>By hour</h2>${hourChart(sum, label)}</section>
-  <section><h2>Every restock, newest first</h2>${latestTable(rows.slice(0, 60))}</section>
-  ${await factsBlock(env)}`;
+  ${alertCta(env, T)}
+  ${extra}
+  <section><h2>${e(T.rp.byHour)}</h2>${hourChart(T, sum, label)}</section>
+  <section><h2>${e(T.rp.every)}</h2>${latestTable(T, rows.slice(0, 60))}</section>
+  ${await factsBlock(env, T)}`;
   // Thin-content rule (§7): indexable only with ≥ 20 restocks over > 18 h
-  return page(env, { title, description: `${h1}: real restock times from ${sum.count} logged restocks.`, path, body, noindex: !sum.indexable, nav: 'restocks' });
+  return page(env, T, { title, description: T.rp.desc(h1, sum.count), path, body, noindex: !sum.indexable, nav: 'restocks' });
 }
 
-export async function skuRestocks(env, slug) {
-  const k = await d.skuBySlug(env, slug); if (!k) return null;
-  return restockPage(env, { title: `When does ${k.name} restock? Real restock times`, h1: `When does ${k.name} restock?`, path: `/us/${k.slug}/restocks`, rows: await d.restocks(env, 'r.sku_id = ?', [k.id]), back: { name: k.name, path: `/us/${k.slug}` }, label: k.name });
+export async function skuRestocks(env, cc, slug) {
+  const T = t(cc); const k = await d.skuBySlug(env, slug); if (!k || !(await d.skuInCountry(env, k.id, cc))) return null;
+  const h1 = T.rp.sku(k.name);
+  return restockPage(env, T, { title: h1 + T.rp.titleSuffix, h1, path: `${base(cc)}/${k.slug}/restocks`, rows: await d.restocks(env, cc, 'r.sku_id = ?', [k.id]), back: { name: k.name, path: `${base(cc)}/${k.slug}` }, label: k.name });
 }
-export async function cityRestocks(env, metroSlug) {
-  const m = metroBySlug[metroSlug]; if (!m) return null;
-  const [rows, stores] = await Promise.all([d.restocks(env, 's.metro = ?', [m.slug]), d.storesInMetro(env, m.slug)]);
-  const res = await restockPage(env, { title: `When do stores restock Pokémon cards in ${m.name}?`, h1: `When do stores restock Pokémon cards in ${m.name}?`, path: `/us/restocks/${m.slug}`, rows, back: { name: 'Cities', path: '/us/cities' }, label: m.name });
-  // add the store list of the city
-  const html = (await res.text()).replace('<section><h2>By hour</h2>', `<section><h2>Stores in ${e(m.name)}</h2>${stores.length ? `<ul class="rows">${stores.map((s) => `<li class="row${s.in_count ? ' is-in' : ''}"><span class="name"><a href="/us/store/${e(s.slug)}">${e(placeLabel(s))}</a></span><span class="meta">${e(s.address ?? '')} · ${s.last_restock ? `last restock ${timeAgo(s.last_restock)}` : 'no restock seen yet'}</span><span class="side">${s.in_count ? `<span class="chip in">${s.in_count} in stock</span>` : '<span class="chip out">Sold out</span>'}</span></li>`).join('')}</ul>` : '<p class="empty">No stores yet.</p>'}</section><section><h2>By hour</h2>`);
-  return new Response(html, res);
+export async function cityRestocks(env, cc, metroSlug) {
+  const T = t(cc); const m = metroInCountry(cc, metroSlug); if (!m) return null;
+  const [rows, stores] = await Promise.all([d.restocks(env, cc, 's.metro = ?', [m.id]), d.storesInMetro(env, m.id)]);
+  const extra = `<section><h2>${e(T.rp.storesIn(m.name))}</h2>${stores.length ? `<ul class="rows">${stores.map((s) => `<li class="row${s.in_count ? ' is-in' : ''}"><span class="name"><a href="${base(cc)}/store/${e(s.slug)}">${e(placeLabel(T, s))}</a></span><span class="meta">${e(s.address ?? '')} · ${e(s.last_restock ? T.lastRestockAgo(T.f.ago(s.last_restock)) : T.noRestockYet)}</span><span class="side">${s.in_count ? `<span class="chip in">${e(T.nInStock(s.in_count))}</span>` : `<span class="chip out">${e(T.chip.out)}</span>`}</span></li>`).join('')}</ul>` : `<p class="empty">${e(T.rp.noStores)}</p>`}</section>`;
+  const h1 = T.rp.city(m.name);
+  return restockPage(env, T, { title: h1, h1, path: `${base(cc)}/restocks/${m.slug}`, rows, back: { name: T.rp.cities, path: `${base(cc)}/cities` }, label: m.name, extra });
 }
-export async function storeRestocks(env, slug) {
-  const s = await d.storeBySlug(env, slug); if (!s) return null;
-  return restockPage(env, { title: `When does ${placeLabel(s)} restock Pokémon cards?`, h1: `When does ${placeLabel(s)} restock Pokémon cards?`, path: `/us/store/${s.slug}/restocks`, rows: await d.restocks(env, 'r.store_id = ?', [s.id]), back: { name: placeLabel(s), path: `/us/store/${s.slug}` }, label: placeLabel(s) });
+export async function storeRestocks(env, cc, slug) {
+  const T = t(cc); const s = await d.storeBySlug(env, slug); if (!s || s.country !== cc) return null;
+  const h1 = T.rp.store(placeLabel(T, s));
+  return restockPage(env, T, { title: h1, h1, path: `${base(cc)}/store/${s.slug}/restocks`, rows: await d.restocks(env, cc, 'r.store_id = ?', [s.id]), back: { name: placeLabel(T, s), path: `${base(cc)}/store/${s.slug}` }, label: placeLabel(T, s) });
 }
-export async function retailerPage(env, id) {
-  const src = SOURCES[id]; if (!src) return null;
-  return restockPage(env, { title: `When does ${src.name} restock Pokémon cards? Real restock times`, h1: `When does ${src.name} restock Pokémon cards?`, path: `/us/retailer/${id}`, rows: await d.restocks(env, 'r.source = ?', [id]), back: { name: 'Retailers', path: '/us/retailers' }, label: src.name });
+export async function retailerPage(env, cc, id) {
+  const T = t(cc); const src = SOURCES[id]; if (!src || src.country !== cc) return null;
+  const h1 = T.rp.retailer(src.name);
+  return restockPage(env, T, { title: h1 + T.rp.titleSuffix, h1, path: `${base(cc)}/retailer/${id}`, rows: await d.restocks(env, cc, 'r.source = ?', [id]), back: { name: T.rp.retailers, path: `${base(cc)}/retailers` }, label: src.name });
 }
-export async function allRestocks(env) {
-  return restockPage(env, { title: 'When do stores restock Pokémon cards? Real restock times', h1: 'When do stores restock Pokémon cards?', path: '/us/restocks', rows: await d.restocks(env), back: { name: 'Live stock', path: '/' }, label: 'All retailers' });
+export async function allRestocks(env, cc) {
+  const T = t(cc);
+  return restockPage(env, T, { title: T.rp.all + T.rp.titleSuffix, h1: T.rp.all, path: `${base(cc)}/restocks`, rows: await d.restocks(env, cc), back: { name: T.nav.live, path: homePath(cc) }, label: T.rp.allRetailers });
 }
 
 /* ---------- store ---------- */
-export async function store(env, slug) {
-  const s = await d.storeBySlug(env, slug); if (!s) return null;
-  const [items, rs] = await Promise.all([d.storeStock(env, s.id), d.restocks(env, 'r.store_id = ?', [s.id])]);
+export async function store(env, cc, slug) {
+  const T = t(cc); const s = await d.storeBySlug(env, slug); if (!s || s.country !== cc) return null;
+  const [items, rs] = await Promise.all([d.storeStock(env, s.id), d.restocks(env, cc, 'r.store_id = ?', [s.id])]);
   const sum = d.summarize(rs);
   const inNow = items.filter((i) => i.in_stock);
-  const label = placeLabel(s);
-  const lede = (inNow.length ? `${e(label)} has <strong>${inNow.length} Pokémon TCG product${inNow.length > 1 ? 's' : ''} in stock</strong>: ${inNow.slice(0, 3).map((i) => e(i.name)).join(', ')}.` : `${e(label)} has <strong>no Pokémon TCG product in stock</strong> right now.`)
-    + (sum.peakHour != null ? ` Restocks here usually land around ${hourLabel(sum.peakHour)}.` : '');
-  const m = metroBySlug[s.metro];
-  const c = crumbs(env, [{ name: 'Live stock', path: '/' }, ...(m ? [{ name: m.name, path: `/us/restocks/${m.slug}` }] : []), { name: label, path: `/us/store/${s.slug}` }]);
-  const body = `${c.html}<div class="answer"><h1>${e(label)}: Pokémon cards in stock</h1><p class="lede">${lede}</p><p class="asof">${e([s.address, s.city, s.state, s.zip].filter(Boolean).join(', '))}</p></div>
-  ${alertCta(env, { metro: s.metro ?? '' })}
-  <section><h2>Here right now</h2>${items.length ? `<ul class="rows">${items.map((i) => `<li class="row${i.in_stock ? ' is-in' : ''}"><span class="name"><a href="/us/${e(i.slug)}">${e(i.name)}</a></span><span class="meta">${i.last_restock ? `last restock ${timeAgo(i.last_restock)}` : 'no restock seen yet'} · checked ${timeAgo(i.seen_at)}</span><span class="side">${chip(i.in_stock, i.seen_at)}${i.qty > 1 ? `<span class="qty">${i.qty} available</span>` : ''}</span></li>`).join('')}</ul>` : '<p class="empty">Nothing checked here yet.</p>'}</section>
-  <section><h2>When this store restocks</h2>${hourChart(sum, label)}<p><a href="/us/store/${e(s.slug)}/restocks">Full restock history</a></p></section>
-  ${await factsBlock(env)}`;
-  return page(env, { title: `Pokémon cards in stock at ${label}${s.city ? ` (${s.city})` : ''} — live + alerts`, description: `${label}: ${inNow.length} Pokémon TCG products in stock now. Usual restock hour and alerts.`, path: `/us/store/${s.slug}`, body, jsonLd: [c.ld] });
+  const label = placeLabel(T, s);
+  const lede = (inNow.length ? T.store.has(e(label), inNow.length, inNow.slice(0, 3).map((i) => e(i.name)).join(', ')) : T.store.none(e(label))) + (sum.peakHour != null ? T.store.usual(T.f.hour(sum.peakHour)) : '');
+  const m = metroById[s.metro];
+  const c = crumbs(env, [{ name: T.nav.live, path: homePath(cc) }, ...(m ? [{ name: m.name, path: `${base(cc)}/restocks/${m.slug}` }] : []), { name: label, path: `${base(cc)}/store/${s.slug}` }]);
+  const body = `${c.html}<div class="answer"><h1>${e(T.store.h1(label))}</h1><p class="lede">${lede}</p><p class="asof">${e([s.address, s.city, s.state, s.zip].filter(Boolean).join(', '))}</p></div>
+  ${alertCta(env, T, { metro: m?.slug ?? '' })}
+  <section><h2>${e(T.store.here)}</h2>${items.length ? `<ul class="rows">${items.map((i) => `<li class="row${i.in_stock ? ' is-in' : ''}"><span class="name"><a href="${base(cc)}/${e(i.slug)}">${e(i.name)}</a></span><span class="meta">${e(i.last_restock ? T.lastRestockAgo(T.f.ago(i.last_restock)) : T.noRestockYet)} · ${e(T.checkedAgo(T.f.ago(i.seen_at)))}</span><span class="side">${chip(T, i.in_stock, i.seen_at)}${i.qty > 1 ? `<span class="qty">${e(T.available(i.qty))}</span>` : ''}</span></li>`).join('')}</ul>` : `<p class="empty">${e(T.store.nothing)}</p>`}</section>
+  <section><h2>${e(T.store.when)}</h2>${hourChart(T, sum, label)}<p><a href="${base(cc)}/store/${e(s.slug)}/restocks">${e(T.sku.history)}</a></p></section>
+  ${await factsBlock(env, T)}`;
+  return page(env, T, { title: T.store.title(label, s.city), description: T.store.desc(label, inNow.length), path: `${base(cc)}/store/${s.slug}`, body, jsonLd: [c.ld] });
 }
 
 /* ---------- indexes ---------- */
-export async function cities(env) {
-  return page(env, { title: 'Pokémon cards in stock by city', description: 'Live Pokémon TCG stock and restock times in the 50 largest US cities.', path: '/us/cities', nav: 'cities',
-    body: `<div class="answer"><h1>Pokémon cards in stock, by city</h1></div>${cityGrid(await d.metroTotals(env), (m) => `/us/restocks/${m.slug}`)}` });
+export async function cities(env, cc) {
+  const T = t(cc);
+  return page(env, T, { title: T.idx.citiesTitle, description: T.idx.citiesDesc(T.cc.metros.length, T.cc.name), path: `${base(cc)}/cities`, nav: 'cities',
+    body: `<div class="answer"><h1>${e(T.idx.citiesH1)}</h1></div>${cityGrid(T, await d.metroTotals(env, cc), (m) => `${base(cc)}/restocks/${m.slug}`)}` });
 }
-export async function retailers(env) {
-  return page(env, { title: 'Pokémon cards in stock by retailer', description: 'Restock times and live stock at Target, Best Buy, GameStop, Costco and Pokémon Center.', path: '/us/retailers', nav: 'retailers',
-    body: `<div class="answer"><h1>Pokémon cards in stock, by retailer</h1><p class="lede">Store by store at Target, Best Buy and GameStop; online at Pokémon Center and Costco.</p></div>${retailerGrid()}` });
-}
-
-export async function pricing(env) {
-  return page(env, { title: `Pricing — ${env.BRAND_NAME}`, description: 'Restock alert plans.', path: '/pricing',
-    body: `<div class="answer"><h1>Pricing</h1><p class="lede">Live stock pages are free. Alerts are paid, for 30 days, cancel in 2 clicks.</p></div>
-    <table><thead><tr><th>Plan</th><th>What you watch</th><th>30 days</th></tr></thead><tbody>
-    <tr><td>Solo</td><td>1 product in 1 store, 1 city or online</td><td>$${e(env.PRICE_SOLO)}</td></tr>
-    <tr><td>Multi</td><td>Several products and places, or any sealed product of a set</td><td>$${e(env.PRICE_MULTI)}</td></tr></tbody></table>
-    <p class="sub">Taxes may be added at checkout depending on your country. We alert, you buy from the retailer: we never buy for you.</p>
-    <p><a class="btn" href="/alerts">Set up my alert</a></p>` });
+export async function retailers(env, cc) {
+  const T = t(cc); const srcs = sourcesOf(cc);
+  const stores = T.f.list([...new Set(srcs.filter((s) => s.kind === 'stores').map((s) => s.name))]);
+  const online = T.f.list([...new Set(srcs.filter((s) => s.kind !== 'stores').map((s) => s.name))]);
+  return page(env, T, { title: T.idx.retTitle, description: T.idx.retDesc(shopsText(T, cc)), path: `${base(cc)}/retailers`, nav: 'retailers',
+    body: `<div class="answer"><h1>${e(T.idx.retH1)}</h1><p class="lede">${e(T.idx.retLede(stores, online))}</p></div>${retailerGrid(T)}` });
 }
 
-/** Press kit from real restock data (§7). */
+export async function pricing(env, cc) {
+  const T = t(cc);
+  return page(env, T, { title: T.pricing.title(env.BRAND_NAME), description: T.pricing.lede, path: '/pricing', noindex: cc !== 'us',
+    body: `<div class="answer"><h1>${e(T.pricing.h1)}</h1><p class="lede">${e(T.pricing.lede)}</p></div>
+    <table><thead><tr><th>${e(T.th.plan)}</th><th>${e(T.th.watch)}</th><th>${e(T.th.days30)}</th></tr></thead><tbody>
+    <tr><td>Solo</td><td>${e(T.pricing.solo)}</td><td>${e(T.f.money(T.cc.prices.solo))}</td></tr>
+    <tr><td>Multi</td><td>${e(T.pricing.multi)}</td><td>${e(T.f.money(T.cc.prices.multi))}</td></tr></tbody></table>
+    <p class="sub">${e(T.pricing.tax)}</p>
+    <p><a class="btn" href="/alerts?c=${cc}">${e(T.cta.btn)}</a></p>` });
+}
+
+/** Press kit from real restock data (§7), US numbers. */
 export async function press(env) {
-  const rows = await d.restocks(env);
+  const T = t('us');
+  const rows = await d.restocks(env, 'us');
   const sum = d.summarize(rows);
-  const bySource = sourceList.map((s) => ({ s, sum: d.summarize(rows.filter((r) => r.source === s.id)) })).filter((x) => x.sum.count);
-  return page(env, { title: `Press — ${env.BRAND_NAME}`, description: 'Pokémon TCG restock data for journalists.', path: '/press',
-    body: `<div class="answer"><h1>Press kit: Pokémon card restocks, in numbers</h1><p class="lede">${sum.count} restocks logged in the last 30 days across US retailers. Most land around ${sum.peakHour != null ? hourLabel(sum.peakHour) : '—'}; stock typically lasts ${formatDuration(sum.typical)}, the shortest ${formatDuration(sum.shortest)}.</p></div>
-    <table><thead><tr><th>Retailer</th><th>Restocks</th><th>Usual hour</th><th>Typical time in stock</th></tr></thead><tbody>${bySource.map(({ s, sum: x }) => `<tr><td>${e(s.name)}</td><td>${x.count}</td><td>${hourLabel(x.peakHour)}</td><td>${formatDuration(x.typical)}</td></tr>`).join('')}</tbody></table>
-    <p class="sub">Data: each retailer's public availability, read every few minutes. Contact: <a href="mailto:${e(env.SUPPORT_EMAIL)}">${e(env.SUPPORT_EMAIL)}</a>.</p>` });
+  const bySource = sourcesOf('us').map((s) => ({ s, sum: d.summarize(rows.filter((r) => r.source === s.id)) })).filter((x) => x.sum.count);
+  return page(env, T, { title: T.press.title(env.BRAND_NAME), description: T.press.h1, path: '/press',
+    body: `<div class="answer"><h1>${e(T.press.h1)}</h1><p class="lede">${e(T.press.lede(sum.count, T.f.hour(sum.peakHour), T.f.dur(sum.typical), T.f.dur(sum.shortest)))}</p></div>
+    <table><thead><tr><th>${e(T.th.retailer)}</th><th>${e(T.th.restocks)}</th><th>${e(T.th.usualHour)}</th><th>${e(T.th.typical)}</th></tr></thead><tbody>${bySource.map(({ s, sum: x }) => `<tr><td>${e(s.name)}</td><td>${x.count}</td><td>${e(T.f.hour(x.peakHour))}</td><td>${e(T.f.dur(x.typical))}</td></tr>`).join('')}</tbody></table>
+    <p class="sub">${e(T.press.data)} <a href="mailto:${e(env.SUPPORT_EMAIL)}">${e(env.SUPPORT_EMAIL)}</a>.</p>` });
 }
 
-export const legal = (env, kind) => page(env, { title: kind === 'terms' ? 'Terms' : 'Privacy', description: kind, path: `/${kind}`, noindex: false,
+export const legal = (env, kind) => page(env, t('us'), { title: kind === 'terms' ? 'Terms' : 'Privacy', description: kind, path: `/${kind}`,
   body: kind === 'terms'
-    ? `<div class="prose"><h1>Terms</h1><p>${e(env.BRAND_NAME)} sends stock alerts; it never buys products for you. Stock data comes from retailers' public availability and can be wrong or late: always confirm with the retailer. Alerts are sold for 30 days and renew unless cancelled; cancel in 2 clicks from your account. [Legal entity, address and governing law: to be completed by the founder.]</p></div>`
-    : `<div class="prose"><h1>Privacy</h1><p>We store your email, the alerts you set, your notification channels and your payments. One cookie keeps you signed in. Visit measurement uses no cookie: a per-tab id lives in your browser's session storage and is deleted when you close the tab. A 2-hour link between a Safari visit and the Home Screen app is made only if you install it. We never sell data. Contact: ${e(env.SUPPORT_EMAIL)}. [Controller details: to be completed by the founder.]</p></div>` });
+    ? `<div class="prose"><h1>Terms</h1><p>${e(env.BRAND_NAME)} sends stock and lottery alerts; it never buys products for you. Stock data comes from retailers' public availability and can be wrong or late: always confirm with the retailer. Alerts are sold for 30 days and renew unless cancelled; cancel in 2 clicks from your account. [Legal entity, address and governing law: to be completed by the founder.]</p></div>`
+    : `<div class="prose"><h1>Privacy</h1><p>We store your email, the alerts you set, your notification channels and your payments. One cookie keeps you signed in. Visit measurement uses no cookie: a per-tab id lives in your browser's session storage and is deleted when you close the tab. We never sell data. Contact: ${e(env.SUPPORT_EMAIL)}. [Controller details: to be completed by the founder.]</p></div>` });
+
+export function notFound(env, cc = 'us') {
+  const T = t(cc);
+  const r = page(env, T, { title: T.notFound.title, description: '', path: '/404', noindex: true, body: `<div class="answer"><h1>${e(T.notFound.h1)}</h1><p class="lede">${T.notFound.lede}</p></div>` });
+  return new Response(r.body, { status: 404, headers: r.headers });
+}

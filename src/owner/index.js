@@ -15,7 +15,7 @@ export function ownerAllowed(env, req, url) {
 
 const shell = (title, body, key) => new Response(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
 <title>${e(title)}</title><link rel="stylesheet" href="/site.css"></head><body class="owner"><main class="wrap">
-<p class="crumbs"><a href="/owner/monitor${key}">Surveillance</a> · <a href="/owner/marketing${key}">Marketing</a> · <a href="/owner/bakeoff${key}">Test des sources</a> · <a href="/">Site</a></p>${body}</main></body></html>`,
+<p class="crumbs"><a href="/owner/monitor${key}">Surveillance</a> · <a href="/owner/marketing${key}">Marketing</a> · <a href="/owner/bakeoff${key}">Test des sources</a> · <a href="/owner/lottery${key}">Tirages Japon</a> · <a href="/">Site</a></p>${body}</main></body></html>`,
 { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
 
 const SWITCHES = [

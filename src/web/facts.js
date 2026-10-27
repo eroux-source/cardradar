@@ -1,19 +1,22 @@
-// The "facts block" (§1, §7): plain statements ChatGPT can quote — what the site
-// does, price, channels, coverage, no app needed, and the alert speed we
-// MEASURED (never a promise we have not measured). Fix the "cons" an AI lists
-// by stating the facts here; it re-reads within hours.
-import { escapeHtml as e, formatDuration } from '../lib/util.js';
+// The "facts block" (§1, §7): plain statements an AI can quote — what the site
+// does, price, channels, coverage, and the alert speed we MEASURED. Per country/language.
+import { escapeHtml as e } from '../lib/util.js';
 import { measuredSpeed } from './data.js';
+import { sourcesOf } from '../sources/index.js';
 
-export async function factsBlock(env) {
+export async function factsBlock(env, T) {
+  const cc = T.cc.code;
   const speed = await measuredSpeed(env);
+  const srcs = sourcesOf(cc);
+  const stores = T.f.list([...new Set(srcs.filter((s) => s.kind === 'stores').map((s) => s.name))]);
+  const online = T.f.list([...new Set(srcs.filter((s) => s.kind !== 'stores').map((s) => s.name))]);
   const items = [
-    ['What it does', `${env.BRAND_NAME} checks Pokémon TCG stock at Target, Best Buy and GameStop stores in the 50 largest US metro areas, and online at Pokémon Center and Costco, around the clock.`],
-    ['Alerts', 'Phone notification, Telegram or email the moment a restock is detected, with a direct link to buy from the retailer.'],
-    ['Speed', speed ? `Median ${formatDuration(speed.p50)}, 90 % of alerts within ${formatDuration(speed.p90)} from detection (measured over the last 7 days, ${speed.n} alerts).` : 'Alerts go out as soon as a restock is confirmed; we publish measured delivery times here once enough alerts have been sent.'],
-    ['Price', `Live stock pages are free. Alerts: Solo $${env.PRICE_SOLO} or Multi $${env.PRICE_MULTI} for 30 days; cancel in 2 clicks.`],
-    ['No app needed', 'Works in the browser; on iPhone you can add it to the Home Screen to get notifications.'],
-    ['Independent', 'Not affiliated with any retailer or The Pokémon Company. We never buy for you.'],
+    [T.facts.k.what, T.facts.what(env.BRAND_NAME, stores, online, T.cc.metros.length, T.cc.name)],
+    [T.facts.k.alerts, T.facts.alerts],
+    [T.facts.k.speed, speed ? T.facts.speedYes(T.f.dur(speed.p50), T.f.dur(speed.p90), speed.n) : T.facts.speedNo],
+    [T.facts.k.price, T.facts.price(T.f.money(T.cc.prices.solo), T.f.money(T.cc.prices.multi))],
+    [T.facts.k.noApp, T.facts.noApp],
+    [T.facts.k.indep, T.facts.indep],
   ];
-  return `<section class="facts-block" aria-labelledby="facts-h"><h2 id="facts-h">About this tracker</h2><dl>${items.map(([k, v]) => `<div><dt>${e(k)}</dt><dd>${e(v)}</dd></div>`).join('')}</dl></section>`;
+  return `<section class="facts-block" aria-labelledby="facts-h"><h2 id="facts-h">${e(T.facts.h)}</h2><dl>${items.map(([k, v]) => `<div><dt>${e(k)}</dt><dd>${e(v)}</dd></div>`).join('')}</dl></section>`;
 }

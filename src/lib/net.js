@@ -25,8 +25,12 @@ export function parseProxies(list) {
 }
 
 let rr = 0;
-function pickProxy(env) {
-  const list = env.__proxies ??= parseProxies(env.PROXY_LIST);
+// Proxies per country: PROXY_LIST_UK, PROXY_LIST_JP… (retailers geo-block foreign IPs); PROXY_LIST = US/default.
+const COUNTRY_OF = (source) => (/_(uk|ca|au|jp|de|fr|nl|it|es)$/.exec(source)?.[1] ?? '');
+function pickProxy(env, source = '') {
+  const cc = COUNTRY_OF(source).toUpperCase();
+  env.__proxies ??= {};
+  const list = env.__proxies[cc] ??= parseProxies((cc && env[`PROXY_LIST_${cc}`]) || env.PROXY_LIST);
   return list.length ? list[rr++ % list.length] : null;
 }
 
@@ -36,7 +40,7 @@ function pickProxy(env) {
  */
 export async function sourceFetch(env, source, url, { method = 'GET', headers = {}, body, useProxy = true, timeoutMs = 20000 } = {}) {
   const h = { 'user-agent': UA, 'accept-language': 'en-US,en;q=0.9', 'accept-encoding': 'identity', ...headers };
-  const proxy = useProxy && !env.__noProxy && env.__settings?.['budget.proxy'] !== 'off' ? pickProxy(env) : null;
+  const proxy = useProxy && !env.__noProxy && env.__settings?.['budget.proxy'] !== 'off' ? pickProxy(env, source) : null;
   const res = proxy
     ? await viaProxy(proxy, url, { method, headers: h, body, timeoutMs })
     : await fetch(url, { method, headers: h, body, signal: AbortSignal.timeout(timeoutMs) });

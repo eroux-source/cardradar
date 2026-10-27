@@ -16,7 +16,7 @@ async function storesAround(env, zip) {
 }
 
 export default {
-  id: 'bestbuy', name: 'Best Buy', kind: 'stores',
+  id: 'bestbuy', name: 'Best Buy', kind: 'stores', country: 'us',
   enabled: (env) => Boolean(env.BESTBUY_API_KEY),
   queries: ['pokemon trading card', 'pokemon elite trainer box', 'pokemon booster'],
 

@@ -7,20 +7,23 @@ import { sourceText, nextData, jsonLdProducts, offerAvailability } from '../lib/
 
 const BASE = 'https://www.pokemoncenter.com';
 
-export default {
-  id: 'pokemoncenter', name: 'Pokémon Center', kind: 'online',
-  queries: ['/category/trading-card-game', '/category/trading-card-game?page=2', '/category/trading-card-game?page=3', '/category/new-releases'],
+/** Same platform in every country, under a locale prefix ('' for the US, '/en-gb', '/en-ca', '/en-au'). */
+export function pokemonCenter({ id, country, prefix }) {
+  const P = (path) => `${prefix}${path}`;
+  return {
+  id, name: 'Pokémon Center', kind: 'online', country,
+  queries: [P('/category/trading-card-game'), P('/category/trading-card-game?page=2'), P('/category/new-releases')],
   titleNeedsPokemon: false,
 
   async search(env, path) {
-    const html = await sourceText(env, 'pokemoncenter', `${BASE}${path}`);
+    const html = await sourceText(env, id, `${BASE}${path}`);
     return (nextData(html)?.props?.initialState?.search?.results?.products ?? []).filter((p) => p.code && p.name).map((p) => ({
-      sourceSku: p.code, title: p.name, price: p.purchasePrice?.amount ?? null, url: `${BASE}/product/${p.code}`,
+      sourceSku: p.code, title: p.name, price: p.purchasePrice?.amount ?? null, url: `${BASE}${P(`/product/${p.code}`)}`, image: p.images?.[0]?.url ?? p.image?.url ?? null,
     }));
   },
 
   async checkOnline(env, listing) {
-    const html = await sourceText(env, 'pokemoncenter', `${BASE}/product/${listing.source_sku}`, { headers: { referer: `${BASE}/category/trading-card-game` } });
+    const html = await sourceText(env, id, `${BASE}${P(`/product/${listing.source_sku}`)}`, { headers: { referer: `${BASE}${P('/category/trading-card-game')}` } });
     if (!html) return { inStock: false, gone: true };
     const p = jsonLdProducts(html)[0];
     const a = offerAvailability(p);
@@ -29,3 +32,9 @@ export default {
     return { inStock: a === 'in', price: offers?.price ? Number(offers.price) : null };
   },
 };
+}
+
+export default pokemonCenter({ id: 'pokemoncenter', country: 'us', prefix: '' });
+export const pokemonCenterUK = pokemonCenter({ id: 'pokemoncenter_uk', country: 'uk', prefix: '/en-gb' });
+export const pokemonCenterCA = pokemonCenter({ id: 'pokemoncenter_ca', country: 'ca', prefix: '/en-ca' });
+export const pokemonCenterAU = pokemonCenter({ id: 'pokemoncenter_au', country: 'au', prefix: '/en-au' });

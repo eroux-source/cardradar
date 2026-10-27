@@ -30,15 +30,18 @@ export async function planMinute(env) {
 
     // discovery
     const lastDisc = Number(s[`discovery.${src.id}`] ?? 0);
-    if (t - lastDisc > DISCOVERY_EVERY) {
+    if (src.kind !== 'lottery' && t - lastDisc > DISCOVERY_EVERY) {
       const queries = [...src.queries, ...((await src.dynamicQueries?.(env)) ?? [])];
       for (const q of queries) tasks.push({ t: src.snapshot ? 'snapshot' : 'search', source: src.id, q });
       await env.DB.prepare('INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at')
         .bind(`discovery.${src.id}`, String(t), t).run();
     }
 
-    // snapshot sources: one page covers many listings → re-run queries as the "rest" lane
-    if (src.snapshot) {
+    // lottery sources (Japan): read the shop's lottery page every `every` minutes
+    if (src.kind === 'lottery') {
+      const every = src.everyMinutes ?? 10;
+      if (Math.floor(t / 60e3) % every === 0) for (const q of src.queries) tasks.push({ t: 'lottery', source: src.id, q });
+    } else if (src.snapshot) {
       const every = Math.max(1, Math.floor(src.queries.length / Math.max(1, budget)));
       if (Math.floor(t / 60e3) % every === 0) for (const q of src.queries.slice(0, budget)) tasks.push({ t: 'snapshot', source: src.id, q });
     } else {

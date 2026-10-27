@@ -2,11 +2,11 @@
 import { one, run, now } from '../lib/db.js';
 import { classify } from '../lib/catalog.js';
 import { slugify } from '../lib/util.js';
-import { metros } from '../data/metros.js';
+import { COUNTRIES } from '../data/countries.js';
 import { SOURCES } from '../sources/index.js';
 
 // Keep sealed TCG products, drop accessories and apparel that mention "TCG".
-const KEEP = /(trading card|tcg|booster|elite trainer|etb|collection|tin|blister|build & battle|battle deck|card game)/i;
+const KEEP = /(trading card|tcg|booster|elite trainer|etb|collection|tin|blister|build & battle|battle deck|card game|sammelkarten|top-trainer|display|coffret|cartes?|kaarten|carte|cartas|sobres|buste|set allenatore|caja de entrenador|拡張パック|ハイクラスパック|box)/i;
 const DROP = /\b(binder|sleeves?|deck box|playmat|portfolio|plush|t-shirt|shirt|hoodie|pin|dice|card case|toploader|storage|album|keychain|sticker|puzzle|squishmallow|figure(?! collection))\b/i;
 
 export function keepItem(source, item) {
@@ -16,7 +16,9 @@ export function keepItem(source, item) {
 }
 
 /** Upsert set + sku + listing; create the lanes the crawler will read. Returns listing id. */
-export async function upsertListing(env, source, item, metroSlugs = metros.map((m) => m.slug)) {
+export const countryOf = (source) => SOURCES[source]?.country ?? 'us';
+
+export async function upsertListing(env, source, item, metroSlugs = (COUNTRIES[countryOf(source)] ?? COUNTRIES.us).metros.map((m) => m.id)) {
   const c = classify(item.title);
   const t = now();
   let setId = null;
@@ -28,10 +30,10 @@ export async function upsertListing(env, source, item, metroSlugs = metros.map((
     ON CONFLICT(slug) DO UPDATE SET active = 1, set_id = COALESCE(skus.set_id, excluded.set_id), msrp = COALESCE(skus.msrp, excluded.msrp)`,
     c.skuSlug || slugify(item.title), c.name, setId, c.type, item.price ?? null, t);
   const sku = await one(env, 'SELECT id FROM skus WHERE slug = ?', c.skuSlug || slugify(item.title));
-  await run(env, `INSERT INTO listings (sku_id, source, source_sku, title, url, price, active, last_seen) VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+  await run(env, `INSERT INTO listings (sku_id, source, source_sku, title, url, price, active, last_seen, country, image) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
     ON CONFLICT(source, source_sku) DO UPDATE SET title = excluded.title, url = COALESCE(excluded.url, listings.url),
-      price = COALESCE(excluded.price, listings.price), active = 1, last_seen = excluded.last_seen`,
-    sku.id, source, String(item.sourceSku), item.title, item.url ?? null, item.price ?? null, t);
+      price = COALESCE(excluded.price, listings.price), image = COALESCE(excluded.image, listings.image), active = 1, last_seen = excluded.last_seen`,
+    sku.id, source, String(item.sourceSku), item.title, item.url ?? null, item.price ?? null, t, countryOf(source), item.image ?? null);
   const listing = await one(env, 'SELECT id FROM listings WHERE source = ? AND source_sku = ?', source, String(item.sourceSku));
 
   if (SOURCES[source].kind === 'stores') {
@@ -47,18 +49,18 @@ export async function upsertListing(env, source, item, metroSlugs = metros.map((
 export async function upsertStore(env, source, s, metro) {
   const id = `${source}:${s.id}`;
   const slug = slugify(`${SOURCES[source].name} ${s.name} ${s.city ?? ''} ${s.state ?? ''} ${s.id}`);
-  await run(env, `INSERT INTO stores (id, source, slug, name, address, city, state, zip, lat, lng, metro, online)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+  await run(env, `INSERT INTO stores (id, source, slug, name, address, city, state, zip, lat, lng, metro, online, country)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
     ON CONFLICT(id) DO UPDATE SET name = excluded.name, address = COALESCE(excluded.address, stores.address),
       city = COALESCE(excluded.city, stores.city), state = COALESCE(excluded.state, stores.state), zip = COALESCE(excluded.zip, stores.zip),
       lat = COALESCE(excluded.lat, stores.lat), lng = COALESCE(excluded.lng, stores.lng), metro = COALESCE(stores.metro, excluded.metro)`,
-    id, source, slug, s.name, s.address ?? null, s.city ?? null, s.state ?? null, s.zip ?? null, s.lat ?? null, s.lng ?? null, metro);
+    id, source, slug, s.name, s.address ?? null, s.city ?? null, s.state ?? null, s.zip ?? null, s.lat ?? null, s.lng ?? null, metro, countryOf(source));
   return id;
 }
 
 export async function onlineStore(env, source) {
   const id = `${source}:online`;
-  await run(env, `INSERT INTO stores (id, source, slug, name, online) VALUES (?, ?, ?, ?, 1) ON CONFLICT(id) DO NOTHING`,
-    id, source, `${source}-online`, `${SOURCES[source].name} online`);
+  await run(env, `INSERT INTO stores (id, source, slug, name, online, country) VALUES (?, ?, ?, ?, 1, ?) ON CONFLICT(id) DO NOTHING`,
+    id, source, `${source}-online`, `${SOURCES[source].name} online`, countryOf(source));
   return id;
 }

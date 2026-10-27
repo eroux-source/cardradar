@@ -22,13 +22,22 @@ export async function hmacHex(secret, body) {
   return hex(await crypto.subtle.sign('HMAC', key, enc.encode(body)));
 }
 
-const planIdFor = (env, plan) => (plan === 'multi' ? env.WHOP_PLAN_MULTI : env.WHOP_PLAN_SOLO);
-const planFromId = (env, id) => (id === env.WHOP_PLAN_MULTI ? 'multi' : id === env.WHOP_PLAN_SOLO ? 'solo' : null);
+// One Whop plan per plan × currency: WHOP_PLAN_SOLO (USD), WHOP_PLAN_SOLO_GBP, WHOP_PLAN_MULTI_EUR, …
+// Missing local plan → falls back to the USD plan (Whop converts at checkout).
+const CURRENCIES = ['USD', 'GBP', 'CAD', 'AUD', 'EUR', 'JPY'];
+const planIdFor = (env, plan, cur = 'USD') => {
+  const k = `WHOP_PLAN_${plan === 'multi' ? 'MULTI' : 'SOLO'}`;
+  return (cur !== 'USD' && env[`${k}_${cur}`]) || env[k];
+};
+const planFromId = (env, id) => {
+  for (const p of ['solo', 'multi']) for (const c of CURRENCIES) if (id && planIdFor(env, p, c) === id && (c === 'USD' || env[`WHOP_PLAN_${p.toUpperCase()}_${c}`])) return p;
+  return null;
+};
 
 /** Where to send the buyer. The pass is linked to THIS email (email-less checkout is a bug). */
-export function checkoutUrl(env, { plan, email }) {
+export function checkoutUrl(env, { plan, email, currency = 'USD' }) {
   if (env.BILLING_PROVIDER === 'fake') return `${env.BASE_URL}/dev/fake-checkout?plan=${plan}&email=${encodeURIComponent(email)}`;
-  const u = new URL(`https://whop.com/checkout/${planIdFor(env, plan)}`);
+  const u = new URL(`https://whop.com/checkout/${planIdFor(env, plan, currency)}`);
   u.searchParams.set('email', email); // confirm param name with Whop
   return u.toString();
 }
