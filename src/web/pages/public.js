@@ -13,6 +13,7 @@ import { t } from '../../i18n/index.js';
 import * as d from '../data.js';
 import { page, home as homePath, base, chip, crumbs, answers, hourChart, placeRows, latestTable, cityGrid, retailerGrid, alertCta, placeLabel, shopsText, productGrid } from '../html.js';
 import { factsBlock } from '../facts.js';
+import { stockPage } from './stock.js';
 
 const asOf = (T, ts) => (ts ? T.asOf(T.f.when(ts)) : T.waiting);
 
@@ -23,42 +24,22 @@ const homeAlternates = (live) => Object.fromEntries(countryList.filter((c) => li
 export async function home(env, cc) {
   const T = t(cc);
   const live = await d.liveCountries(env);
-  const [c, skus, latest, all30] = await Promise.all([d.counts(env, cc), d.allSkus(env, cc), d.restocks(env, cc, '1=1', [], 30, 10), d.restocks(env, cc)]);
-  const sum = d.summarize(all30);
-  const last = latest[0];
+  const skus = live.has(cc) ? await d.allSkus(env, cc) : [];
   const shops = shopsText(T, cc);
-  const hasData = live.has(cc);
-  const lede = !hasData ? T.home.soon(T.cc.name)
-    : c.stores ? T.home.lede(c.stores_in, c.stores) + (last ? T.home.latest(e(last.sku_name), e(placeLabel(T, last)), T.f.ago(last.started_at)) : '') + (sum.typical ? T.home.typical(T.f.dur(sum.typical)) : '')
-      : T.home.fallback(shops);
-  const head = `<div class="answer"><h1>${e(T.home.h1)}</h1><p class="lede">${lede}</p><p class="asof">${e(asOf(T, c.last_check))}</p></div>`;
-  const I = T.intro;
-  const hasStores = sourcesOf(cc).some((x) => x.kind === 'stores');
-  const faq = answers(I.faq(shops, T.f.money(T.cc.prices.solo)), I.faqH);
-  // Layout for a first-time visitor: what this is → how it works → the products → the rest.
-  const body = !hasData ? `${head}${await factsBlock(env, T)}` : `
-  <section class="intro">
-    <h1>${e(I.h1)}</h1>
-    <p class="lede">${e(I.what(shops))}</p>
-    <p class="intro-cta"><a class="btn" href="#products">${e(I.seeStock)}</a> <a class="btn ghost" href="/alerts?c=${cc}" data-ev="sheet_open">${e(I.freeAlert)}</a></p>
-    ${c.stores ? `<p class="now"><span class="dot" aria-hidden="true"></span>${I.now(c.stores_in, c.stores, e(T.f.ago(c.last_check)))}</p>` : ''}
-  </section>
-  <section class="how" aria-labelledby="how-h"><h2 id="how-h">${e(I.howH)}</h2><ol>${I.steps.map((x) => `<li>${e(x)}</li>`).join('')}</ol></section>
-  <section id="products" aria-labelledby="p-h"><h2 id="p-h">${e(I.productsH)}</h2><p class="sub">${e(I.productsSub)}</p>${productGrid(T, skus)}</section>
-  ${latest.length ? `<section aria-labelledby="l-h"><h2 id="l-h">${e(I.latestH)}</h2>${latestTable(T, latest.slice(0, 5))}<p><a href="${base(cc)}/restocks">${e(I.allTimes)}</a></p></section>` : ''}
-  ${alertCta(env, T)}
-  <section aria-labelledby="r-h"><h2 id="r-h">${e(I.placesH)}</h2>${retailerGrid(T)}
-    ${hasStores ? `<details class="city-pick"><summary>${e(T.sku.allCities(T.cc.metros.length))}</summary>${cityGrid(T, await d.metroTotals(env, cc), (m) => `${base(cc)}/restocks/${m.slug}`)}</details>` : ''}</section>
-  ${faq.html}
-  ${await factsBlock(env, T)}`;
-  return page(env, T, { title: T.home.title(env.BRAND_NAME), description: T.home.desc(shops), path: homePath(cc), body, noindex: !hasData, alternates: homeAlternates(live), live,
-    jsonLd: [...(hasData ? [faq.ld] : []), { '@context': 'https://schema.org', '@type': 'WebSite', name: env.BRAND_NAME, url: `${env.BASE_URL}${homePath(cc)}`, inLanguage: T.cc.locale },
-      { '@context': 'https://schema.org', '@type': 'Organization', name: env.BRAND_NAME, url: env.BASE_URL, logo: `${env.BASE_URL}/icon.svg`, email: env.SUPPORT_EMAIL },
-      { '@context': 'https://schema.org', '@type': 'WebApplication', name: env.BRAND_NAME, url: `${env.BASE_URL}${homePath(cc)}`, applicationCategory: 'ShoppingApplication', operatingSystem: 'Any (web browser)',
-        description: T.home.desc(shops), inLanguage: T.cc.locale,
-        offers: [{ '@type': 'Offer', name: 'Live stock pages', price: '0', priceCurrency: T.cc.currency },
-          { '@type': 'Offer', name: 'Solo alerts, 30 days', price: T.cc.prices.solo, priceCurrency: T.cc.currency },
-          { '@type': 'Offer', name: 'Multi alerts, 30 days', price: T.cc.prices.multi, priceCurrency: T.cc.currency }] }] });
+  const ld = [{ '@context': 'https://schema.org', '@type': 'WebSite', name: env.BRAND_NAME, url: `${env.BASE_URL}${homePath(cc)}`, inLanguage: T.cc.locale },
+    { '@context': 'https://schema.org', '@type': 'Organization', name: env.BRAND_NAME, url: env.BASE_URL, logo: `${env.BASE_URL}/icon.svg`, email: env.SUPPORT_EMAIL },
+    { '@context': 'https://schema.org', '@type': 'WebApplication', name: env.BRAND_NAME, url: `${env.BASE_URL}${homePath(cc)}`, applicationCategory: 'ShoppingApplication', operatingSystem: 'Any (web browser)',
+      description: T.home.desc(shops), inLanguage: T.cc.locale,
+      offers: [{ '@type': 'Offer', name: 'Live stock pages + daily email alert', price: '0', priceCurrency: T.cc.currency },
+        { '@type': 'Offer', name: 'Solo alerts, 30 days', price: T.cc.prices.solo, priceCurrency: T.cc.currency },
+        { '@type': 'Offer', name: 'Multi alerts, 30 days', price: T.cc.prices.multi, priceCurrency: T.cc.currency }] }];
+  // Like InStock Radar: the home IS the live stock of the product people chase most (hardest to find first)
+  if (skus.length) {
+    const k = await d.skuBySlug(env, skus[0].slug);
+    return stockPage(env, T, cc, k, { isHome: true, live, alternates: homeAlternates(live), extraLd: ld });
+  }
+  const body = `<div class="answer"><h1>${e(T.home.h1)}</h1><p class="lede">${T.home.soon(T.cc.name)}</p></div>${await factsBlock(env, T)}`;
+  return page(env, T, { title: T.home.title(env.BRAND_NAME), description: T.home.desc(shops), path: homePath(cc), body, noindex: true, alternates: homeAlternates(live), live, jsonLd: ld });
 }
 
 /* ---------- product ---------- */
@@ -67,53 +48,21 @@ export async function sku(env, cc, slug, metroSlug = null) {
   const k = await d.skuBySlug(env, slug);
   const metro = metroSlug ? metroInCountry(cc, metroSlug) : null;
   if (!k || (metroSlug && !metro) || !(await d.skuInCountry(env, k.id, cc))) return null;
-  const [rows, rs, listings] = await Promise.all([
-    d.availability(env, cc, k.id, metro?.id),
-    d.restocks(env, cc, metro ? 'r.sku_id = ? AND (s.online = 1 OR s.metro = ?)' : 'r.sku_id = ?', metro ? [k.id, metro.id] : [k.id]),
-    d.listingsOf(env, k.id, cc),
-  ]);
-  const sum = d.summarize(rs);
-  const phys = rows.filter((r) => !r.online); const inStores = phys.filter((r) => r.in_stock); const online = rows.filter((r) => r.online && r.in_stock);
-  const place = metro ? metro.name : T.cc.name;
-  const lastCheck = rows.reduce((m, r) => Math.max(m, r.seen_at ?? 0), 0);
-  const minPrice = Math.min(...listings.map((l) => l.price || Infinity));
-  const onlineList = T.f.list(online.map((o) => sourceName(o.source)));
+  return stockPage(env, T, cc, k, { metro });
+}
 
-  const parts = [];
-  if (phys.length) parts.push(inStores.length ? T.sku.inStores(inStores.length, phys.length, e(place), e(placeLabel(T, inStores[0])), e(inStores[0].city ?? '')) : T.sku.outStores(phys.length, e(place)));
-  parts.push(online.length ? T.sku.onlineAt(e(onlineList)) : T.sku.outOnline);
-  let lede = rows.length ? T.sku.is(e(k.name), parts.join(T.sku.joinParts)) : T.sku.new(e(k.name));
-  if (rs[0]) lede += T.sku.lastLine(e(placeLabel(T, rs[0])), T.f.ago(rs[0].started_at), rs[0].ended_at ? T.f.dur(rs[0].ended_at - rs[0].started_at) : null);
-
-  const path = metro ? `${base(cc)}/${k.slug}/${metro.slug}` : `${base(cc)}/${k.slug}`;
-  const c = crumbs(env, [{ name: T.sku.crumbLive, path: homePath(cc) }, ...(metro ? [{ name: k.name, path: `${base(cc)}/${k.slug}` }, { name: metro.name, path }] : [{ name: k.name, path }])]);
-  const a = answers([
-    { q: T.sku.q1(k.name), a: inStores.length || online.length ? T.sku.a1yes([...online.map((o) => placeLabel(T, o)), ...inStores.slice(0, 3).map((s) => `${placeLabel(T, s)} (${s.city ?? ''})`)].join(', ')) : T.sku.a1no(place) },
-    { q: T.sku.q2(k.name), a: sum.count ? T.sku.a2yes(sum.count, metro?.name, T.f.hour(sum.peakHour), sum.peakDay != null ? T.f.day(sum.peakDay) : null) : T.sku.a2no },
-    { q: T.sku.q3(k.name), a: sum.typical ? T.sku.a3yes(T.f.dur(sum.typical), T.f.dur(sum.shortest)) : T.sku.a3no },
-  ], 'FAQ');
-
-  const byRetailer = sourcesOf(cc).map((s) => {
-    const mine = rows.filter((r) => r.source === s.id); if (!mine.length) return '';
-    const n = mine.filter((r) => r.in_stock).length;
-    return `<tr><td><a href="${base(cc)}/retailer/${s.id}">${e(s.name)}</a></td><td>${s.kind !== 'stores' ? (n ? `<strong>${e(T.sku.inOnline)}</strong>` : e(T.sku.outOnlineCell)) : `${n ? '<strong>' : ''}${e(T.sku.ofStores(n, mine.length))}${n ? '</strong>' : ''}`}</td></tr>`;
-  }).join('');
-  const buy = listings.filter((l) => l.url).slice(0, 6).map((l) => `<a class="btn ghost small" href="${e(l.url)}" rel="nofollow noopener sponsored">${e(sourceName(l.source))}${l.price ? ` · ${e(T.f.money(l.price))}` : ''}</a>`).join(' ');
-
-  const body = `${c.html}
-  <div class="hero"><div class="answer"><h1>${e(T.sku.h1(k.name, metro?.name))}</h1><p class="lede">${lede}</p>
-  <p class="asof">${e(asOf(T, lastCheck))}${Number.isFinite(minPrice) ? e(T.sku.from(T.f.money(minPrice))) : ''}</p>${buy ? `<p class="buy">${buy}</p>` : ''}</div>
-  ${k.image ? `<figure class="hero-photo"><img src="${e(k.image)}" alt="${e(k.name)}" referrerpolicy="no-referrer"></figure>` : ''}</div>
-  ${alertCta(env, T, { sku: k, metro: metro?.slug ?? '' })}
-  ${byRetailer ? `<section aria-labelledby="b-h"><h2 id="b-h">${e(T.home.byRetailer)}</h2><table><thead><tr><th>${e(T.th.retailer)}</th><th>${e(T.th.rightNow)}</th></tr></thead><tbody>${byRetailer}</tbody></table></section>` : ''}
-  <section aria-labelledby="w-h"><h2 id="w-h">${e(T.sku.whereIs(metro?.name))}</h2>${placeRows(T, rows, { limit: metro ? 150 : 30 })}</section>
-  <section aria-labelledby="h-h"><h2 id="h-h">${e(T.sku.when)}</h2>${hourChart(T, sum, k.name)}<p><a href="${base(cc)}/${e(k.slug)}/restocks">${e(T.sku.history)}</a></p></section>
-  ${a.html}
-  ${metro ? '' : `<section aria-labelledby="c-h"><h2 id="c-h">${e(T.sku.byCity(k.name))}</h2><details><summary>${e(T.sku.allCities(T.cc.metros.length))}</summary>${cityGrid(T, await d.metroTotals(env, cc, k.id), (m) => `${base(cc)}/${k.slug}/${m.slug}`)}</details></section>`}
-  ${await factsBlock(env, T)}`;
-  const productLd = { '@context': 'https://schema.org', '@type': 'Product', name: k.name, ...(k.image ? { image: k.image } : {}),
-    ...(Number.isFinite(minPrice) ? { offers: { '@type': 'AggregateOffer', priceCurrency: T.cc.currency, lowPrice: minPrice, offerCount: listings.length, availability: inStores.length || online.length ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' } } : {}) };
-  return page(env, T, { title: T.sku.title(k.name, metro?.name), description: T.sku.desc(k.name, inStores.length, phys.length, place, online.length ? onlineList : null), path, body, jsonLd: [c.ld, a.ld, productLd], noindex: !rows.length && !rs.length });
+/** /{cc}/search?q= : one clear match → its page; else the matching products (or all of them). */
+export async function search(env, cc, q) {
+  const T = t(cc); const S = T.sv;
+  const skus = await d.allSkus(env, cc);
+  const strip = (x) => String(x ?? '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+  const words = strip(q).replace(/\betb\b/g, 'elite trainer box').split(/[^a-z0-9]+/).filter((w) => w.length > 1 && !['pokemon', 'tcg', 'the'].includes(w));
+  const scored = skus.map((k) => ({ k, n: words.filter((w) => strip(k.name).includes(w)).length })).filter((x) => x.n).sort((a, b) => b.n - a.n);
+  const exact = skus.find((k) => strip(k.name) === strip(q).trim());
+  if (exact || (scored.length && (scored.length === 1 || scored[0].n > scored[1].n))) return Response.redirect(`${env.BASE_URL}${base(cc)}/${(exact ?? scored[0].k).slug}`, 302);
+  const list = scored.length ? scored.map((x) => x.k) : skus;
+  return page(env, T, { title: S.matches(q), description: S.matches(q), path: `${base(cc)}/search`, noindex: true,
+    body: `<div class="answer"><h1>${e(scored.length ? S.matches(q) : S.noMatch(q))}</h1></div>${productGrid(T, list)}` });
 }
 
 /* ---------- restock-time pages ---------- */

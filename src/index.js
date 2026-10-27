@@ -127,6 +127,7 @@ async function route(req, env, ctx) {
   if (COUNTRIES[cc]) {
     if (seg.length === 1) return pub.home(env, cc);
     if (seg[1] === 'pricing' && seg.length === 2) return pub.pricing(env, cc);
+    if (seg[1] === 'search' && seg.length === 2) return pub.search(env, cc, url.searchParams.get('q') ?? '');
     let res = null;
     if (seg[1] === 'restocks') res = seg[2] ? await pub.cityRestocks(env, cc, seg[2]) : await pub.allRestocks(env, cc);
     else if (seg[1] === 'cities' && seg.length === 2) res = await pub.cities(env, cc);

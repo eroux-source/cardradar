@@ -54,7 +54,7 @@ export const storeBySlug = (env, slug) => one(env, 'SELECT * FROM stores WHERE s
 export const listingsOf = (env, skuId, cc) => all(env, 'SELECT * FROM listings WHERE sku_id = ? AND country = ? AND active = 1 ORDER BY source', skuId, cc);
 
 export const availability = (env, cc, skuId, metro = null) => all(env, `
-  SELECT s.*, k.in_stock, k.qty, k.seen_at, k.price, l.source AS l_source, l.url,
+  SELECT s.*, k.in_stock, k.qty, k.seen_at, k.in_since, k.price, l.source AS l_source, l.url,
     (SELECT MAX(started_at) FROM restocks r WHERE r.listing_id = k.listing_id AND r.store_id = k.store_id) AS last_restock
   FROM stock k JOIN listings l ON l.id = k.listing_id JOIN stores s ON s.id = k.store_id
   WHERE l.sku_id = ? AND s.country = ? ${metro ? 'AND (s.online = 1 OR s.metro = ?)' : ''}

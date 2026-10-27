@@ -33,6 +33,13 @@
     charts.forEach((c) => io.observe(c));
   } else charts.forEach((c) => c.classList.add('seen'));
 
+  /* ---------- product finder + city picker ---------- */
+  $$('[data-find]').forEach((inp) => inp.addEventListener('change', () => {
+    const o = [...(inp.list?.options ?? [])].find((x) => x.value === inp.value);
+    if (o?.dataset.href) location.href = o.dataset.href;
+  }));
+  $$('select[data-nav]').forEach((sel) => sel.addEventListener('change', () => { location.href = sel.value; }));
+
   /* ---------- phone notifications ---------- */
   const b64 = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (s.length % 4)) % 4)), (c) => c.charCodeAt(0));
   async function enablePush(vapid) {
