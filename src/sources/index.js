@@ -24,7 +24,9 @@ export const SOURCES = Object.fromEntries([
   bestbuyCA, // its JSON APIs may answer without a Canadian address: tried directly, rests if blocked
   needsLocalProxy(pokemonCenterCA),
   needsLocalProxy(kmartAU), needsLocalProxy(pokemonCenterAU),
-  ...SHOPS.map(shopify), // independent Shopify card shops, every country, no proxy needed
+  // independent Shopify card shops, every country (through the relay + proxy). Shared budget:
+  // about 15 searches a minute in total, whatever the number of shops (proxy data is paid per GB).
+  ...SHOPS.map((x) => ({ ...shopify(x), everyMinutes: Math.max(3, Math.ceil(SHOPS.length / 15)) })),
 ].map((s) => [s.id, s]));
 export const sourceList = Object.values(SOURCES);
 export const sourceName = (id) => SOURCES[id]?.name ?? id;
