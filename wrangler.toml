@@ -80,10 +80,8 @@ crons = ["* * * * *"]
 # Node relay for proxied requests (Workers cannot tunnel TLS through an HTTP proxy)
 [[containers]]
 class_name = "Relay"
-image = "./relay/Dockerfile"
-max_instances = 2
-instance_type = "lite"
 scheduling_policy = "durable_object"
+images = { relay = { dockerfile = "./relay/Dockerfile" } }
 
 [[durable_objects.bindings]]
 name = "RELAY"
