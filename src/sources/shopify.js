@@ -24,6 +24,14 @@ export function shopify({ id, name, domain, country, lang = 'en' }) {
     everyMinutes: 3, // one search every 3 min → each query re-read about every 18 min (proxy data is paid per GB)
     titleNeedsPokemon: lang === 'ja' ? false : undefined,
 
+    /** One product, for the restock watch: /products/<handle>.js (the storefront's own product JSON). */
+    async checkOnline(env, listing) {
+      const j = await sourceJson(env, id, `https://${domain}/products/${encodeURIComponent(listing.source_sku)}.js`, { headers: { accept: 'application/json' } });
+      if (!j) return { inStock: false, gone: true };
+      if (typeof j.available !== 'boolean') return null;
+      return { inStock: j.available, price: Number(j.price) ? Number(j.price) / 100 : null };
+    },
+
     async snapshot(env, q) {
       const u = `https://${domain}/search/suggest.json?${new URLSearchParams({ q, 'resources[type]': 'product', 'resources[limit]': '10', 'resources[options][unavailable_products]': 'last' })}`;
       const json = await sourceJson(env, id, u, { headers: { accept: 'application/json' } });

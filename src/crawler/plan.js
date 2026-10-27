@@ -16,7 +16,10 @@ export async function planMinute(env) {
   const hour = new Date(t).getUTCHours();
   const messages = [];
 
-  for (const src of enabledSources(env)) {
+  const enabled = enabledSources(env);
+  const shopCount = enabled.filter((x) => x.platform === 'shopify').length;
+  const shopBudget = await numSetting(env, 'budget.shops', 30);
+  for (const src of enabled) {
     const health = (await all(env, 'SELECT * FROM source_health WHERE source = ?', src.id))[0];
     // a blocked source rests 10 minutes before trying again
     if (health?.status === 'blocked' && t - (health.last_block_at ?? 0) < 10 * 60e3) continue;
@@ -44,7 +47,9 @@ export async function planMinute(env) {
       if (Math.floor(t / 60e3) % every === 0) for (const q of src.queries) tasks.push({ t: 'lottery', source: src.id, q });
     } else if (src.snapshot) {
       // one query every `everyMinutes`, rotating through the list (gentle on small shops)
-      const every = src.everyMinutes ?? 1; const minute = Math.floor(t / 60e3);
+      // shops share one budget (setting budget.shops, searches per minute in total)
+      const every = src.platform === 'shopify' ? Math.max(2, Math.ceil(shopCount / shopBudget)) : (src.everyMinutes ?? 1);
+      const minute = Math.floor(t / 60e3);
       const offset = [...src.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7) % every; // spread shops over the cycle
       if (src.queries.length && (minute + offset) % every === 0) tasks.push({ t: 'snapshot', source: src.id, q: src.queries[Math.floor((minute + offset) / every) % src.queries.length] });
     } else {
@@ -77,6 +82,15 @@ export async function planMinute(env) {
     // spread over the minute
     tasks.forEach((body, i) => messages.push({ body, delaySeconds: Math.floor((i * 60) / Math.max(1, tasks.length)) }));
   }
+
+  // Restock watch: every product that came back in stock in the last 48 h and has not sold out
+  // yet is re-read about every 2 minutes, so we measure how long a restock really lasts.
+  const watch = await all(env, `SELECT r.listing_id, r.source FROM restocks r JOIN lanes ln ON ln.listing_id = r.listing_id AND ln.metro = ''
+    JOIN stores s ON s.id = r.store_id AND s.online = 1
+    WHERE r.ended_at IS NULL AND r.started_at > ? AND ln.last_checked_at < ? GROUP BY r.listing_id ORDER BY ln.last_checked_at LIMIT ?`,
+    t - 48 * 3600e3, t - 110e3, await numSetting(env, 'budget.watch', 30));
+  const enabledIds = new Set(enabledSources(env).map((x) => x.id));
+  watch.filter((w) => enabledIds.has(w.source)).forEach((w, i, arr) => messages.push({ body: { t: 'online', source: w.source, listingId: w.listing_id, metro: '' }, delaySeconds: Math.floor((i * 60) / Math.max(1, arr.length)) }));
 
   for (let i = 0; i < messages.length; i += 100) await env.CRAWL_QUEUE.sendBatch(messages.slice(i, i + 100));
   return { tasks: messages.length };
