@@ -45,7 +45,11 @@ export async function sourceFetch(env, source, url, { method = 'GET', headers = 
     ? await viaProxy(proxy, url, { method, headers: h, body, timeoutMs })
     : await fetch(url, { method, headers: h, body, signal: AbortSignal.timeout(timeoutMs) });
   if (res.status === 404) return null;
-  if (!res.ok) throw new SourceError(source, res.status, url);
+  if (!res.ok) {
+    // diagnosis: who answered (proxy or site) and a hint of what it said
+    let hint = ''; try { hint = (await res.text()).replace(/\s+/g, ' ').slice(0, 80); } catch {}
+    throw new SourceError(source, res.status, url, `${proxy ? `via ${proxy.host}${MODE[proxy.host] ? ` (${MODE[proxy.host]})` : ''}` : 'direct'} server=${res.headers.get('server') ?? '?'}${res.headers.get('location') ? ` loc=${res.headers.get('location').slice(0, 60)}` : ''} «${hint}»`);
+  }
   return res;
 }
 
