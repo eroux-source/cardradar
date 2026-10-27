@@ -59,7 +59,12 @@ function knownSet(raw) {
 }
 
 /** Everything the catalogue needs from one retailer title. */
-export function classify(title) {
+// "Mega Evolution—Delta Reign", "Scarlet & Violet: Surging Sparks": the series name before a
+// dash or colon is not the set; drop it so "Delta Reign" is found (and not the base set).
+const SERIES_PREFIX = /\b(mega[- ]?evolution|mega[- ]?entwicklung|m[ée]ga[- ]?[ée]volution|megaevoluzione|megaevoluci[óo]n|scarlet\s*&\s*violet|sword\s*&\s*shield|karmesin\s*&\s*purpur|[ée]carlate\s*(et|&)\s*violet|scarlatto\s*e\s*violetto|escarlata\s*y\s*p[úu]rpura)\s*(\d+(\.\d+)?)?\s*[—–:|\-]\s*(?=\S)/i;
+
+export function classify(rawTitle) {
+  const title = String(rawTitle).replace(SERIES_PREFIX, '');
   const canonical = canonicalTitle(title);
   const type = skuType(canonical);
   const set = knownSet(title) ?? setName(canonical);
@@ -75,7 +80,7 @@ export function classify(title) {
     if (/pok[eé]mon center|\bexclusive\b/i.test(title)) name += ' (Pokémon Center Exclusive)';
   }
   // Asian editions are different products: say it in the name (and the URL)
-  const ed = edition(title);
+  const ed = edition(rawTitle);
   if (ed && !name.toLowerCase().includes(ed.toLowerCase())) name = `${name} (${ed})`;
   // URLs: non-Latin names (Japanese…) keep a short hash so two products never share a slug
   const slug = (x) => { const sl = slugify(x); return /[^\u0000-\u024f]/.test(x) ? `${sl ? `${sl}-` : ''}${hash(x)}` : sl; };

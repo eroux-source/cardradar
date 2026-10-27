@@ -30,7 +30,8 @@ export async function planMinute(env) {
 
     // discovery
     const lastDisc = Number(s[`discovery.${src.id}`] ?? 0);
-    if (src.kind !== 'lottery' && t - lastDisc > DISCOVERY_EVERY) {
+    // snapshot sources (shops) discover as they read: no separate burst of searches
+    if (src.kind !== 'lottery' && !src.snapshot && t - lastDisc > DISCOVERY_EVERY) {
       const queries = [...src.queries, ...((await src.dynamicQueries?.(env)) ?? [])];
       for (const q of queries) tasks.push({ t: src.snapshot ? 'snapshot' : 'search', source: src.id, q });
       await env.DB.prepare('INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at')
