@@ -72,6 +72,20 @@ async function route(req, env, ctx) {
     if (p === '/owner/monitor') return monitor(env, url);
     if (p === '/owner/marketing') return marketing(env, url);
     if (p === '/owner/bakeoff') return bakeoff(env, url);
+    if (p === '/owner/debug') {
+      // small, indexed counts only (never heavy SQL on prod)
+      const c = await one(env, `SELECT (SELECT COUNT(*) FROM listings) listings, (SELECT COUNT(*) FROM lanes) lanes, (SELECT COUNT(*) FROM stores) stores,
+        (SELECT COUNT(*) FROM stock) stock, (SELECT COUNT(*) FROM source_health) health`);
+      const s2 = await env.DB.prepare("SELECT key, value, updated_at FROM settings WHERE key LIKE 'discovery.%' OR key LIKE 'cron.%'").all();
+      const rep = await env.DB.prepare('SELECT kind, at, text FROM reports ORDER BY at DESC LIMIT 15').all();
+      return json({ now: now(), counts: c, settings: s2.results, reports: rep.results });
+    }
+    if (p === '/owner/run') {
+      // run one crawl task inline and show what happens (diagnosis)
+      const task = { t: url.searchParams.get('t') ?? 'search', source: url.searchParams.get('source') ?? 'target', q: url.searchParams.get('q') ?? 'pokemon elite trainer box' };
+      try { await runTask(env, task); return json({ ok: true, task, counts: await one(env, 'SELECT (SELECT COUNT(*) FROM listings) listings, (SELECT COUNT(*) FROM source_health) health') }); }
+      catch (e) { return json({ ok: false, task, error: String(e.stack ?? e).slice(0, 1500) }); }
+    }
     if (p === '/owner/settings' && m === 'POST') return ownerSettings(env, req, url);
     return Response.redirect(`${env.BASE_URL}/owner/monitor${url.search}`, 302);
   }
@@ -134,6 +148,7 @@ export default {
         msg.ack();
       } catch (e) {
         console.error(q, e);
+        await run(env, 'INSERT INTO reports (kind, at, text) VALUES (?, ?, ?)', 'queue_error', now(), `${q}: ${String(e.message ?? e).slice(0, 400)}`).catch(() => {});
         msg.retry();
       }
     }

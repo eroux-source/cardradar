@@ -10,6 +10,8 @@ export async function everyMinute(env) {
   const out = {};
   out.plan = await planMinute(env).catch((e) => ({ error: e.message }));
   out.emails = await flushOutbox(env).catch((e) => ({ error: e.message }));
+  // heartbeat + visible errors for the owner page
+  await run(env, "INSERT INTO settings (key, value, updated_at) VALUES ('cron.last', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at", JSON.stringify(out).slice(0, 500), now());
   // stuck stock rows: a pending sold-out never confirmed (source went quiet) → drop the pending mark after 15 min
   await run(env, 'UPDATE stock SET pending_out_at = NULL WHERE pending_out_at IS NOT NULL AND pending_out_at < ?', now() - 15 * 60e3);
   return out;
