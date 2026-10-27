@@ -42,7 +42,7 @@ export async function sourceFetch(env, source, url, { method = 'GET', headers = 
   const h = { 'user-agent': UA, 'accept-language': 'en-US,en;q=0.9', 'accept-encoding': 'identity', ...headers };
   const proxy = useProxy && !env.__noProxy && env.__settings?.['budget.proxy'] !== 'off' ? pickProxy(env, source) : null;
   const res = proxy
-    ? await viaProxy(proxy, url, { method, headers: h, body, timeoutMs })
+    ? (env.RELAY ? await viaRelay(env, proxy, url, { method, headers: h, body, timeoutMs }) : await viaProxy(proxy, url, { method, headers: h, body, timeoutMs }))
     : await fetch(url, { method, headers: h, body, signal: AbortSignal.timeout(timeoutMs) });
   if (res.status === 404) return null;
   if (!res.ok) {
@@ -73,6 +73,20 @@ const dec = new TextDecoder();
 // Absolute-form turned out to be fetched over plain HTTP by Decodo (sites answer 301 → https),
 // so we tunnel with CONNECT and upgrade with node:tls (a different code path than startTls).
 const MODE = {};
+
+/** Through the Node relay container (src/relay.js): Node tunnels TLS through the proxy fine. */
+async function viaRelay(env, proxy, url, { method, headers, body, timeoutMs }) {
+  MODE[proxy.host] = 'relay';
+  const { getContainer } = await import('@cloudflare/containers');
+  const stub = getContainer(env.RELAY, `relay-${rr % 2}`);
+  const proxyUrl = `http://${proxy.user ? `${encodeURIComponent(proxy.user)}:${encodeURIComponent(proxy.pass)}@` : ''}${proxy.host}:${proxy.port}`;
+  const r = await stub.fetch('http://relay/fetch', { method: 'POST', body: JSON.stringify({ url, method, headers, body: typeof body === 'string' ? body : undefined, proxy: proxyUrl, timeoutMs }) });
+  if (!r.headers.get('x-relay-status')) throw new Error(`relay ${r.status}: ${(await r.text()).slice(0, 160)}`);
+  const hdrs = new Headers(JSON.parse(decodeURIComponent(r.headers.get('x-relay-headers') ?? '%7B%7D')));
+  const status = Number(r.headers.get('x-relay-status'));
+  return new Response([204, 304].includes(status) ? null : await r.arrayBuffer(), { status, headers: hdrs });
+}
+
 async function viaProxy(proxy, url, opts) {
   MODE[proxy.host] = 'node-tls';
   return viaProxyNodeTls(proxy, url, opts);

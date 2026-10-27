@@ -18,6 +18,7 @@ import { bestTrackers, versus, howItWorks } from './web/pages/compare.js';
 import { lineWebhook } from './alerts/channels/line.js';
 import { COUNTRIES } from './data/countries.js';
 import { setEnv } from './sources/index.js';
+export { Relay } from './relay.js';
 import { ownerLottery } from './owner/lottery.js';
 import { applyReading } from './crawler/state.js';
 import { publishRestocks } from './alerts/pipeline.js';

@@ -76,3 +76,18 @@ crons = ["* * * * *"]
 # WHOP_PLAN_MULTI, POSTMARK_TOKEN, RESEND_API_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET,
 # VAPID_PRIVATE_JWK, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, BESTBUY_API_KEY,
 # PROXY_LIST, ADMIN_KEY, SESSION_SECRET
+
+# Node relay for proxied requests (Workers cannot tunnel TLS through an HTTP proxy)
+[[containers]]
+class_name = "Relay"
+image = "./relay/Dockerfile"
+max_instances = 2
+instance_type = "lite"
+
+[[durable_objects.bindings]]
+name = "RELAY"
+class_name = "Relay"
+
+[[migrations]]
+tag = "relay-v1"
+new_sqlite_classes = ["Relay"]
