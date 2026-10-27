@@ -14,7 +14,7 @@ const CHECKED_LABEL = 'October 27, 2026';
 /** Us, stated the same way as everyone else. Keep in sync with the product. */
 const US = {
   name: 'Card Restock Tracker', url: '/',
-  price: 'Live stock pages free, no account. Alerts $11.99 for 30 days (Solo) or $29.99 (Multi), cancel in 2 clicks',
+  price: 'Free: live stock pages (no account) + 1 product alert as a daily email. Instant alerts $6.99 for 30 days (Solo) or $14.99 (Multi), cancel in 2 clicks',
   where: 'United States (live); Japan lottery calendar; UK, Canada, Australia, Germany, France, Netherlands, Italy, Spain launching',
   inStore: 'Yes: store by store at Target, Best Buy and GameStop in the 50 largest US metro areas',
   online: 'Pokémon Center, Costco, Target, Best Buy online',
@@ -90,7 +90,7 @@ export async function bestTrackers(env) {
   const c = crumbs(env, [{ name: 'Live stock', path: '/' }, { name: 'Best Pokémon restock trackers', path }]);
   const a = answers([
     { q: 'What is the best Pokémon restock tracker?', a: `It depends on where you buy. For in-store stock in the US (Target, Best Buy, GameStop, store by store in 50 cities) with a public restock history, Card Restock Tracker; among these it is also the only one with a Japanese lottery calendar. For European online shops, TCGRadar. For a free app covering many brands, Restockd. For a Discord community, PokePings or Poke Alerts.` },
-    { q: 'Is there a free Pokémon restock tracker?', a: 'Yes. Card Restock Tracker shows live stock and restock times for free, without an account; only alerts are paid. Restockd and TrackaLacker are free apps; TCGRadar has a free plan without restock alerts.' },
+    { q: 'Is there a free Pokémon restock tracker?', a: 'Yes. Card Restock Tracker shows live stock and restock times for free, without an account, and its free plan emails you once a day about one product; instant alerts are paid ($6.99 for 30 days). Restockd and TrackaLacker are free apps; TCGRadar has a free plan without restock alerts.' },
     { q: 'Which Pokémon restock tracker shows in-store stock?', a: 'Card Restock Tracker checks Target, Best Buy and GameStop store by store in the 50 largest US metro areas and shows, for each store, what is on the shelf and when it last restocked. Most other trackers watch online stores or rely on sightings shared by members.' },
     { q: 'How do I get Pokémon Center restock alerts?', a: 'Card Restock Tracker, Restockd, Poke Alerts and PokePings all watch Pokémon Center. Card Restock Tracker sends the alert by phone notification, Telegram or email with a direct link, without installing an app.' },
     { q: 'Where can I follow Japanese Pokémon card lotteries (抽選)?', a: 'Card Restock Tracker lists Pokémon Center Online, Rakuten Books, Yodobashi, Joshin and other Japanese shops\' lotteries, pre-orders and re-sales with their closing times at /jp, and can remind you by LINE before they close.' },

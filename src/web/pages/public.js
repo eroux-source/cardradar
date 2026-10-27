@@ -32,16 +32,27 @@ export async function home(env, cc) {
     : c.stores ? T.home.lede(c.stores_in, c.stores) + (last ? T.home.latest(e(last.sku_name), e(placeLabel(T, last)), T.f.ago(last.started_at)) : '') + (sum.typical ? T.home.typical(T.f.dur(sum.typical)) : '')
       : T.home.fallback(shops);
   const head = `<div class="answer"><h1>${e(T.home.h1)}</h1><p class="lede">${lede}</p><p class="asof">${e(asOf(T, c.last_check))}</p></div>`;
-  // Country not live yet: say so plainly, nothing else (no empty sections)
-  const body = !hasData ? `${head}${await factsBlock(env, T)}` : `${head}
+  const I = T.intro;
+  const hasStores = sourcesOf(cc).some((x) => x.kind === 'stores');
+  const faq = answers(I.faq(shops, T.f.money(T.cc.prices.solo)), I.faqH);
+  // Layout for a first-time visitor: what this is → how it works → the products → the rest.
+  const body = !hasData ? `${head}${await factsBlock(env, T)}` : `
+  <section class="intro">
+    <h1>${e(I.h1)}</h1>
+    <p class="lede">${e(I.what(shops))}</p>
+    <p class="intro-cta"><a class="btn" href="#products">${e(I.seeStock)}</a> <a class="btn ghost" href="/alerts?c=${cc}" data-ev="sheet_open">${e(I.freeAlert)}</a></p>
+    ${c.stores ? `<p class="now"><span class="dot" aria-hidden="true"></span>${I.now(c.stores_in, c.stores, e(T.f.ago(c.last_check)))}</p>` : ''}
+  </section>
+  <section class="how" aria-labelledby="how-h"><h2 id="how-h">${e(I.howH)}</h2><ol>${I.steps.map((x) => `<li>${e(x)}</li>`).join('')}</ol></section>
+  <section id="products" aria-labelledby="p-h"><h2 id="p-h">${e(I.productsH)}</h2><p class="sub">${e(I.productsSub)}</p>${productGrid(T, skus)}</section>
+  ${latest.length ? `<section aria-labelledby="l-h"><h2 id="l-h">${e(I.latestH)}</h2>${latestTable(T, latest.slice(0, 5))}<p><a href="${base(cc)}/restocks">${e(I.allTimes)}</a></p></section>` : ''}
   ${alertCta(env, T)}
-  <section aria-labelledby="p-h"><h2 id="p-h">${e(T.home.every)}</h2><p class="sub">${e(T.home.hardest)}</p>${productGrid(T, skus)}</section>
-  <section aria-labelledby="l-h"><h2 id="l-h">${e(T.home.latestH)}</h2>${latestTable(T, latest)}</section>
-  <section aria-labelledby="r-h"><h2 id="r-h">${e(T.home.byRetailer)}</h2>${retailerGrid(T)}</section>
-  ${sourcesOf(cc).some((x) => x.kind === 'stores') ? `<section aria-labelledby="c-h"><h2 id="c-h">${e(T.home.byCity)}</h2>${cityGrid(T, await d.metroTotals(env, cc), (m) => `${base(cc)}/restocks/${m.slug}`)}</section>` : ''}
+  <section aria-labelledby="r-h"><h2 id="r-h">${e(I.placesH)}</h2>${retailerGrid(T)}
+    ${hasStores ? `<details class="city-pick"><summary>${e(T.sku.allCities(T.cc.metros.length))}</summary>${cityGrid(T, await d.metroTotals(env, cc), (m) => `${base(cc)}/restocks/${m.slug}`)}</details>` : ''}</section>
+  ${faq.html}
   ${await factsBlock(env, T)}`;
   return page(env, T, { title: T.home.title(env.BRAND_NAME), description: T.home.desc(shops), path: homePath(cc), body, noindex: !hasData, alternates: homeAlternates(live), live,
-    jsonLd: [{ '@context': 'https://schema.org', '@type': 'WebSite', name: env.BRAND_NAME, url: `${env.BASE_URL}${homePath(cc)}`, inLanguage: T.cc.locale },
+    jsonLd: [...(hasData ? [faq.ld] : []), { '@context': 'https://schema.org', '@type': 'WebSite', name: env.BRAND_NAME, url: `${env.BASE_URL}${homePath(cc)}`, inLanguage: T.cc.locale },
       { '@context': 'https://schema.org', '@type': 'Organization', name: env.BRAND_NAME, url: env.BASE_URL, logo: `${env.BASE_URL}/icon.svg`, email: env.SUPPORT_EMAIL },
       { '@context': 'https://schema.org', '@type': 'WebApplication', name: env.BRAND_NAME, url: `${env.BASE_URL}${homePath(cc)}`, applicationCategory: 'ShoppingApplication', operatingSystem: 'Any (web browser)',
         description: T.home.desc(shops), inLanguage: T.cc.locale,
@@ -184,6 +195,7 @@ export async function pricing(env, cc) {
   return page(env, T, { title: T.pricing.title(env.BRAND_NAME), description: T.pricing.lede, path: '/pricing', noindex: cc !== 'us',
     body: `<div class="answer"><h1>${e(T.pricing.h1)}</h1><p class="lede">${e(T.pricing.lede)}</p></div>
     <table><thead><tr><th>${e(T.th.plan)}</th><th>${e(T.th.watch)}</th><th>${e(T.th.days30)}</th></tr></thead><tbody>
+    ${T.pricing.free && cc !== 'jp' ? `<tr><td>Free</td><td>${e(T.pricing.free)}</td><td>${e(T.f.money(0))}</td></tr>` : ''}
     <tr><td>Solo</td><td>${e(T.pricing.solo)}</td><td>${e(T.f.money(T.cc.prices.solo))}</td></tr>
     <tr><td>Multi</td><td>${e(T.pricing.multi)}</td><td>${e(T.f.money(T.cc.prices.multi))}</td></tr></tbody></table>
     <p class="sub">${e(T.pricing.tax)}</p>

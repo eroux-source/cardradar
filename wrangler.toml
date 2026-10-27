@@ -17,8 +17,8 @@ SUPPORT_EMAIL = "hello@cardrestocktracker.com"
 ALERTS_FROM = "Card Restock Tracker <alerts@notify.cardrestocktracker.com>"
 CODES_FROM = "Card Restock Tracker <hello@cardrestocktracker.com>"
 TELEGRAM_BOT_NAME = ""               # bot username, without @
-PRICE_SOLO = "11.99"                 # playbook arm E won on revenue per visit
-PRICE_MULTI = "29.99"
+PRICE_SOLO = "6.99"                  # 27/10/2026: under US competitors ($5.99–8.99/month); free plan added
+PRICE_MULTI = "14.99"
 VAPID_PUBLIC_KEY = "BMAxII6sWYgTbvvIM3e85qmSodeJ7rZZTFtkksSitH3S6nW6dT4DlVASQGYrPAz45VBSJYLaPDfWNQYIskQKcG8"   # public half of the push key pair
 INDEXNOW_KEY = "e411abef1fa0fa6fb2de7e9b58aa1882"            # public by design (served at /<key>.txt for Bing)
 

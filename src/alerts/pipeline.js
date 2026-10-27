@@ -16,12 +16,12 @@ export async function publishRestocks(env, restockIds) {
   }
 }
 
-/** Matching alerts for one restock, only for customers with a valid pass. */
+/** Matching alerts for one restock: customers with a valid pass, plus free alerts (sent later as a daily email). */
 async function alertsFor(env, r) {
   return all(env, `
     SELECT a.id AS alert_id FROM alerts a
-    JOIN passes p ON p.user_id = a.user_id AND p.status IN ('active','refunded_kept') AND p.ends_at > ?
-    WHERE a.status = 'active'
+    LEFT JOIN passes p ON p.user_id = a.user_id AND p.status IN ('active','refunded_kept') AND p.ends_at > ?
+    WHERE a.status = 'active' AND (p.id IS NOT NULL OR a.free = 1)
       AND (a.sku_id = ? OR (a.sku_id IS NULL AND a.set_id = ?))
       AND ((a.kind = 'online' AND ? = 1 AND a.country = ?)
         OR (a.kind = 'stores' AND ? = 0 AND (a.metro = ? OR EXISTS (SELECT 1 FROM json_each(a.store_ids) WHERE value = ?))))

@@ -22,11 +22,16 @@ export function alertText(env, r) {
 
 export async function deliver(env, { alertId, restockId }) {
   const claim = await one(env, 'SELECT * FROM alert_sent WHERE alert_id = ? AND restock_id = ?', alertId, restockId);
-  if (!claim || claim.status === 'sent' || claim.status === 'held') return;
+  if (!claim || ['sent', 'held', 'daily'].includes(claim.status)) return;
   const a = await one(env, 'SELECT a.*, u.email, u.telegram_chat_id, u.push_endpoint, u.push_keys, u.last_email_alert_at, u.line_user_id FROM alerts a JOIN users u ON u.id = a.user_id WHERE a.id = ?', alertId);
   const r = await one(env, `SELECT r.*, k.name AS sku_name, k.slug AS sku_slug, l.url, s.name AS store_name, s.city, s.online, s.country
     FROM restocks r JOIN skus k ON k.id = r.sku_id JOIN listings l ON l.id = r.listing_id JOIN stores s ON s.id = r.store_id WHERE r.id = ?`, restockId);
   if (!a || !r) return;
+  // Free alert (no pass): kept for tomorrow's daily email, never sent live
+  if (a.free && !(await one(env, "SELECT 1 FROM passes WHERE user_id = ? AND status IN ('active','refunded_kept') AND ends_at > ?", a.user_id, now()))) {
+    await run(env, "UPDATE alert_sent SET status = 'daily' WHERE alert_id = ? AND restock_id = ?", alertId, restockId);
+    return;
+  }
   const channels = JSON.parse(a.channels || '["email"]');
   const msg = alertText(env, r);
 

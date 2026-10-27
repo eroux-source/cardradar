@@ -12,7 +12,7 @@ import { metros as US_METROS } from './metros.js';
 const m = (cc, list) => list.map(([slug, name, region, zip]) => ({ id: cc === 'us' ? slug : `${cc}-${slug}`, slug, name, state: region, zip, country: cc }));
 
 export const COUNTRIES = {
-  us: { code: 'us', name: 'United States', lang: 'en', locale: 'en-US', currency: 'USD', prices: { solo: '11.99', multi: '29.99' }, tz: 'America/New_York',
+  us: { code: 'us', name: 'United States', lang: 'en', locale: 'en-US', currency: 'USD', prices: { solo: '6.99', multi: '14.99' }, tz: 'America/New_York',
     metros: US_METROS.map((x) => ({ ...x, id: x.slug, country: 'us' })) },
   uk: { code: 'uk', name: 'United Kingdom', lang: 'en', locale: 'en-GB', currency: 'GBP', prices: { solo: '4.99', multi: '11.99' }, tz: 'Europe/London',
     metros: m('uk', [['london', 'London', 'ENG', 'WC2N 5DU'], ['birmingham', 'Birmingham', 'ENG', 'B2 4QA'], ['manchester', 'Manchester', 'ENG', 'M1 1AD'], ['leeds', 'Leeds', 'ENG', 'LS1 4DY'], ['glasgow', 'Glasgow', 'SCT', 'G1 3SL'], ['liverpool', 'Liverpool', 'ENG', 'L1 1JQ'], ['newcastle', 'Newcastle', 'ENG', 'NE1 7RU'], ['sheffield', 'Sheffield', 'ENG', 'S1 2HE'], ['bristol', 'Bristol', 'ENG', 'BS1 4DJ'], ['nottingham', 'Nottingham', 'ENG', 'NG1 2BU'], ['leicester', 'Leicester', 'ENG', 'LE1 5YA'], ['edinburgh', 'Edinburgh', 'SCT', 'EH1 1YZ'], ['cardiff', 'Cardiff', 'WLS', 'CF10 1EP'], ['belfast', 'Belfast', 'NIR', 'BT1 5GS'], ['southampton', 'Southampton', 'ENG', 'SO14 7DU']]) },

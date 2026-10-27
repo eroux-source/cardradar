@@ -19,6 +19,22 @@ export default {
   card: { live: 'Direct', tracker: 'Suivi des réassorts', inStock: 'en stock', stores: 'magasins', online: 'En ligne', soldOut: 'Épuisé', lastRestock: 'Dernier réassort', typicalStay: 'Durée habituelle', storesTracked: 'Magasins suivis', retailersN: (n) => `${n} enseignes`, productsN: (n) => `${n} produits`, storesFrac: (a, b) => `${a}/${b} magasins` },
   rarity: { rare: 'Rare : dans aucun magasin en ce moment', uncommon: 'Peu commune : dans peu de magasins', common: 'Commune : dans beaucoup de magasins' },
   hud: { title: 'Radar en direct par enseigne', allOut: 'tout est épuisé', warming: 'démarrage' },
+  intro: {
+    h1: 'Trouvez des cartes Pokémon en stock près de chez vous',
+    what: (shops) => `Nous vérifions ${shops} toutes les quelques minutes et montrons quels magasins ont des cartes Pokémon scellées en rayon en ce moment. Consulter est gratuit. Recevez une alerte quand votre produit revient.`,
+    now: (a, b, ago) => `En ce moment : <strong>${a} magasins sur ${b}</strong> ont des cartes Pokémon en stock · vérifié ${ago}`,
+    seeStock: 'Voir ce qui est en stock', freeAlert: 'Créer une alerte gratuite',
+    howH: 'Comment ça marche',
+    steps: ['Choisissez le produit voulu : coffret Dresseur d\'élite, display, pokébox…', 'Nous le cherchons dans chaque magasin et site toutes les quelques minutes, jour et nuit.', 'Dès qu\'il revient, vous recevez une alerte avec un lien pour l\'acheter ou le réserver.'],
+    productsH: 'Les produits suivis', productsSub: 'Vert = en stock quelque part en ce moment. Touchez un produit pour voir les magasins.',
+    latestH: 'Tout juste réassortis', allTimes: 'Voir quand chaque magasin réassortit', placesH: 'Par enseigne ou par ville',
+    faqH: 'Questions',
+    faq: (shops, solo) => [
+      { q: 'Qu\'est-ce que Card Restock Tracker ?', a: `Un site gratuit qui vérifie ${shops} toutes les quelques minutes et montre où les cartes Pokémon scellées sont en stock, magasin par magasin.` },
+      { q: 'C\'est gratuit ?', a: `Oui. Consulter le stock est gratuit et sans compte, et la formule gratuite vous envoie un e-mail par jour pour un produit. Les alertes instantanées coûtent ${solo} pour 30 jours, résiliables en 2 clics.` },
+      { q: 'Vous vendez des cartes ?', a: 'Non. Nous vous disons où elles sont ; vous achetez chez l\'enseigne, au prix de l\'enseigne.' },
+    ],
+  },
   home: {
     title: (brand) => `Réassort cartes Pokémon — stock en direct près de chez vous | ${brand}`,
     desc: (shops) => `Suivi des réassorts Pokémon : stock de cartes Pokémon en direct chez ${shops}, vrais horaires de réassort et alertes instantanées.`,
@@ -86,7 +102,7 @@ export default {
     kicker: 'Carte Objet · Alerte réassort', item: 'Objet', name: 'Alerte réassort', flavor: 'À jouer quand le stock est rare. Ne ratez plus aucun réassort.',
     h2: (name) => `Soyez prévenu à la seconde où ${name || 'il'} revient`,
     effect: '<strong>Effet :</strong> le stock part souvent en quelques minutes. Nous vérifions chaque magasin et boutique en ligne jour et nuit, et vous prévenons par notification, Telegram ou e-mail, avec un lien direct pour acheter.',
-    btn: 'Créer mon alerte', fine: (price) => `À partir de ${price} pour 30 jours. Résiliable en 2 clics.`,
+    btn: 'Créer mon alerte', fine: (price) => `Gratuit en e-mail quotidien, ou instantané dès ${price} pour 30 jours. Résiliable en 2 clics.`,
   },
   facts: {
     h: 'À propos de ce suivi',

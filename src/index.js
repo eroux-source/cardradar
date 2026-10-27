@@ -57,6 +57,7 @@ async function route(req, env, ctx) {
     if (id) await publishRestocks(env, [id]);
     return json({ ok: true, restock: id, sent: await one(env, 'SELECT * FROM alert_sent WHERE restock_id = ?', id) });
   }
+  if (p === '/dev/daily' && env.DEV_TOOLS === '1') return json({ users: await (await import('./jobs/index.js')).dailyFree(env) });
   if (p === '/api/stock' && await limited(env, req)) return tooMany();
   if (p.startsWith('/api/')) return api(env, req, url, ctx);
   if (p === '/auth/google') return googleStart(env, url.searchParams.get('next') ?? '/account');

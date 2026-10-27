@@ -1,4 +1,4 @@
-// The paid-only stepped funnel (§2) and the account page.
+// The stepped alert funnel (§2: free daily email or paid instant alerts) and the account page.
 // /alerts : 1 email → 2 product + place → 3 how to reach you → 4 plan → checkout.
 // The email is captured at step 1 (lead), so a visitor who stops still gets one
 // follow-up. Steps run client-side (public/app.js) against /api/funnel/*.
@@ -84,6 +84,7 @@ export async function alertsPage(env, url, user) {
     <form data-form="plan">
       <label class="plan"><input type="radio" name="plan" value="solo" checked><span><strong>Solo · ${e(T.f.money(T.cc.prices.solo))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.solo)}</span></span></label>
       <label class="plan"><input type="radio" name="plan" value="multi"><span><strong>Multi · ${e(T.f.money(T.cc.prices.multi))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.multi)}</span></span></label>
+      ${!lottery && F.free ? `<label class="plan"><input type="radio" name="plan" value="free"><span><strong>${e(F.freeName)} · ${e(T.f.money(0))}</strong><br><span class="fine">${e(F.free)}</span></span></label>` : ''}
       <p class="fine">${e(F.renew)}</p>
       <button class="btn" type="submit">${e(F.checkout)}</button></form>
     <p class="err" role="alert"></p>
@@ -115,8 +116,9 @@ export async function accountPage(env, url, user) {
   const body = `<div class="account" id="account" data-vapid="${e(env.VAPID_PUBLIC_KEY ?? '')}">
   <h1>Your alerts</h1>
   ${paid ? '<p class="ok" role="status">Payment received. Your alerts are live. Connect Telegram or phone notifications below so you hear about restocks first.</p>' : ''}
-  <p class="lede">${e(user.email)} · ${pass ? `<strong>${e(PLANS[pass.plan]?.name ?? pass.plan)}</strong> until ${formatUtc(pass.ends_at)}${pass.renews ? ' (renews)' : ' (will not renew)'}` : '<strong>No active plan</strong>: alerts are paused until you pick one.'}</p>
-  ${pass ? (pass.renews ? '<p><button class="btn ghost" data-act="cancel">Cancel renewal</button></p>' : '') : '<p><a class="btn" href="/alerts">Pick a plan</a></p>'}
+  ${url.searchParams.get('free') ? '<p class="ok" role="status">Your free alert is on. Every morning you get one email with the restocks it caught the day before.</p>' : ''}
+  <p class="lede">${e(user.email)} · ${pass ? `<strong>${e(PLANS[pass.plan]?.name ?? pass.plan)}</strong> until ${formatUtc(pass.ends_at)}${pass.renews ? ' (renews)' : ' (will not renew)'}` : alerts.some((a) => a.free) ? '<strong>Free plan</strong>: one email a day with yesterday\'s restocks. Paid alerts arrive within seconds of a restock.' : '<strong>No active plan</strong>: alerts are paused until you pick one.'}</p>
+  ${pass ? (pass.renews ? '<p><button class="btn ghost" data-act="cancel">Cancel renewal</button></p>' : '') : `<p><a class="btn" href="/alerts">${alerts.some((a) => a.free) ? 'Get instant alerts' : 'Pick a plan'}</a></p>`}
 
   <section><h2>What we watch for you</h2>${alerts.length ? `<ul class="rows">${alerts.map((a) => `<li class="row" data-alert="${a.id}">
     <span class="name">${e(a.kind === 'lottery' ? (a.set_slug ? (JP_SETS.find((x) => x.slug === a.set_slug)?.name ?? a.set_slug) : '抽選・再販（すべて）') : (a.sku_name ?? `Anything from ${a.set_name}`))}</span>

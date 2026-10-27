@@ -81,12 +81,24 @@ export async function api(env, req, url, ctx) {
     const metro = kind === 'stores' ? metroInCountry(cc, b.metro) : null;
     if (kind === 'stores' && !metro) return bad('Pick your city.');
     const pass = await activePass(env, user.id);
+    const free = !pass && b.plan === 'free';
+    if (free && (setId || kind === 'lottery')) return bad('The free plan covers one product. Pick a single product or a paid plan.');
     const effPlan = pass?.plan ?? plan;
-    if ((setId || (kind === 'lottery' && !setSlug)) && effPlan !== 'multi') return bad('"Anything from a set" needs the Multi plan.');
+    if (!free && (setId || (kind === 'lottery' && !setSlug)) && effPlan !== 'multi') return bad('"Anything from a set" needs the Multi plan.');
     const count = (await one(env, "SELECT COUNT(*) n FROM alerts WHERE user_id = ? AND status != 'deleted'", user.id)).n;
     if (pass && count >= PLANS[pass.plan].maxAlerts) return bad(`Your ${PLANS[pass.plan].name} plan covers ${PLANS[pass.plan].maxAlerts} alert${PLANS[pass.plan].maxAlerts > 1 ? 's' : ''}. Delete one or switch to Multi.`);
-    const channels = ['email', ...(b.push ? ['push'] : []), ...(b.telegram ? ['telegram'] : []), ...(b.line ? ['line'] : [])];
+    const channels = free ? ['email'] : ['email', ...(b.push ? ['push'] : []), ...(b.telegram ? ['telegram'] : []), ...(b.line ? ['line'] : [])];
     const t = now();
+    if (free) {
+      // one free alert per person: it replaces the previous free alert and any unpaid draft
+      await run(env, "UPDATE alerts SET status = 'deleted', delete_reason = 'replaced_draft', updated_at = ? WHERE user_id = ? AND status = 'active'", t, user.id);
+      await run(env, 'INSERT INTO alerts (user_id, kind, sku_id, set_id, set_slug, metro, store_ids, channels, status, created_at, updated_at, country, free) VALUES (?, ?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, 1)',
+        user.id, kind, skuId, metro?.id ?? null, '[]', JSON.stringify(channels), 'active', t, t, cc);
+      await run(env, 'UPDATE users SET country = COALESCE(country, ?) WHERE id = ?', cc, user.id);
+      await lead(env, user.email, { step: 'free', skuId, metro: metro?.id ?? null });
+      await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', t, b.visit ?? null, 'free_alert', JSON.stringify({ kind, cc }));
+      return json({ ok: true, next: `/account?free=1&c=${cc}` });
+    }
     // Solo without a pass: keep a single pending alert (replace the previous draft)
     if (!pass) await run(env, "UPDATE alerts SET status = 'deleted', delete_reason = 'replaced_draft', updated_at = ? WHERE user_id = ? AND status = 'active'", t, user.id);
     await run(env, 'INSERT INTO alerts (user_id, kind, sku_id, set_id, set_slug, metro, store_ids, channels, status, created_at, updated_at, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
