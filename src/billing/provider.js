@@ -80,7 +80,7 @@ export async function billingWebhook(env, request) {
   const email = pick(data, ['user.email', 'email', 'customer.email', 'membership.user.email', 'member.user.email', 'member.email']);
   const planId = pick(data, ['plan.id', 'plan_id', 'membership.plan_id']);
   const ref = String(pick(data, ['id', 'payment_id', 'membership_id']) ?? '');
-  const amount = Number(pick(data, ['final_amount', 'amount', 'subtotal']) ?? 0);
+  const amount = Number(pick(data, ['final_amount', 'total', 'usd_total', 'amount', 'subtotal']) ?? 0);
   if (!email) return new Response('no email', { status: 200 });
   const user = await userByEmail(env, email, { create: true, source: 'checkout' });
 

@@ -73,23 +73,17 @@ jobs:
 
       - name: Copy app secrets from GitHub to Cloudflare (only the ones you added)
         env:
-          WHOP_API_KEY: ${{ secrets.WHOP_API_KEY }}
-          WHOP_WEBHOOK_SECRET: ${{ secrets.WHOP_WEBHOOK_SECRET }}
-          WHOP_PLAN_SOLO: ${{ secrets.WHOP_PLAN_SOLO }}
-          WHOP_PLAN_MULTI: ${{ secrets.WHOP_PLAN_MULTI }}
-          POSTMARK_TOKEN: ${{ secrets.POSTMARK_TOKEN }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
-          VAPID_PRIVATE_JWK: ${{ secrets.VAPID_PRIVATE_JWK }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          BESTBUY_API_KEY: ${{ secrets.BESTBUY_API_KEY }}
-          PROXY_LIST: ${{ secrets.PROXY_LIST }}
-          ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
-          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          ALL_SECRETS: ${{ toJSON(secrets) }}
         run: |
-          node -e "const k='WHOP_API_KEY WHOP_WEBHOOK_SECRET WHOP_PLAN_SOLO WHOP_PLAN_MULTI POSTMARK_TOKEN RESEND_API_KEY TELEGRAM_BOT_TOKEN TELEGRAM_WEBHOOK_SECRET VAPID_PRIVATE_JWK GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET BESTBUY_API_KEY PROXY_LIST ADMIN_KEY SESSION_SECRET'.split(' ');const o={};for(const n of k)if(process.env[n])o[n]=process.env[n];require('fs').writeFileSync('secrets.json',JSON.stringify(o));console.log('secrets to copy:',Object.keys(o).join(', ')||'none')"
+          # Every GitHub secret the app knows (exact names or prefixes), never the Cloudflare/GitHub ones.
+          node -e "
+            const all = JSON.parse(process.env.ALL_SECRETS || '{}');
+            const exact = new Set('WHOP_API_KEY WHOP_WEBHOOK_SECRET POSTMARK_TOKEN RESEND_API_KEY TELEGRAM_BOT_TOKEN TELEGRAM_WEBHOOK_SECRET VAPID_PRIVATE_JWK GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET BESTBUY_API_KEY ADMIN_KEY SESSION_SECRET LINE_CHANNEL_TOKEN LINE_CHANNEL_SECRET'.split(' '));
+            const prefix = ['PROXY_LIST', 'WHOP_PLAN_SOLO_', 'WHOP_PLAN_MULTI_'];
+            const o = {};
+            for (const [n, v] of Object.entries(all)) if (v && (exact.has(n) || prefix.some((p) => n.startsWith(p)))) o[n] = v;
+            require('fs').writeFileSync('secrets.json', JSON.stringify(o));
+            console.log('secrets to copy:', Object.keys(o).join(', ') || 'none');"
           if [ "$(cat secrets.json)" != "{}" ]; then npx wrangler secret bulk secrets.json; fi
           rm -f secrets.json
 
