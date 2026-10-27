@@ -48,6 +48,8 @@ jobs:
             ID=$(node -e "const a=JSON.parse(require('fs').readFileSync('d1.json','utf8').replace(/^[^\[]*/s,''));const r=a.find(d=>d.name==='cardradar');console.log(r?(r.uuid||r.id):'')")
           fi
           [ -n "$ID" ] || { echo "::error title=d1::database id not found"; exit 1; }
+          [ -n "$DOMAIN" ] || { echo "::error title=DOMAIN missing::Add the repository VARIABLE DOMAIN (e.g. cardrestocktracker.com) in GitHub > Settings > Secrets and variables > Actions > Variables"; exit 1; }
+          echo "::notice title=domain::$DOMAIN" 
           echo "::notice title=d1::database $ID"
           sed -i "s/^database_id = .*/database_id = \"$ID\"/" wrangler.toml
           if [ -n "$DOMAIN" ]; then sed -i "/^compatibility_flags/a routes = [{ pattern = \"$DOMAIN\", custom_domain = true }]" wrangler.toml; fi
