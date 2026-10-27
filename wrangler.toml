@@ -10,11 +10,11 @@ binding = "ASSETS"
 run_worker_first = false
 
 [vars]
-BRAND_NAME = "Card Restock Tracker"   # domain: cardrestocktracker.com (no "Pokémon" in brand or domain)
+BRAND_NAME = "Pokémon Restock Tracker"   # domain: pokemonrestocktracker.com (founder's choice; trademark risk accepted, see docs)
 BASE_URL = "http://localhost:8787"   # set to https://<domain> in production
-SUPPORT_EMAIL = "hello@cardrestocktracker.com"
-ALERTS_FROM = "Card Restock Tracker <alerts@notify.cardrestocktracker.com>"
-CODES_FROM = "Card Restock Tracker <hello@cardrestocktracker.com>"
+SUPPORT_EMAIL = "hello@pokemonrestocktracker.com"
+ALERTS_FROM = "Pokémon Restock Tracker <alerts@notify.pokemonrestocktracker.com>"
+CODES_FROM = "Pokémon Restock Tracker <hello@pokemonrestocktracker.com>"
 TELEGRAM_BOT_NAME = ""               # bot username, without @
 PRICE_SOLO = "11.99"                 # playbook arm E won on revenue per visit
 PRICE_MULTI = "29.99"

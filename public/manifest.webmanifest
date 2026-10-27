@@ -1,5 +1,5 @@
 {
-  "name": "Card Restock Tracker",
+  "name": "Pokémon Restock Tracker",
   "short_name": "Restocks",
   "start_url": "/account?utm_source=homescreen",
   "display": "standalone",

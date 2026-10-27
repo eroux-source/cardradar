@@ -293,3 +293,4 @@ body.owner textarea { width: 100%; font: 13px/1.5 ui-monospace, monospace; paddi
 @media (max-width: 640px) { .brand-word { font-size: 19px; } .brand-mark { width: 24px; height: 34px; } .brand-mark svg { width: 17px; } .site-nav { gap: 10px; } }
 @media (max-width: 480px) { .site-nav a[href="/account"] { display: none; } }
 @media (max-width: 360px) { .site-nav a[href="/us/restocks"] { display: none; } }
+@media (max-width: 480px) { .site-nav a[href="/us/restocks"] { display: none; } }

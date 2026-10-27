@@ -2,7 +2,7 @@
 
 Tout le reste, c'est Claude. Compte ~2 h au total. Envoie-moi chaque clé dans la conversation (ou mets-la toi-même avec `wrangler secret put`).
 
-1. **Choisir le nom et le domaine** — sans « Pokémon » dedans (règle du playbook : marque déposée, risque de saisie du domaine et de fermeture du compte de paiement). Le nom actuel « CardRadar » est provisoire.
+1. **Domaine : pokemonrestocktracker.com**, nom « Pokémon Restock Tracker ». Choix d'Eugène, contre la règle du playbook : « Pokémon » est une marque déposée. Risques acceptés : plainte UDRP (perte du domaine), signalement au moyen de paiement. Garde le site sans aucun visuel officiel, et le texte « non affilié » en bas de page.
 2. **Cloudflare** — créer le compte, acheter le domaine dedans (Registrar), puis me donner un *API token* « Edit Workers + D1 + Queues ».
 3. **GitHub** — créer un dépôt privé, y ajouter `CLOUDFLARE_API_TOKEN` et `CLOUDFLARE_ACCOUNT_ID` (Settings › Secrets). Chaque mise en ligne passe par là, jamais à la main.
 4. **Whop** — créer le compte vendeur, 2 produits : Solo 11,99 $ / 30 jours et Multi 29,99 $ / 30 jours (renouvelables, **pas** d'`initial_price`). Me donner : clé API, secret du webhook, les 2 identifiants de plan. Webhook à pointer sur `https://<domaine>/api/billing/webhook`.
