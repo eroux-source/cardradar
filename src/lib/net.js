@@ -70,14 +70,67 @@ const dec = new TextDecoder();
 // Workers' startTls after CONNECT returns an empty stream in production (works locally).
 // So we first ask the proxy to make the HTTPS request itself ("absolute-form" request over
 // plain HTTP, which most residential providers accept), and fall back to CONNECT+TLS.
-const MODE = {}; // proxy host → 'absolute' | 'connect'
+// Absolute-form turned out to be fetched over plain HTTP by Decodo (sites answer 301 → https),
+// so we tunnel with CONNECT and upgrade with node:tls (a different code path than startTls).
+const MODE = {};
 async function viaProxy(proxy, url, opts) {
-  const m = MODE[proxy.host];
-  if (m !== 'connect') {
-    try { const r = await viaProxyAbsolute(proxy, url, opts); MODE[proxy.host] = 'absolute'; return r; }
-    catch (e) { if (m === 'absolute') throw e; }
-  }
-  const r = await viaProxyConnect(proxy, url, opts); MODE[proxy.host] = 'connect'; return r;
+  MODE[proxy.host] = 'node-tls';
+  return viaProxyNodeTls(proxy, url, opts);
+}
+
+async function viaProxyNodeTls(proxy, url, { method, headers, body, timeoutMs }) {
+  const net = await import('node:net');
+  const tls = await import('node:tls');
+  const target = new URL(url);
+  const port = Number(target.port || 443);
+  return await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => { reject(new Error('proxy timeout')); try { raw.destroy(); } catch {} }, timeoutMs);
+    const fail = (e) => { clearTimeout(timer); reject(e instanceof Error ? e : new Error(String(e))); };
+    const raw = net.connect({ host: proxy.host, port: proxy.port });
+    raw.once('error', fail);
+    raw.once('connect', () => {
+      const auth = proxy.user ? `Proxy-Authorization: Basic ${btoa(`${proxy.user}:${proxy.pass}`)}\r\n` : '';
+      raw.write(`CONNECT ${target.hostname}:${port} HTTP/1.1\r\nHost: ${target.hostname}:${port}\r\n${auth}\r\n`);
+    });
+    let head = '';
+    const onData = (chunk) => {
+      head += Buffer.from(chunk).toString('latin1');
+      const i = head.indexOf('\r\n\r\n'); if (i < 0) return;
+      raw.removeListener('data', onData);
+      if (!/^HTTP\/1\.[01] 200/.test(head)) return fail(new Error(`proxy CONNECT refused: ${head.split('\r\n')[0].slice(0, 80)}`));
+      const sec = tls.connect({ socket: raw, servername: target.hostname });
+      sec.once('error', fail);
+      sec.once('secureConnect', () => {
+        const payload = body ? (typeof body === 'string' ? body : Buffer.from(body)) : null;
+        const lines = [`${method} ${target.pathname}${target.search} HTTP/1.1`, `Host: ${target.host}`, 'Connection: close'];
+        for (const [k, v] of Object.entries(headers)) lines.push(`${k}: ${v}`);
+        if (payload) lines.push(`Content-Length: ${Buffer.byteLength(payload)}`);
+        sec.write(`${lines.join('\r\n')}\r\n\r\n`); if (payload) sec.write(payload);
+      });
+      const parts = [];
+      sec.on('data', (d) => parts.push(new Uint8Array(d)));
+      sec.once('end', () => {
+        clearTimeout(timer);
+        try { resolve(parseRaw(parts.reduce((a, b) => concat(a, b), new Uint8Array()))); } catch (e) { reject(e); }
+        try { sec.destroy(); } catch {}
+      });
+    };
+    raw.on('data', onData);
+  });
+}
+
+function parseRaw(bytes) {
+  const idx = indexOfCRLFCRLF(bytes);
+  if (idx < 0) throw new Error(`proxy: unreadable response (${bytes.length} bytes)`);
+  const [statusLine, ...hdrLines] = dec.decode(bytes.slice(0, idx)).split('\r\n');
+  const status = Number(statusLine.split(' ')[1]);
+  if (!(status >= 200 && status <= 599)) throw new Error(`proxy: unreadable response (head "${statusLine.slice(0, 60)}")`);
+  const headers = new Headers();
+  for (const l of hdrLines) { const i = l.indexOf(':'); if (i > 0) headers.append(l.slice(0, i).trim(), l.slice(i + 1).trim()); }
+  let bodyBytes = bytes.slice(idx + 4);
+  if (/chunked/i.test(headers.get('transfer-encoding') ?? '')) bodyBytes = dechunk(bodyBytes);
+  headers.delete('transfer-encoding');
+  return new Response([204, 304].includes(status) ? null : bodyBytes, { status, headers });
 }
 
 async function viaProxyAbsolute(proxy, url, { method, headers, body, timeoutMs }) {
