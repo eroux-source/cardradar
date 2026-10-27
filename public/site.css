@@ -136,7 +136,7 @@ a.tcg:hover { box-shadow: 0 2px 4px rgba(0,0,0,.1), 0 22px 40px -14px rgba(42, 4
 /* card grid: dealt in when it scrolls into view (app.js adds .dealt) */
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 26px 22px; list-style: none; padding: 0; margin: 0; }
 .card-grid li { transition: opacity .5s, transform .6s cubic-bezier(.2, 1.2, .4, 1); transition-delay: calc(var(--i) * 70ms); }
-.js .card-grid:not(.dealt) li { opacity: 0; transform: translateY(30px) rotate(-4deg); }
+
 @media (max-width: 520px) { .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; } .card-grid .tcg { padding: 6px; border-radius: 12px; } .card-grid .tcg-name { font-size: 14px; } .card-grid .tcg-num { font-size: 20px; } .card-grid .stage { display: none; } .card-grid .move { font-size: 11px; padding: 3px 6px; gap: 4px; grid-template-columns: 1fr auto; } .card-grid .cost { display: none; } .card-grid .move-name, .card-grid .move-val { font-size: 12px; } .card-grid .tcg-foot { font-size: 9px; } }
 
 /* ---------- sections ---------- */
