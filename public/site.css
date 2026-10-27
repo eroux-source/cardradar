@@ -124,7 +124,12 @@ h2 .live { vertical-align: middle; margin-right: 4px; }
 .pgo { padding: 0 14px 14px; font-size: 14px; font-weight: 700; color: var(--navy); }
 .products.small { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
 .products.small .ph { padding: 10px; }
-.out-list > summary { margin: 6px 0 14px; }
+.out-list > summary { margin: 14px 0; }
+.out-section { background: #fbf7ef; border: 1px solid #f0e3c4; border-radius: var(--r); padding: 22px; }
+.out-section .products li { display: flex; flex-direction: column; gap: 8px; }
+.out-section .ph img { filter: grayscale(.35); }
+.alert-btn { text-align: center; margin: 0; }
+h2 .count.out { background: var(--out-bg); color: var(--out); }
 li[hidden] { display: none; }
 
 /* ---------- header ---------- */

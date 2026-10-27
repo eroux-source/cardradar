@@ -20,13 +20,14 @@ export default {
   rarity: { rare: 'Rare : dans aucun magasin en ce moment', uncommon: 'Peu commune : dans peu de magasins', common: 'Commune : dans beaucoup de magasins' },
   hud: { title: 'Radar en direct par enseigne', allOut: 'tout est épuisé', warming: 'démarrage' },
   hl: {
+    showIn: (n) => `Voir ${n} autres produits en stock`,
     h1: (country) => `Cartes Pokémon en stock maintenant en ${country}`,
     lede: (n, shops) => `${n} produits scellés sont en stock en ce moment dans les ${shops} boutiques que nous vérifions toutes les quelques minutes. Touchez un produit pour voir quelles boutiques l'ont et l'acheter chez elles.`,
     ledeNone: (shops) => `Rien n'est en stock en ce moment dans les ${shops} boutiques que nous vérifions. Créez une alerte : on vous prévient dès que ça revient.`,
     all: 'Tout', inH: 'En stock maintenant', outH: 'Épuisé en ce moment', outSub: 'Créez une alerte sur l\'un d\'eux : vous êtes prévenu à la seconde où il revient.',
     at: (n) => `en stock dans ${n} boutique${n > 1 ? 's' : ''}`, from: (p) => `dès ${p}`, see: 'Voir où', none: 'Rien de cette catégorie n\'est en stock en ce moment.',
     types: { etb: 'Coffrets Dresseur d\'élite', booster_box: 'Displays', booster_bundle: 'Bundles de boosters', tin: 'Pokébox', upc: 'Collections premium', collection: 'Coffrets', blister: 'Blisters', deck: 'Decks', booster: 'Boosters', other: 'Autres' },
-    showOut: (n) => `Voir les ${n} produits épuisés`,
+    showOut: (n) => `Voir ${n} autres produits épuisés`,
   },
   sv: {
     findPh: 'Chercher un produit : coffret Dresseur d\'élite, display…', findBtn: 'Chercher', noMatch: (q) => `Aucun produit ne correspond à « ${q} » pour l\'instant. Voici tout ce que nous suivons :`, matches: (q) => `Produits pour « ${q} »`,

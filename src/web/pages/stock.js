@@ -130,7 +130,9 @@ export async function homeList(env, T, cc, { live = null, alternates = null, ext
   const skus = await d.allSkus(env, cc);
   const shopsN = new Set(sourcesOf(cc).map((s) => s.id)).size;
   const inNow = skus.filter((k) => k.places_in > 0).sort((a, b) => b.places_in - a.places_in || (b.last_restock ?? 0) - (a.last_restock ?? 0));
-  const out = skus.filter((k) => !(k.places_in > 0));
+  // sold out: the most watched first (checked in most places, restocked most recently)
+  const out = skus.filter((k) => !(k.places_in > 0)).sort((a, b) => (b.places ?? 0) - (a.places ?? 0) || (b.last_restock ?? 0) - (a.last_restock ?? 0));
+  const OUT_SHOWN = 12;
   const types = [...new Set(skus.map((k) => k.type ?? 'other'))].filter((x) => H.types[x]);
   const order = Object.keys(H.types);
   types.sort((a, b) => order.indexOf(a) - order.indexOf(b));
@@ -139,7 +141,7 @@ export async function homeList(env, T, cc, { live = null, alternates = null, ext
       <span class="pname">${e(k.name)}</span>
       <span class="pstatus">${isIn ? `<span class="chip in">${e(H.at(k.places_in))}</span>` : `<span class="chip out">${e(T.chip.out)}</span>`}</span>
       <span class="pmeta">${isIn && k.price_in ? `<strong>${e(H.from(T.f.money(k.price_in)))}</strong>` : k.min_price ? e(T.f.money(k.min_price)) : ''}${!isIn && k.last_restock ? ` · ${e(T.lastRestockAgo(T.f.ago(k.last_restock)))}` : ''}</span>
-      <span class="pgo">${e(isIn ? H.see : S.alertBtn)} →</span></a></li>`;
+      ${isIn ? `<span class="pgo">${e(H.see)} →</span>` : ''}</a>${isIn ? '' : `<a class="btn go small alert-btn" href="/alerts?${new URLSearchParams({ c: cc, sku: k.slug })}" data-ev="sheet_open">🔔 ${e(S.alertBtn)}</a>`}</li>`;
   const body = `<section class="hl-head">
     <h1>${e(H.h1(T.cc.name))}</h1>
     <p class="lede">${e(inNow.length ? H.lede(inNow.length, shopsN) : H.ledeNone(shopsN))}</p>
@@ -150,10 +152,13 @@ export async function homeList(env, T, cc, { live = null, alternates = null, ext
     ${types.length > 1 ? `<div class="pills" data-filter>${[`<button type="button" class="pill on" data-t="">${e(H.all)}</button>`, ...types.map((x) => `<button type="button" class="pill" data-t="${x}">${e(H.types[x])}</button>`)].join('')}</div>` : ''}
   </section>
   <section aria-labelledby="in-h"><h2 id="in-h"><span class="live"><span class="dot" aria-hidden="true"></span></span> ${e(H.inH)} <span class="count">${inNow.length}</span></h2>
-    ${inNow.length ? `<ul class="products" data-grid>${inNow.map((k) => card(k, true)).join('')}</ul><p class="empty" data-none hidden>${e(H.none)}</p>` : `<p class="empty">${e(H.ledeNone(shopsN))}</p>`}</section>
+    ${inNow.length ? `<ul class="products" data-grid>${inNow.slice(0, 24).map((k) => card(k, true)).join('')}</ul>
+      ${inNow.length > 24 ? `<details class="out-list"><summary>${e(H.showIn(inNow.length - 24))}</summary><ul class="products" data-grid>${inNow.slice(24).map((k) => card(k, true)).join('')}</ul></details>` : ''}
+      <p class="empty" data-none hidden>${e(H.none)}</p>` : `<p class="empty">${e(H.ledeNone(shopsN))}</p>`}</section>
+  ${out.length ? `<section class="out-section" aria-labelledby="out-h"><h2 id="out-h">${e(H.outH)} <span class="count out">${out.length}</span></h2><p class="sub">${e(H.outSub)}</p>
+    <ul class="products small" data-grid>${out.slice(0, OUT_SHOWN).map((k) => card(k, false)).join('')}</ul>
+    ${out.length > OUT_SHOWN ? `<details class="out-list"><summary>${e(H.showOut(out.length - OUT_SHOWN))}</summary><ul class="products small" data-grid>${out.slice(OUT_SHOWN).map((k) => card(k, false)).join('')}</ul></details>` : ''}</section>` : ''}
   ${alertCta(env, T)}
-  ${out.length ? `<section aria-labelledby="out-h"><h2 id="out-h">${e(H.outH)} <span class="count">${out.length}</span></h2><p class="sub">${e(H.outSub)}</p>
-    <details class="out-list"><summary>${e(H.showOut(out.length))}</summary><ul class="products small" data-grid>${out.map((k) => card(k, false)).join('')}</ul></details></section>` : ''}
   ${await factsBlock(env, T)}`;
   const ld = { '@context': 'https://schema.org', '@type': 'ItemList', name: H.inH, itemListElement: inNow.slice(0, 50).map((k, i) => ({ '@type': 'ListItem', position: i + 1, name: k.name, url: `${env.BASE_URL}${base(cc)}/${k.slug}` })) };
   return page(env, T, { title: T.home.title(env.BRAND_NAME), description: T.home.desc(shopsText(T, cc)), path: homePath(cc), body, live, alternates, jsonLd: [ld, ...extraLd] });
