@@ -49,7 +49,12 @@ async function route(req, env, ctx) {
       (SELECT COUNT(*) FROM stock k JOIN stores s ON s.id = k.store_id WHERE s.source = h.source) AS readings FROM source_health h`).all();
     const c = await one(env, 'SELECT (SELECT COUNT(*) FROM listings WHERE active = 1) listings, (SELECT COUNT(*) FROM stock) readings, (SELECT COUNT(*) FROM stock WHERE in_stock = 1) in_stock');
     const bw = await one(env, "SELECT value, updated_at FROM settings WHERE key = 'billing.last_webhook'");
-    return json({ ok: true, billing: { api_key_set: !!env.WHOP_API_KEY, webhook_secret_set: !!env.WHOP_WEBHOOK_SECRET, plans: [env.WHOP_PLAN_SOLO, env.WHOP_PLAN_MULTI], last_webhook: bw ? { ...JSON.parse(bw.value), at: bw.updated_at } : null }, last_read: last?.t ?? null, age_s: last?.t ? Math.round((now() - last.t) / 1000) : null, counts: c,
+    const day = now() - 864e5;
+    const aud = await one(env, "SELECT COUNT(DISTINCT visit) visits, COUNT(*) views FROM events WHERE at > ? AND name = 'view' AND bot = 0", day);
+    const audAll = await one(env, "SELECT COUNT(DISTINCT visit) visits, COUNT(*) views, MIN(at) since FROM events WHERE name = 'view' AND bot = 0");
+    const srcs = (await env.DB.prepare("SELECT COALESCE(NULLIF(source,''),'direct') s, COUNT(DISTINCT visit) n FROM events WHERE at > ? AND name = 'view' AND bot = 0 GROUP BY 1 ORDER BY n DESC LIMIT 6").bind(day).all()).results;
+    const bots = await one(env, "SELECT COUNT(*) n FROM events WHERE at > ? AND bot = 1", day);
+    return json({ ok: true, audience: { last_24h: aud, all_time: audAll, sources_24h: srcs, bot_hits_24h: bots?.n ?? 0 }, billing: { api_key_set: !!env.WHOP_API_KEY, webhook_secret_set: !!env.WHOP_WEBHOOK_SECRET, plans: [env.WHOP_PLAN_SOLO, env.WHOP_PLAN_MULTI], last_webhook: bw ? { ...JSON.parse(bw.value), at: bw.updated_at } : null }, last_read: last?.t ?? null, age_s: last?.t ? Math.round((now() - last.t) / 1000) : null, counts: c,
       sources: Object.fromEntries(src.results.map((r) => [r.source, { status: r.status, http: Number(/\s(\d{3})\s/.exec(r.last_error ?? '')?.[1]) || null, err: String(r.last_error ?? '').replace(/https?:\/\/[^\s?]+\?[^\s]*/g, '').slice(0, 320), listings: r.listings, readings: r.readings, last_ok_s: r.last_ok_at ? Math.round((now() - r.last_ok_at) / 1000) : null }])) });
   }
   if (p === '/api/billing/webhook' && m === 'POST') return billingWebhook(env, req);
