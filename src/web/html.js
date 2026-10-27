@@ -22,7 +22,7 @@ export function page(env, { title, description, path, body, jsonLd = [], noindex
 ${jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, '\\u003c')}</script>`).join('')}
 </head><body>
 <header class="site-head"><div class="wrap">
-  <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="12" r="5.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 12 19 5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg></span><span class="brand-word">${e(env.BRAND_NAME)}</span></a>
+  <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="12" r="5.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 12 19 5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg></span><span class="brand-text"><span class="brand-word">${e(env.BRAND_NAME)}</span><span class="brand-tag">Pokémon restock tracker</span></span></a>
   <nav class="site-nav" aria-label="Main">
     <a href="/us/restocks"${cur('restocks')}><span class="long">Restock times</span><span class="short">Restocks</span></a>
     <a class="long" href="/us/retailers"${cur('retailers')}>Retailers</a>

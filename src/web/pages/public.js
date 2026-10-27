@@ -72,7 +72,7 @@ export async function home(env) {
   <section aria-labelledby="r-h"><h2 id="r-h">By retailer</h2>${retailerGrid()}</section>
   <section aria-labelledby="c-h"><h2 id="c-h">By city</h2>${cityGrid(await d.metroTotals(env), (m) => `/us/restocks/${m.slug}`)}</section>
   ${await factsBlock(env)}`;
-  return page(env, { title: `Pokémon Cards In Stock Near Me — Live Stock & Restock Alerts | ${env.BRAND_NAME}`, description: 'Live Pokémon TCG stock at Target, Best Buy, GameStop, Costco and Pokémon Center. Restock times and instant alerts.', path: '/', body,
+  return page(env, { title: `Pokémon Restock Tracker — Pokémon Cards In Stock Near You, Live | ${env.BRAND_NAME}`, description: 'Pokémon restock tracker: live Pokémon card stock at Target, Best Buy, GameStop, Costco and Pokémon Center, real restock times and instant alerts.', path: '/', body,
     jsonLd: [{ '@context': 'https://schema.org', '@type': 'WebSite', name: env.BRAND_NAME, url: env.BASE_URL }] });
 }
 

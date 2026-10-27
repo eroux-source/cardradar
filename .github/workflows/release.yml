@@ -43,7 +43,7 @@ jobs:
 
       - name: Deploy
         run: |
-          B="${{ vars.BRAND_NAME }}"; B="${B:-Pokémon Restock Tracker}"
+          B="${{ vars.BRAND_NAME }}"; B="${B:-Card Restock Tracker}"
           S="${{ vars.SUPPORT_EMAIL }}"; S="${S:-hello@$DOMAIN}"
           npx wrangler deploy \
             --var "BASE_URL:https://$DOMAIN" --var "BRAND_NAME:$B" --var "SUPPORT_EMAIL:$S" \
