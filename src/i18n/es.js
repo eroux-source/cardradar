@@ -1,6 +1,6 @@
 export default {
   tag: 'Rastreador de reposiciones Pokémon',
-  nav: { restocks: 'Horarios de reposición', restocksShort: 'Reposiciones', retailers: 'Tiendas', cities: 'Ciudades', account: 'Cuenta', alerts: 'Recibir alertas', live: 'Stock en directo', pricing: 'Precios', press: 'Prensa', terms: 'Condiciones', privacy: 'Privacidad', contact: 'Contacto', countries: 'Países' },
+  nav: { restocks: 'Horarios de reposición', restocksShort: 'Reposiciones', retailers: 'Tiendas', cities: 'Ciudades', account: 'Cuenta', alerts: 'Recibir alertas', live: 'Stock en directo', pricing: 'Precios', press: 'Prensa', terms: 'Condiciones', privacy: 'Privacidad', contact: 'Contacto', countries: 'Países', alertsShort: 'Alertas', moreShops: (n) => `${n} tiendas más` },
   disclaimer: (brand, shops) => `${brand} es un servicio de alertas independiente para reposiciones de cartas Pokémon. No está afiliado ni respaldado por The Pokémon Company, Nintendo, Creatures, Game Freak${shops ? `, ${shops}` : ''}. Pokémon es una marca de sus propietarios. Nunca compramos por ti: te avisamos, tú compras en la tienda.`,
   and: 'y',
   chip: { in: 'En stock', out: 'Agotado', unknown: 'Sin comprobar' },

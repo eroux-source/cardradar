@@ -1,6 +1,6 @@
 export default {
   tag: 'Tracker restock Pokémon',
-  nav: { restocks: 'Orari di restock', restocksShort: 'Restock', retailers: 'Negozi', cities: 'Città', account: 'Account', alerts: 'Ricevi avvisi', live: 'Disponibilità live', pricing: 'Prezzi', press: 'Stampa', terms: 'Termini', privacy: 'Privacy', contact: 'Contatti', countries: 'Paesi' },
+  nav: { restocks: 'Orari di restock', restocksShort: 'Restock', retailers: 'Negozi', cities: 'Città', account: 'Account', alerts: 'Ricevi avvisi', live: 'Disponibilità live', pricing: 'Prezzi', press: 'Stampa', terms: 'Termini', privacy: 'Privacy', contact: 'Contatti', countries: 'Paesi', alertsShort: 'Avvisi', moreShops: (n) => `altri ${n} negozi` },
   disclaimer: (brand, shops) => `${brand} è un servizio di avvisi indipendente per i restock di carte Pokémon. Non affiliato né approvato da The Pokémon Company, Nintendo, Creatures, Game Freak${shops ? `, ${shops}` : ''}. Pokémon è un marchio dei rispettivi proprietari. Non compriamo mai al posto tuo: ti avvisiamo, tu compri dal negozio.`,
   and: 'e',
   chip: { in: 'Disponibile', out: 'Esaurito', unknown: 'Non ancora controllato' },

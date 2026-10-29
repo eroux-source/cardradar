@@ -1,6 +1,6 @@
 export default {
   tag: 'Suivi des réassorts Pokémon',
-  nav: { restocks: 'Horaires de réassort', restocksShort: 'Réassorts', retailers: 'Enseignes', cities: 'Villes', account: 'Compte', alerts: 'Recevoir les alertes', live: 'Stock en direct', pricing: 'Tarifs', press: 'Presse', terms: 'Conditions', privacy: 'Confidentialité', contact: 'Contact', countries: 'Pays' },
+  nav: { restocks: 'Horaires de réassort', restocksShort: 'Réassorts', retailers: 'Enseignes', cities: 'Villes', account: 'Compte', alerts: 'Recevoir les alertes', live: 'Stock en direct', pricing: 'Tarifs', press: 'Presse', terms: 'Conditions', privacy: 'Confidentialité', contact: 'Contact', countries: 'Pays', alertsShort: 'Alertes', moreShops: (n) => `${n} autres boutiques` },
   disclaimer: (brand, shops) => `${brand} est un service d'alertes indépendant pour les réassorts de cartes Pokémon. Non affilié à The Pokémon Company, Nintendo, Creatures, Game Freak${shops ? `, ${shops}` : ''}, ni approuvé par eux. Pokémon est une marque de ses propriétaires. Nous n'achetons jamais à votre place : nous alertons, vous achetez chez l'enseigne.`,
   and: 'et',
   chip: { in: 'En stock', out: 'Épuisé', unknown: 'Pas encore vérifié' },

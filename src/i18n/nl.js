@@ -1,6 +1,6 @@
 export default {
   tag: 'Pokémon restock-tracker',
-  nav: { restocks: 'Restocktijden', restocksShort: 'Restocks', retailers: 'Winkels', cities: 'Steden', account: 'Account', alerts: 'Meldingen', live: 'Live voorraad', pricing: 'Prijzen', press: 'Pers', terms: 'Voorwaarden', privacy: 'Privacy', contact: 'Contact', countries: 'Landen' },
+  nav: { restocks: 'Restocktijden', restocksShort: 'Restocks', retailers: 'Winkels', cities: 'Steden', account: 'Account', alerts: 'Meldingen', live: 'Live voorraad', pricing: 'Prijzen', press: 'Pers', terms: 'Voorwaarden', privacy: 'Privacy', contact: 'Contact', countries: 'Landen', alertsShort: 'Meldingen', moreShops: (n) => `${n} andere winkels` },
   disclaimer: (brand, shops) => `${brand} is een onafhankelijke meldingsdienst voor restocks van Pokémon-kaarten. Niet verbonden aan of goedgekeurd door The Pokémon Company, Nintendo, Creatures, Game Freak${shops ? `, ${shops}` : ''}. Pokémon is een merk van de eigenaars. Wij kopen nooit voor je: wij melden, jij koopt bij de winkel.`,
   and: 'en',
   chip: { in: 'Op voorraad', out: 'Uitverkocht', unknown: 'Nog niet gecontroleerd' },

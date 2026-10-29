@@ -1,7 +1,7 @@
 // 日本語。日本では「抽選・予約・再販」のカレンダーが中心（lot.*）。在庫ページの文言も用意。
 export default {
   tag: 'ポケカ抽選・再販トラッカー',
-  nav: { restocks: '再販・抽選カレンダー', restocksShort: '抽選', retailers: 'ショップ', cities: '地域', account: 'アカウント', alerts: '通知を受け取る', live: '最新情報', pricing: '料金', press: 'プレス', terms: '利用規約', privacy: 'プライバシー', contact: 'お問い合わせ', countries: '国・地域' },
+  nav: { restocks: '再販・抽選カレンダー', restocksShort: '抽選', retailers: 'ショップ', cities: '地域', account: 'アカウント', alerts: '通知を受け取る', live: '最新情報', pricing: '料金', press: 'プレス', terms: '利用規約', privacy: 'プライバシー', contact: 'お問い合わせ', countries: '国・地域', alertsShort: '通知', moreShops: (n) => `ほか${n}店` },
   disclaimer: (brand, shops) => `${brand}はポケモンカードの抽選・再販情報を通知する独立したサービスです。株式会社ポケモン、任天堂、クリーチャーズ、ゲームフリーク${shops ? `、${shops}` : ''}とは一切関係がなく、承認も受けていません。ポケモンは各権利者の商標です。購入代行は行いません。お知らせするだけで、購入は各ショップで行ってください。`,
   and: '、',
   chip: { in: '在庫あり', out: '売り切れ', unknown: '未確認' },

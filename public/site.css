@@ -299,3 +299,38 @@ body.owner textarea { width: 100%; font: 13px/1.5 ui-monospace, monospace; paddi
 .owner-form { display: grid; gap: 0 18px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); align-items: end; background: var(--tint); padding: 8px 18px 18px; border-radius: var(--r); }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* ---------- phones ---------- */
+html, body { overflow-x: clip; }
+@media (max-width: 560px) {
+  .site-head .wrap { min-height: 56px; gap: 8px; }
+  .site-nav .acct { display: none; }
+  .site-nav a.cta { padding: 9px 12px; }
+  .controls { top: 56px; margin-top: 12px; padding: 10px 16px; }
+  .intro, .hl-head { padding-top: 20px; }
+  section { margin: 32px 0; }
+  .lede { font-size: 16px; }
+  .find .btn { padding: 10px 16px; }
+  .pills { margin-right: -16px; padding-right: 16px; }
+  /* product cards: shorter photo, whole card is the link */
+  .products { gap: 10px; }
+  .ph { aspect-ratio: 4 / 3; padding: 8px; }
+  .pgo { display: none; }
+  .pname { font-size: 15px; }
+  .pmeta strong { font-size: 15px; }
+  .chip { font-size: 13px; padding: 5px 8px; }
+  .alert-btn, .btn.small { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .out-section { padding: 16px 12px; margin-left: -4px; margin-right: -4px; }
+  /* product page */
+  .hero2-grid { grid-template-columns: 1fr 84px; gap: 12px; align-items: start; }
+  .hero2 h1 { font-size: 30px; }
+  .answer-line { font-size: 15px; }
+  .layout { margin-top: 16px; }
+  .place-actions .btn { flex: 1 1 auto; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .side-card { padding: 16px; }
+  .alert-card .btn { display: flex; justify-content: center; }
+  footer nav a { display: inline-block; padding: 6px 0; }
+}
+@media (max-width: 340px) {
+  .brand-text { display: none; }
+}

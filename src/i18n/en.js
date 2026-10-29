@@ -1,7 +1,7 @@
 // English strings (US, UK, Canada, Australia). Every other language mirrors these keys.
 export default {
   tag: 'Pokémon restock tracker',
-  nav: { restocks: 'Restock times', restocksShort: 'Restocks', retailers: 'Retailers', cities: 'Cities', account: 'Account', alerts: 'Get alerts', live: 'Live stock', pricing: 'Pricing', press: 'Press', terms: 'Terms', privacy: 'Privacy', contact: 'Contact', countries: 'Countries' },
+  nav: { restocks: 'Restock times', restocksShort: 'Restocks', retailers: 'Retailers', cities: 'Cities', account: 'Account', alerts: 'Get alerts', live: 'Live stock', pricing: 'Pricing', press: 'Press', terms: 'Terms', privacy: 'Privacy', contact: 'Contact', countries: 'Countries', alertsShort: 'Alerts', moreShops: (n) => `${n} more shops` },
   disclaimer: (brand, shops) => `${brand} is an independent alert service for Pokémon TCG restocks. Not affiliated with, endorsed or sponsored by The Pokémon Company, Nintendo, Creatures, Game Freak${shops ? `, ${shops}` : ''}. Pokémon is a trademark of its owners. We never buy for you: we alert, you buy from the retailer.`,
   and: 'and',
   chip: { in: 'In stock', out: 'Sold out', unknown: 'Not checked yet' },

@@ -9,7 +9,10 @@ import { sourcesOf, sourceName } from '../sources/index.js';
 export const home = (cc) => (cc === 'us' ? '/' : `/${cc}`);
 export const base = (cc) => `/${cc}`;
 export const placeLabel = (T, s) => (s.online ? `${sourceName(s.source)} ${T.online}` : `${sourceName(s.source)} ${s.name ?? s.store_name}`);
-export const shopsText = (T, cc) => T.f.list([...new Set(sourcesOf(cc).map((s) => s.name))]);
+export const shopsText = (T, cc, max = 6) => {
+  const names = [...new Set(sourcesOf(cc).map((s) => s.name))];
+  return names.length > max + 1 ? T.f.list([...names.slice(0, max), T.nav.moreShops(names.length - max)]) : T.f.list(names);
+};
 
 const LOGO = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="12" r="5.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 12 19 5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>';
 
@@ -40,12 +43,12 @@ ${jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).repl
     <a href="${b}/restocks"${cur('restocks')}><span class="long">${e(T.nav.restocks)}</span><span class="short">${e(T.nav.restocksShort)}</span></a>
     <a class="long" href="${b}/retailers"${cur('retailers')}>${e(T.nav.retailers)}</a>
     <a class="long" href="${b}/cities"${cur('cities')}>${e(T.nav.cities)}</a>`}
-    <a href="/account?c=${cc}"${cur('account')}>${e(T.nav.account)}</a>
-    <a class="cta" href="/alerts?c=${cc}"${cur('alerts')}>${e(T.nav.alerts)}</a>
+    <a class="acct" href="/account?c=${cc}"${cur('account')}>${e(T.nav.account)}</a>
+    <a class="cta" href="/alerts?c=${cc}"${cur('alerts')}><span class="long">${e(T.nav.alerts)}</span><span class="short">${e(T.nav.alertsShort)}</span></a>
   </nav></div></header>
 <main class="wrap">${body}</main>
 <footer class="site-foot"><div class="wrap">
-  <nav aria-label="Footer"><a href="${home(cc)}">${e(T.nav.live)}</a>${cc === 'jp' ? '' : `<a href="${b}/restocks">${e(T.nav.restocks)}</a><a href="${b}/retailers">${e(T.nav.retailers)}</a><a href="${b}/cities">${e(T.nav.cities)}</a>`}<a href="/pricing?c=${cc}">${e(T.nav.pricing)}</a><a href="/press">${e(T.nav.press)}</a><a href="/best-pokemon-restock-trackers">Compare trackers</a><a href="/how-it-works">How it works</a><a href="/terms">${e(T.nav.terms)}</a><a href="/privacy">${e(T.nav.privacy)}</a><a href="mailto:${e(env.SUPPORT_EMAIL)}">${e(T.nav.contact)}</a></nav>
+  <nav aria-label="Footer"><a href="${home(cc)}">${e(T.nav.live)}</a>${cc === 'jp' ? '' : `<a href="${b}/restocks">${e(T.nav.restocks)}</a><a href="${b}/retailers">${e(T.nav.retailers)}</a><a href="${b}/cities">${e(T.nav.cities)}</a>`}<a href="/pricing?c=${cc}">${e(T.nav.pricing)}</a><a href="/account?c=${cc}">${e(T.nav.account)}</a><a href="/press">${e(T.nav.press)}</a><a href="/best-pokemon-restock-trackers">Compare trackers</a><a href="/how-it-works">How it works</a><a href="/terms">${e(T.nav.terms)}</a><a href="/privacy">${e(T.nav.privacy)}</a><a href="mailto:${e(env.SUPPORT_EMAIL)}">${e(T.nav.contact)}</a></nav>
   <nav class="countries" aria-label="${e(T.nav.countries)}"><span>${e(T.countryPicker)}:</span> ${countries}</nav>
   <p>${e(T.disclaimer(env.BRAND_NAME, shops))}</p>
 </div></footer>
