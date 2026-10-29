@@ -13,7 +13,7 @@
   let source = q.get('utm_source') || q.get('via') || '';
   if (!source && document.referrer) { try { const h = new URL(document.referrer).hostname.replace(/^www\./, ''); if (h !== location.hostname) source = h; } catch {} }
   if (!source && standalone) source = 'homescreen';
-  const ev = (n, x) => { try { navigator.sendBeacon('/api/e', new Blob([JSON.stringify({ n, v: visit, p: location.pathname, s: source, x })], { type: 'application/json' })); } catch {} };
+  const ev = (n, x) => { try { if (n !== 'view' && window.gtag) window.gtag('event', n, x && typeof x === 'object' ? x : {}); } catch {} try { navigator.sendBeacon('/api/e', new Blob([JSON.stringify({ n, v: visit, p: location.pathname, s: source, x })], { type: 'application/json' })); } catch {} };
   ev('view');
   document.addEventListener('click', (e) => { const a = e.target.closest('[data-ev]'); if (a) ev(a.dataset.ev); });
 

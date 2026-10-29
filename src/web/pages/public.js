@@ -163,7 +163,7 @@ export async function press(env) {
 export const legal = (env, kind) => page(env, t('us'), { title: kind === 'terms' ? 'Terms' : 'Privacy', description: kind, path: `/${kind}`,
   body: kind === 'terms'
     ? `<div class="prose"><h1>Terms</h1><p>${e(env.BRAND_NAME)} sends stock and lottery alerts; it never buys products for you. Stock data comes from retailers' public availability and can be wrong or late: always confirm with the retailer. Alerts are sold for 30 days and renew unless cancelled; cancel in 2 clicks from your account. [Legal entity, address and governing law: to be completed by the founder.]</p></div>`
-    : `<div class="prose"><h1>Privacy</h1><p>We store your email, the alerts you set, your notification channels and your payments. One cookie keeps you signed in. Visit measurement uses no cookie: a per-tab id lives in your browser's session storage and is deleted when you close the tab. We never sell data. Contact: ${e(env.SUPPORT_EMAIL)}. [Controller details: to be completed by the founder.]</p></div>` });
+    : `<div class="prose"><h1>Privacy</h1><p>We store your email, the alerts you set, your notification channels and your payments. One cookie keeps you signed in. Our own visit measurement uses no cookie: a per-tab id lives in your browser's session storage and is deleted when you close the tab. We also use Google Analytics to understand how the site is used (pages viewed, device, country); in the EU, UK and EEA it runs without cookies, and no data is used for advertising. We never sell data. Contact: ${e(env.SUPPORT_EMAIL)}. [Controller details: to be completed by the founder.]</p></div>` });
 
 export function notFound(env, cc = 'us') {
   const T = t(cc);

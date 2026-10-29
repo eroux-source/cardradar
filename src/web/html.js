@@ -27,7 +27,12 @@ export function page(env, T, { title, description, path, body, jsonLd = [], noin
   return new Response(`<!doctype html>
 <html lang="${T.cc.locale}"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>${e(title)}</title><meta name="description" content="${e(description)}">
+${env.GA_ID ? `<script async src="https://www.googletagmanager.com/gtag/js?id=${e(env.GA_ID)}"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'granted'});
+gtag('consent','default',{analytics_storage:'denied',region:['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','IS','LI','NO','GB','CH']});
+gtag('js',new Date());gtag('config','${e(env.GA_ID)}',{country:'${cc}'});</script>
+` : ''}<title>${e(title)}</title><meta name="description" content="${e(description)}">
 <link rel="canonical" href="${e(canonical)}">${alt}${noindex ? '<meta name="robots" content="noindex,follow">' : ''}
 <meta property="og:title" content="${e(title)}"><meta property="og:description" content="${e(description)}"><meta property="og:url" content="${e(canonical)}"><meta property="og:type" content="website"><meta property="og:locale" content="${T.cc.locale.replace('-', '_')}">
 <meta name="theme-color" content="#ffffff"><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icon.svg" type="image/svg+xml">
