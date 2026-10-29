@@ -52,15 +52,10 @@ export async function planMinute(env) {
       const every = src.everyMinutes ?? 10;
       if (Math.floor(t / 60e3) % every === 0) for (const q of src.queries) tasks.push({ t: 'lottery', source: src.id, q });
     } else if (src.platform === 'shopify') {
-      // shops: one search per query per day (finds new products); stock is read per product below
+      // shops: each search query once a day (finds new products), queries an hour apart, shops spread over the day
       const day = 1440, minute = Math.floor(t / 60e3);
       const slot = [...src.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7) % day;
-      const lastSearch = Number(s[`discovery.${src.id}`] ?? 0);
-      if (src.queries.length && (minute % day === slot || t - lastSearch > 26 * 3600e3) && t - lastSearch > 20 * 3600e3) {
-        for (const q of src.queries) tasks.push({ t: 'snapshot', source: src.id, q });
-        await env.DB.prepare('INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at')
-          .bind(`discovery.${src.id}`, String(t), t).run();
-      }
+      src.queries.forEach((q, i) => { if (minute % day === (slot + i * 60) % day) tasks.push({ t: 'snapshot', source: src.id, q }); });
     } else if (src.snapshot) {
       // one query every `everyMinutes`, rotating through the list
       const every = src.everyMinutes ?? 1;
@@ -97,7 +92,7 @@ export async function planMinute(env) {
     tasks.forEach((body, i) => messages.push({ body, delaySeconds: Math.floor((i * 60) / Math.max(1, tasks.length)) }));
   }
 
-  // Shop product checks (see SHOP_EVERY), oldest first, at most 3 per shop per minute
+  // Shop product checks (see SHOP_EVERY), oldest first, at most 1 call per shop per minute (shops answer 429 above that)
   const shopIds = new Set(enabled.filter((x) => x.platform === 'shopify').map((x) => x.id));
   const resting = new Set((await all(env, "SELECT source FROM source_health WHERE status = 'blocked' AND last_block_at > ?", t - 10 * 60e3)).map((r) => r.source));
   const due = await all(env, `SELECT ln.listing_id, ln.source FROM lanes ln JOIN listings l ON l.id = ln.listing_id AND l.active = 1
@@ -106,10 +101,11 @@ export async function planMinute(env) {
       WHEN st.in_stock = 1 THEN ? WHEN ln.listing_id % 10 = 0 THEN ? ELSE ? END
     ORDER BY ln.last_checked_at LIMIT ?`, t - SHOP_EVERY.in, t - SHOP_EVERY.test, t - SHOP_EVERY.out, 600);
   const perShop = {}; const shopTasks = [];
+  const tasksBySource = Object.fromEntries(messages.map((m) => [m.body.source, true]));
   const shopBudget = await numSetting(env, 'budget.shops', 60);
   for (const r of due) {
     if (shopTasks.length >= shopBudget) break;
-    if (!shopIds.has(r.source) || resting.has(r.source) || (perShop[r.source] = (perShop[r.source] ?? 0) + 1) > 3) continue;
+    if (!shopIds.has(r.source) || resting.has(r.source) || (perShop[r.source] = (perShop[r.source] ?? 0) + 1) > 1 || tasksBySource[r.source]) continue;
     shopTasks.push({ t: 'online', source: r.source, listingId: r.listing_id, metro: '' });
   }
   shopTasks.forEach((body, i) => messages.push({ body, delaySeconds: Math.floor((i * 60) / Math.max(1, shopTasks.length)) }));
