@@ -1,0 +1,48 @@
+name: traffic
+# Reads Cloudflare's own traffic analytics for the site (who is behind the "visits": bots vs browsers, top paths, top user agents).
+on:
+  workflow_dispatch:
+jobs:
+  traffic:
+    runs-on: ubuntu-latest
+    env:
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - name: Query Cloudflare analytics
+        run: |
+          D="${{ vars.DOMAIN }}"; D="${D:-cardrestocktracker.com}"
+          Z=$(curl -s -H "Authorization: Bearer $CF_TOKEN" "https://api.cloudflare.com/client/v4/zones?name=$D" | node -e "let t='';process.stdin.on('data',d=>t+=d).on('end',()=>{const j=JSON.parse(t);console.log(j.result?.[0]?.id||('ERR '+JSON.stringify(j.errors).slice(0,200)))})")
+          echo "zone: $Z"
+          echo "::notice title=zone::$Z"
+          SINCE=$(date -u -d '-24 hours' +%Y-%m-%dT%H:%M:%SZ); NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          DAY=$(date -u -d '-6 days' +%Y-%m-%d)
+          q() {
+            body=$(node -e "console.log(JSON.stringify({query:process.argv[1]}))" "$1")
+            curl -s -H "Authorization: Bearer $CF_TOKEN" -H 'content-type: application/json' https://api.cloudflare.com/client/v4/graphql -d "$body"
+          }
+          F="filter:{datetime_geq:\"$SINCE\",datetime_lt:\"$NOW\"}"
+          for part in \
+            "days|{viewer{zones(filter:{zoneTag:\"$Z\"}){httpRequests1dGroups(limit:10,filter:{date_geq:\"$DAY\"},orderBy:[date_ASC]){dimensions{date} uniq{uniques} sum{requests pageViews}}}}}" \
+            "ua|{viewer{zones(filter:{zoneTag:\"$Z\"}){httpRequestsAdaptiveGroups(limit:25,$F,orderBy:[count_DESC]){count dimensions{userAgent}}}}}" \
+            "paths|{viewer{zones(filter:{zoneTag:\"$Z\"}){httpRequestsAdaptiveGroups(limit:25,$F,orderBy:[count_DESC]){count dimensions{clientRequestPath}}}}}" \
+            "country|{viewer{zones(filter:{zoneTag:\"$Z\"}){httpRequestsAdaptiveGroups(limit:15,$F,orderBy:[count_DESC]){count dimensions{clientCountryName}}}}}" \
+            "asn|{viewer{zones(filter:{zoneTag:\"$Z\"}){httpRequestsAdaptiveGroups(limit:15,$F,orderBy:[count_DESC]){count dimensions{clientASNDescription}}}}}" \
+            "ips|{viewer{zones(filter:{zoneTag:\"$Z\"}){httpRequestsAdaptiveGroups(limit:1000,$F){count dimensions{clientIP userAgent}}}}}" ; do
+            name=${part%%|*}; query=${part#*|}
+            r=$(q "$query")
+            echo "== $name"; echo "$r" | head -c 20000; echo
+            echo "$r" > "$name.json"
+          done
+          node -e '
+            const fs=require("fs");const g=(n)=>{try{const j=JSON.parse(fs.readFileSync(n+".json","utf8"));if(j.errors&&j.errors.length)return {err:j.errors.map(e=>e.message).join("; ").slice(0,200)};const z=j.data.viewer.zones[0];return Object.values(z)[0]}catch(e){return {err:String(e).slice(0,100)}}};
+            const out=(t,v)=>console.log(`::notice title=${t}::${JSON.stringify(v).slice(0,3500)}`);
+            const days=g("days");out("days",Array.isArray(days)?days.map(d=>[d.dimensions.date,d.uniq.uniques,d.sum.requests,d.sum.pageViews]):days);
+            for(const k of ["ua","paths","country","asn"]){const v=g(k);out(k,Array.isArray(v)?v.map(x=>[Object.values(x.dimensions)[0]?.slice(0,90),x.count]):v)}
+            const ips=g("ips");
+            if(Array.isArray(ips)){
+              const bot=/bot|crawl|spider|slurp|python|curl|wget|go-http|java|axios|node|headless|scan|monitor|fetch|http-client|okhttp|libwww|preview|facebookexternalhit|semrush|ahrefs|mj12|dataforseo|bytespider|gpt|claude|perplex|anthropic|ccbot|petal|yandex|bing|google/i;
+              const byIp={};for(const x of ips){const ip=x.dimensions.clientIP;const ua=x.dimensions.userAgent||"";(byIp[ip]??={bot:false,n:0,ua});byIp[ip].n+=x.count;if(bot.test(ua)||!ua)byIp[ip].bot=true}
+              const all=Object.values(byIp);out("ips24h",{unique_ips:all.length,bot_ips:all.filter(x=>x.bot).length,browser_like_ips:all.filter(x=>!x.bot).length,browser_like_requests:all.filter(x=>!x.bot).reduce((a,x)=>a+x.n,0)});
+              out("browser_like_sample",all.filter(x=>!x.bot).sort((a,b)=>b.n-a.n).slice(0,25).map(x=>[x.n,x.ua.slice(0,80)]));
+            } else out("ips24h",ips);
+          '
