@@ -8,6 +8,14 @@ import { all, numSetting, settings, isOn, now } from '../lib/db.js';
 import { enabledSources } from '../sources/index.js';
 
 const DISCOVERY_EVERY = 6 * 3600e3;
+// Shop products (Shopify), read one by one:
+//   in stock      → once a day
+//   sold out      → every hour
+//   test group    → sold-out products whose id ends in 0 (1 in 10) are read every 10 min,
+//                   to measure how long restocks last and so which interval catches them
+//   just restocked → every 10 min until sold out (restock watch below), to time the sell-out
+export const SHOP_EVERY = { in: 24 * 3600e3, out: 3600e3, test: 10 * 60e3, watch: 10 * 60e3 };
+export const isTestLane = (listingId) => listingId % 10 === 0;
 
 export async function planMinute(env) {
   if (!(await isOn(env, 'crawl'))) return { skipped: 'crawl off' };
@@ -17,8 +25,6 @@ export async function planMinute(env) {
   const messages = [];
 
   const enabled = enabledSources(env);
-  const shopCount = enabled.filter((x) => x.platform === 'shopify').length;
-  const shopBudget = await numSetting(env, 'budget.shops', 30);
   for (const src of enabled) {
     const health = (await all(env, 'SELECT * FROM source_health WHERE source = ?', src.id))[0];
     // a blocked source rests 10 minutes before trying again
@@ -45,13 +51,21 @@ export async function planMinute(env) {
     if (src.kind === 'lottery') {
       const every = src.everyMinutes ?? 10;
       if (Math.floor(t / 60e3) % every === 0) for (const q of src.queries) tasks.push({ t: 'lottery', source: src.id, q });
+    } else if (src.platform === 'shopify') {
+      // shops: one search per query per day (finds new products); stock is read per product below
+      const day = 1440, minute = Math.floor(t / 60e3);
+      const slot = [...src.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7) % day;
+      const lastSearch = Number(s[`discovery.${src.id}`] ?? 0);
+      if (src.queries.length && (minute % day === slot || t - lastSearch > 26 * 3600e3) && t - lastSearch > 20 * 3600e3) {
+        for (const q of src.queries) tasks.push({ t: 'snapshot', source: src.id, q });
+        await env.DB.prepare('INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at')
+          .bind(`discovery.${src.id}`, String(t), t).run();
+      }
     } else if (src.snapshot) {
-      // one query every `everyMinutes`, rotating through the list (gentle on small shops)
-      // shops share one budget (setting budget.shops, searches per minute in total)
-      const every = src.platform === 'shopify' ? Math.max(2, Math.ceil(shopCount / shopBudget)) : (src.everyMinutes ?? 1);
+      // one query every `everyMinutes`, rotating through the list
+      const every = src.everyMinutes ?? 1;
       const minute = Math.floor(t / 60e3);
-      const offset = [...src.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7) % every; // spread shops over the cycle
-      if (src.queries.length && (minute + offset) % every === 0) tasks.push({ t: 'snapshot', source: src.id, q: src.queries[Math.floor((minute + offset) / every) % src.queries.length] });
+      if (src.queries.length && minute % every === 0) tasks.push({ t: 'snapshot', source: src.id, q: src.queries[Math.floor(minute / every) % src.queries.length] });
     } else {
       const room = Math.max(0, budget - tasks.length);
       const picked = new Set();
@@ -83,12 +97,29 @@ export async function planMinute(env) {
     tasks.forEach((body, i) => messages.push({ body, delaySeconds: Math.floor((i * 60) / Math.max(1, tasks.length)) }));
   }
 
+  // Shop product checks (see SHOP_EVERY), oldest first, at most 3 per shop per minute
+  const shopIds = new Set(enabled.filter((x) => x.platform === 'shopify').map((x) => x.id));
+  const resting = new Set((await all(env, "SELECT source FROM source_health WHERE status = 'blocked' AND last_block_at > ?", t - 10 * 60e3)).map((r) => r.source));
+  const due = await all(env, `SELECT ln.listing_id, ln.source FROM lanes ln JOIN listings l ON l.id = ln.listing_id AND l.active = 1
+    LEFT JOIN stock st ON st.listing_id = ln.listing_id AND st.store_id = ln.source || ':online'
+    WHERE ln.metro = '' AND ln.source LIKE 'shop\\_%' ESCAPE '\\' AND ln.last_checked_at < CASE
+      WHEN st.in_stock = 1 THEN ? WHEN ln.listing_id % 10 = 0 THEN ? ELSE ? END
+    ORDER BY ln.last_checked_at LIMIT ?`, t - SHOP_EVERY.in, t - SHOP_EVERY.test, t - SHOP_EVERY.out, 600);
+  const perShop = {}; const shopTasks = [];
+  const shopBudget = await numSetting(env, 'budget.shops', 60);
+  for (const r of due) {
+    if (shopTasks.length >= shopBudget) break;
+    if (!shopIds.has(r.source) || resting.has(r.source) || (perShop[r.source] = (perShop[r.source] ?? 0) + 1) > 3) continue;
+    shopTasks.push({ t: 'online', source: r.source, listingId: r.listing_id, metro: '' });
+  }
+  shopTasks.forEach((body, i) => messages.push({ body, delaySeconds: Math.floor((i * 60) / Math.max(1, shopTasks.length)) }));
+
   // Restock watch: every product that came back in stock in the last 48 h and has not sold out
-  // yet is re-read about every 2 minutes, so we measure how long a restock really lasts.
+  // yet is re-read about every 10 minutes, so we measure how long a restock really lasts.
   const watch = await all(env, `SELECT r.listing_id, r.source FROM restocks r JOIN lanes ln ON ln.listing_id = r.listing_id AND ln.metro = ''
     JOIN stores s ON s.id = r.store_id AND s.online = 1
     WHERE r.ended_at IS NULL AND r.started_at > ? AND ln.last_checked_at < ? GROUP BY r.listing_id ORDER BY ln.last_checked_at LIMIT ?`,
-    t - 48 * 3600e3, t - 110e3, await numSetting(env, 'budget.watch', 30));
+    t - 48 * 3600e3, t - SHOP_EVERY.watch + 20e3, await numSetting(env, 'budget.watch', 30));
   const enabledIds = new Set(enabledSources(env).map((x) => x.id));
   watch.filter((w) => enabledIds.has(w.source)).forEach((w, i, arr) => messages.push({ body: { t: 'online', source: w.source, listingId: w.listing_id, metro: '' }, delaySeconds: Math.floor((i * 60) / Math.max(1, arr.length)) }));
 

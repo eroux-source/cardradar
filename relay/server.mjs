@@ -4,6 +4,7 @@
 // the proxy URL; we answer with the retailer's status, headers (x-relay-headers) and body.
 import http from 'node:http';
 import { ProxyAgent, request } from 'undici';
+import zlib from 'node:zlib';
 
 const agents = new Map();
 const agentFor = (proxy) => {
@@ -18,10 +19,15 @@ http.createServer(async (req, res) => {
   try {
     const { url, method = 'GET', headers = {}, body, proxy, timeoutMs = 20000 } = JSON.parse(Buffer.concat(chunks).toString());
     const r = await request(url, {
-      method, headers, body: body ?? undefined, dispatcher: proxy ? agentFor(proxy) : undefined,
+      // ask for compressed bodies (proxy data is paid per GB), decompress here
+      method, headers: { ...headers, 'accept-encoding': 'gzip, deflate, br' }, body: body ?? undefined, dispatcher: proxy ? agentFor(proxy) : undefined,
       headersTimeout: timeoutMs, bodyTimeout: timeoutMs, maxRedirections: 0,
     });
-    const buf = Buffer.from(await r.body.arrayBuffer());
+    let buf = Buffer.from(await r.body.arrayBuffer());
+    const ce = String(r.headers['content-encoding'] ?? '').toLowerCase();
+    if (ce.includes('br')) buf = zlib.brotliDecompressSync(buf);
+    else if (ce.includes('gzip')) buf = zlib.gunzipSync(buf);
+    else if (ce.includes('deflate')) buf = zlib.inflateSync(buf);
     const h = {}; for (const [k, v] of Object.entries(r.headers)) if (!['transfer-encoding', 'content-encoding', 'content-length', 'connection'].includes(k)) h[k] = Array.isArray(v) ? v.join(', ') : v;
     res.writeHead(200, { 'x-relay-status': String(r.statusCode), 'x-relay-headers': encodeURIComponent(JSON.stringify(h)), 'content-type': 'application/octet-stream' });
     res.end(buf);
