@@ -306,7 +306,9 @@ html, body { overflow-x: clip; }
   .site-head .wrap { min-height: 56px; gap: 8px; }
   .site-nav .acct { display: none; }
   .site-nav a.cta { padding: 9px 12px; }
-  .controls { top: 56px; margin-top: 12px; padding: 10px 16px; }
+  .controls { position: static; margin-top: 12px; padding: 10px 16px; }
+  .ctl-row .fine { display: none; }
+  .hero2 .lede { font-size: 15px; }
   .intro, .hl-head { padding-top: 20px; }
   section { margin: 32px 0; }
   .lede { font-size: 16px; }
