@@ -102,7 +102,7 @@ export async function planMinute(env) {
     ORDER BY ln.last_checked_at LIMIT ?`, t - SHOP_EVERY.in, t - SHOP_EVERY.test, t - SHOP_EVERY.out, 600);
   const perShop = {}; const shopTasks = [];
   const tasksBySource = Object.fromEntries(messages.map((m) => [m.body.source, true]));
-  const shopBudget = await numSetting(env, 'budget.shops', 60);
+  const shopBudget = await numSetting(env, 'budget.shopcalls', 20); // calls per minute, all shops together (Shopify limits per IP)
   for (const r of due) {
     if (shopTasks.length >= shopBudget) break;
     if (!shopIds.has(r.source) || resting.has(r.source) || (perShop[r.source] = (perShop[r.source] ?? 0) + 1) > 1 || tasksBySource[r.source]) continue;

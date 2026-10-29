@@ -17,10 +17,14 @@ export class SourceError extends Error {
 
 /** "host:port:user:pass" or "http://user:pass@host:port", one per line or comma. */
 export function parseProxies(list) {
-  return String(list ?? '').split(/[\n,]+/).map((s) => s.trim()).filter(Boolean).map((p) => {
-    if (p.includes('://')) { const u = new URL(p); return { host: u.hostname, port: Number(u.port || 80), user: decodeURIComponent(u.username), pass: decodeURIComponent(u.password) }; }
-    const [host, port, user, pass] = p.split(':');
-    return { host, port: Number(port), user, pass };
+  // host:port:user:pass, one per line or comma; a port range (host:10001-10010:user:pass) = one proxy per port (ISP proxies: one IP per port)
+  return String(list ?? '').split(/[\n,]+/).map((s) => s.trim()).filter(Boolean).flatMap((p) => {
+    if (p.includes('://')) { const u = new URL(p); return [{ host: u.hostname, port: Number(u.port || 80), user: decodeURIComponent(u.username), pass: decodeURIComponent(u.password) }]; }
+    const [host, port, user, ...rest] = p.split(':');
+    const pass = rest.join(':');
+    const [a, b] = String(port).split('-').map(Number);
+    const ports = b && b >= a && b - a < 1000 ? Array.from({ length: b - a + 1 }, (_, i) => a + i) : [a];
+    return ports.map((n) => ({ host, port: n, user, pass }));
   });
 }
 
