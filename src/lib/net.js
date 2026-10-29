@@ -29,6 +29,20 @@ export function parseProxies(list) {
 }
 
 let rr = 0;
+// Only sources that work through the proxy use it (paid per GB): Shopify shops by default.
+// Big retailers (Target, GameStop…) block it anyway and their pages are heavy. Setting proxy.allow = extra id prefixes, comma separated.
+function proxyAllowed(env, source) {
+  const extra = String(env.__settings?.['proxy.allow'] ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+  return ['shop_', ...extra].some((pre) => source.startsWith(pre));
+}
+async function countBytes(env, n) {
+  if (!n || !env.DB) return;
+  const key = `proxy.bytes.${new Date().toISOString().slice(0, 10)}`;
+  try {
+    await env.DB.prepare("INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = CAST(CAST(settings.value AS INTEGER) + ? AS TEXT), updated_at = excluded.updated_at").bind(key, String(n), Date.now(), n).run();
+    if (env.__settings) env.__settings[key] = String(Number(env.__settings[key] ?? 0) + n);
+  } catch {}
+}
 // Proxies per country: PROXY_LIST_UK, PROXY_LIST_JP… (retailers geo-block foreign IPs); PROXY_LIST = US/default.
 const COUNTRY_OF = (source) => (/_(uk|ca|au|jp|de|fr|nl|it|es)$/.exec(source)?.[1] ?? '');
 function pickProxy(env, source = '') {
@@ -44,7 +58,13 @@ function pickProxy(env, source = '') {
  */
 export async function sourceFetch(env, source, url, { method = 'GET', headers = {}, body, useProxy = true, timeoutMs = 20000 } = {}) {
   const h = { 'user-agent': UA, 'accept-language': 'en-US,en;q=0.9', 'accept-encoding': 'identity', ...headers };
-  const proxy = useProxy && !env.__noProxy && env.__settings?.['budget.proxy'] !== 'off' ? pickProxy(env, source) : null;
+  const proxy = useProxy && !env.__noProxy && env.__settings?.['budget.proxy'] !== 'off' && proxyAllowed(env, source) ? pickProxy(env, source) : null;
+  if (proxy) {
+    // paid data: hard daily cap (setting proxy.daily_mb, default 250 MB/day)
+    const cap = Number(env.__settings?.['proxy.daily_mb'] ?? 250) * 1e6;
+    const used = Number(env.__settings?.[`proxy.bytes.${new Date().toISOString().slice(0, 10)}`] ?? 0);
+    if (used > cap) throw new SourceError(source, 429, url, `proxy daily cap reached (${Math.round(used / 1e6)} MB)`);
+  }
   const res = proxy
     ? (env.RELAY ? await viaRelay(env, proxy, url, { method, headers: h, body, timeoutMs }) : await viaProxy(proxy, url, { method, headers: h, body, timeoutMs }))
     : await fetch(url, { method, headers: h, body, signal: AbortSignal.timeout(timeoutMs) });
@@ -88,6 +108,7 @@ async function viaRelay(env, proxy, url, { method, headers, body, timeoutMs }) {
   if (!r.headers.get('x-relay-status')) throw new Error(`relay ${r.status}: ${(await r.text()).slice(0, 160)}`);
   const hdrs = new Headers(JSON.parse(decodeURIComponent(r.headers.get('x-relay-headers') ?? '%7B%7D')));
   const status = Number(r.headers.get('x-relay-status'));
+  await countBytes(env, Number(r.headers.get('x-relay-wire-bytes') ?? 0) + 1500); // + headers/TLS, roughly
   return new Response([204, 304].includes(status) ? null : await r.arrayBuffer(), { status, headers: hdrs });
 }
 

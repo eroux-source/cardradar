@@ -24,12 +24,13 @@ http.createServer(async (req, res) => {
       headersTimeout: timeoutMs, bodyTimeout: timeoutMs, maxRedirections: 0,
     });
     let buf = Buffer.from(await r.body.arrayBuffer());
+    const wire = buf.length; // bytes that crossed the proxy (before decompression)
     const ce = String(r.headers['content-encoding'] ?? '').toLowerCase();
     if (ce.includes('br')) buf = zlib.brotliDecompressSync(buf);
     else if (ce.includes('gzip')) buf = zlib.gunzipSync(buf);
     else if (ce.includes('deflate')) buf = zlib.inflateSync(buf);
     const h = {}; for (const [k, v] of Object.entries(r.headers)) if (!['transfer-encoding', 'content-encoding', 'content-length', 'connection'].includes(k)) h[k] = Array.isArray(v) ? v.join(', ') : v;
-    res.writeHead(200, { 'x-relay-status': String(r.statusCode), 'x-relay-headers': encodeURIComponent(JSON.stringify(h)), 'content-type': 'application/octet-stream' });
+    res.writeHead(200, { 'x-relay-status': String(r.statusCode), 'x-relay-wire-bytes': String(wire), 'x-relay-headers': encodeURIComponent(JSON.stringify(h)), 'content-type': 'application/octet-stream' });
     res.end(buf);
   } catch (e) {
     res.writeHead(502, { 'content-type': 'text/plain' });
