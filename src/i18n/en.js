@@ -37,8 +37,8 @@ export default {
   hl: {
     showIn: (n) => `Show ${n} more products in stock`,
     h1: (country) => `Pokémon cards in stock now in ${country === 'United States' ? 'the US' : country === 'United Kingdom' ? 'the UK' : country}`,
-    lede: (n, shops) => `${n} sealed products are in stock right now across ${shops} shops we check every few minutes. Tap a product to see which shops have it and buy it there.`,
-    ledeNone: (shops) => `Nothing is in stock right now at the ${shops} shops we check every few minutes. Set an alert and we tell you the moment something lands.`,
+    lede: (n, shops) => `${n} sealed products are in stock right now across ${shops} shops we check around the clock (sold-out products every hour). Tap a product to see which shops have it and buy it there.`,
+    ledeNone: (shops) => `Nothing is in stock right now at the ${shops} shops we check around the clock (sold-out products every hour). Set an alert and we tell you the moment something lands.`,
     all: 'All', inH: 'In stock now', outH: 'Sold out right now', outSub: 'Set an alert on any of these: you hear about it the second it is back.',
     at: (n) => `in stock at ${n} shop${n > 1 ? 's' : ''}`, from: (p) => `from ${p}`, see: 'See where', none: 'Nothing in this category is in stock right now.',
     types: { etb: 'Elite Trainer Boxes', booster_box: 'Booster boxes', booster_bundle: 'Booster bundles', tin: 'Tins', upc: 'Premium collections', collection: 'Collections', blister: 'Blisters', deck: 'Decks', booster: 'Booster packs', other: 'Other' },
@@ -69,16 +69,16 @@ export default {
   },
   intro: {
     h1: 'Find Pokémon cards in stock near you',
-    what: (shops) => `We check ${shops} every few minutes and show which stores have sealed Pokémon cards on the shelf right now. Looking is free. Get an alert when your product is back.`,
+    what: (shops) => `We check ${shops} around the clock and show which shops have sealed Pokémon cards in stock right now. Looking is free. Get an alert when your product is back.`,
     now: (a, b, ago) => `Right now: <strong>${a} of ${b} stores</strong> have Pokémon cards in stock · checked ${ago}`,
     seeStock: 'See what\'s in stock', freeAlert: 'Get a free alert',
     howH: 'How it works',
-    steps: ['Pick the product you want: an Elite Trainer Box, a booster box, a tin…', 'We check every store and website for it every few minutes, day and night.', 'The moment it is back, you get an alert with a link to buy or reserve it.'],
+    steps: ['Pick the product you want: an Elite Trainer Box, a booster box, a tin…', 'We check the shops for it around the clock (every hour while it is sold out).', 'The moment it is back, you get an alert with a link to buy or reserve it.'],
     productsH: 'Products we track', productsSub: 'Green means in stock somewhere right now. Tap a product to see which stores.',
     latestH: 'Just restocked', allTimes: 'See when each store usually restocks', placesH: 'Browse by store or city',
     faqH: 'Questions',
     faq: (shops, solo) => [
-      { q: 'What is Card Restock Tracker?', a: `A free website that checks ${shops} every few minutes and shows where sealed Pokémon cards (Elite Trainer Boxes, booster boxes, bundles, tins) are in stock, store by store.` },
+      { q: 'What is Card Restock Tracker?', a: `A free website that checks ${shops} around the clock (sold-out products every hour) and shows where sealed Pokémon cards (Elite Trainer Boxes, booster boxes, bundles, tins) are in stock right now, shop by shop, with prices.` },
       { q: 'Is it free?', a: `Yes. Checking stock is free, without an account, and the free plan emails you once a day about one product. Instant alerts (phone notification, Telegram or email, within seconds) cost ${solo} for 30 days; cancel in 2 clicks.` },
       { q: 'Do you sell Pokémon cards?', a: 'No. We only tell you where they are. You buy or reserve from the retailer, at the retailer\'s price.' },
     ],
@@ -86,7 +86,7 @@ export default {
   // home
   home: {
     title: (brand) => `Pokémon Restock Tracker: Free Live Stock & Restock Alerts | ${brand}`,
-    desc: (shops) => `Free Pokémon restock tracker: live in-store and online stock at ${shops}, real restock times store by store, and alerts by phone, Telegram or email.`,
+    desc: (shops) => `Free Pokémon restock tracker: live stock at ${shops}, real restock times and how long each restock lasted, and alerts by phone, Telegram or email.`,
     h1: 'Pokémon cards in stock near you, live',
     lede: (a, b) => `Right now <strong>${a} of ${b} stores</strong> we track have Pokémon cards on the shelf.`,
     latest: (name, place, ago) => ` Latest restock: <strong>${name}</strong> at ${place}, ${ago}.`,

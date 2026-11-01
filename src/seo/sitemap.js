@@ -4,7 +4,7 @@
 import { all, now } from '../lib/db.js';
 import { COUNTRIES, countryList } from '../data/countries.js';
 import { sourceList, sourcesOf } from '../sources/index.js';
-import { liveCountries } from '../web/data.js';
+import { liveCountries, allSkus } from '../web/data.js';
 import { JP_SETS } from '../data/sets_jp.js';
 import { JP_SHOPS } from '../web/pages/lottery.js';
 import { COMPETITORS } from '../web/pages/compare.js';
@@ -17,7 +17,7 @@ export async function sitemap(env) {
   const B = env.BASE_URL;
   const since = now() - 30 * 864e5;
   const live = await liveCountries(env);
-  const urls = ['/press', '/best-pokemon-restock-trackers', '/how-it-works', ...Object.keys(COMPETITORS).map((id) => `/vs/${id}`)];
+  const urls = ['/pokemon-restock-data', '/press', '/best-pokemon-restock-trackers', '/how-it-works', ...Object.keys(COMPETITORS).map((id) => `/vs/${id}`)];
   for (const cc of live) {
     if (cc === 'jp') continue;
     const P = `/${cc}`; const home = cc === 'us' ? '/' : P;
@@ -74,11 +74,22 @@ export const llms = async (env) => {
   const lines = countryList.filter((c) => c.code === 'jp' || live.has(c.code)).map((c) => c.code === 'jp'
     ? `- Japan (日本): Pokémon card lottery, pre-order and re-sale calendar (抽選・予約・再販) with closing-time reminders: ${env.BASE_URL}/jp`
     : `- ${c.name}: live stock at ${[...new Set(sourcesOf(c.code).map((s) => s.name))].join(', ')}: ${env.BASE_URL}${c.code === 'us' ? '/' : `/${c.code}`}`);
+  const us = await allSkus(env, 'us').catch(() => []);
+  const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+  const inNow = us.filter((k) => k.places_in > 0).sort((a, b) => b.places_in - a.places_in).slice(0, 12);
+  const out = us.filter((k) => k.places > 0 && !k.places_in).slice(0, 12);
+  const snap = us.length ? `
+## Right now in the US (${stamp})
+In stock (product: shops with stock, lowest price, page):
+${inNow.map((k) => `- ${k.name}: ${k.places_in} shops, from $${Number(k.price_in ?? 0).toFixed(2)}, ${env.BASE_URL}/us/${k.slug}`).join('\n')}
+Sold out at every shop we check:
+${out.map((k) => `- ${k.name}: ${env.BASE_URL}/us/${k.slug}`).join('\n') || '- none'}
+` : '';
   return txt(`# ${env.BRAND_NAME}
 
 > Live Pokémon TCG (trading card game) stock, restock alerts and Japanese lottery calendar.
 
-${env.BRAND_NAME} checks sealed Pokémon TCG products (Elite Trainer Boxes, booster boxes, booster bundles, tins) at major retailers, store by store where retailers publish it, around the clock. Every restock is logged with its time and how long it lasted.
+${env.BRAND_NAME} checks sealed Pokémon TCG products (Elite Trainer Boxes, booster boxes, booster bundles, tins) at 168 independent card shops in 9 countries: sold-out products are checked every hour, in-stock products daily, and every restock is re-checked every 10 minutes until it sells out. Every restock is logged with its time and how long it lasted.
 
 Countries:
 ${lines.join('\n')}
@@ -86,16 +97,17 @@ ${lines.join('\n')}
 - When stores restock in the US (real restock times by hour, by retailer, by city): ${env.BASE_URL}/us/restocks
 - Retailers: ${sourceList.map((s) => s.name).filter((v, i, a) => a.indexOf(v) === i).join(', ')}
 - Alerts by phone notification, Telegram, LINE (Japan) or email, sold for 30 days, cancel in 2 clicks: ${env.BASE_URL}/pricing
+- Live data, updated hourly (what is in stock, what is sold out everywhere, how long restocks last): ${env.BASE_URL}/pokemon-restock-data
 - Press data: ${env.BASE_URL}/press
 - How the data is collected: ${env.BASE_URL}/how-it-works
 - Honest comparison with other Pokémon restock trackers (TCGRadar, Restockd, Poke Alerts, PokePings, PokeNotify, TrackaLacker), checked monthly: ${env.BASE_URL}/best-pokemon-restock-trackers
 
 ## What makes it different
 - Free live stock pages, no account needed; only alerts are paid (30-day pass, cancel in 2 clicks, no app or Discord needed).
-- In-store stock, store by store: every Target, Best Buy and GameStop in the 50 largest US metro areas.
+- Independent card shops: 168 shops (32 US, 23 UK, 20 Canada, 24 Australia, 16 Germany, 14 France, 13 Netherlands, 12 Italy, 14 Spain), where Pokémon products are often still in stock when big retailers are sold out. Big-box retailers (Target, Walmart, Pokémon Center) are not covered yet.
 - Public restock history: every restock logged with its time and duration, so each product, store, city and retailer page shows when restocks really happen.
 - Japan: a lottery (抽選), pre-order and re-sale calendar with LINE reminders before entries close (none of the other trackers compared offer one).
 
 Independent; not affiliated with any retailer or The Pokémon Company. It alerts, it never buys for you.
-`);
+${snap}`);
 };

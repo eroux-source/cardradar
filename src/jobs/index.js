@@ -8,6 +8,22 @@ import { sourceName } from '../sources/index.js';
 
 const HOUR = 3600e3;
 
+/** Once a day: hand every sitemap URL to IndexNow (Bing, which ChatGPT search reads), plus the hourly data pages. */
+export async function indexNowAll(env, only = null) {
+  if (!env.INDEXNOW_KEY || !env.BASE_URL?.startsWith('https')) return 'skip';
+  let urls = only;
+  if (!urls) {
+    const { sitemap } = await import('../seo/sitemap.js');
+    urls = [...(await (await sitemap(env)).text()).matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  }
+  const host = new URL(env.BASE_URL).host;
+  for (let i = 0; i < urls.length; i += 10000) {
+    await fetch('https://api.indexnow.org/indexnow', { method: 'POST', headers: { 'content-type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ host, key: env.INDEXNOW_KEY, keyLocation: `${env.BASE_URL}/${env.INDEXNOW_KEY}.txt`, urlList: urls.slice(i, i + 10000) }) }).catch(() => {});
+  }
+  return urls.length;
+}
+
 export async function everyMinute(env) {
   const out = {};
   out.plan = await planMinute(env).catch((e) => ({ error: e.message }));
@@ -94,4 +110,6 @@ export async function scheduled(env, when) {
   if (d.getUTCMinutes() === 5) await hourly(env);
   if (d.getUTCHours() === 3 && d.getUTCMinutes() === 15) await nightly(env);
   if (d.getUTCHours() === 13 && d.getUTCMinutes() === 20) await dailyFree(env); // ≈ 9 am New York
+  if (d.getUTCHours() === 14 && d.getUTCMinutes() === 10) await indexNowAll(env).catch(() => {});
+  else if (d.getUTCMinutes() === 12) await indexNowAll(env, ['/pokemon-restock-data', '/llms.txt', '/'].map((p) => `${env.BASE_URL}${p}`)).catch(() => {});
 }

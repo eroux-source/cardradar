@@ -12,6 +12,7 @@ import { api, json, clientIp, netKey } from './web/api.js';
 import * as pub from './web/pages/public.js';
 import { alertsPage, signinPage, accountPage } from './web/pages/funnel.js';
 import { sitemap, robots, llms } from './seo/sitemap.js';
+import { restockData } from './web/pages/data_page.js';
 import { ownerAllowed, monitor, marketing, ownerSettings, bakeoff } from './owner/index.js';
 import { jpHome, jpSet, jpShop } from './web/pages/lottery.js';
 import { bestTrackers, versus, howItWorks } from './web/pages/compare.js';
@@ -65,7 +66,7 @@ async function route(req, env, ctx) {
     const interval_test = { restocks_7d: tl.length, median_minutes: tl.length ? Math.round(tl[Math.floor(tl.length / 2)] / 60e3) : null,
       under_1h: tl.filter((d) => d < 3600e3).length,
       catch_pct: Object.fromEntries([10, 30, 60, 120, 360, 1440].map((m) => [`every_${m}min`, tl.length ? Math.round((100 * tl.reduce((a, d) => a + Math.min(1, d / (m * 60e3)), 0)) / tl.length) : null])) };
-    return json({ ok: true, restocks_24h: { ...rs, median_minutes_in_stock_7d: med, measured: durs.length }, interval_test, proxy_mb: await (async () => { const r = (await env.DB.prepare("SELECT key, value FROM settings WHERE key LIKE 'proxy.bytes.%' ORDER BY key DESC LIMIT 7").all()).results; return Object.fromEntries(r.map((x) => [x.key.slice(12), Math.round(Number(x.value) / 1e5) / 10])); })(), audience: { last_24h: aud, all_time: audAll, sources_24h: srcs, bot_hits_24h: bots?.n ?? 0 }, billing: { api_key_set: !!env.WHOP_API_KEY, webhook_secret_set: !!env.WHOP_WEBHOOK_SECRET, plans: [env.WHOP_PLAN_SOLO, env.WHOP_PLAN_MULTI], last_webhook: bw ? { ...JSON.parse(bw.value), at: bw.updated_at } : null }, last_read: last?.t ?? null, age_s: last?.t ? Math.round((now() - last.t) / 1000) : null, counts: c,
+    return json({ ok: true, restocks_24h: { ...rs, median_minutes_in_stock_7d: med, measured: durs.length }, interval_test, ai_landings_7d: (await env.DB.prepare("SELECT source, path, COUNT(DISTINCT visit) AS n FROM events WHERE name = 'view' AND bot = 0 AND at > ? AND (source LIKE '%chatgpt%' OR source LIKE '%openai%' OR source LIKE '%perplexity%' OR source LIKE '%claude%' OR source LIKE '%gemini%' OR source LIKE '%copilot%') GROUP BY source, path ORDER BY n DESC LIMIT 15").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.source} ${r.path} ${r.n}`), proxy_mb: await (async () => { const r = (await env.DB.prepare("SELECT key, value FROM settings WHERE key LIKE 'proxy.bytes.%' ORDER BY key DESC LIMIT 7").all()).results; return Object.fromEntries(r.map((x) => [x.key.slice(12), Math.round(Number(x.value) / 1e5) / 10])); })(), audience: { last_24h: aud, all_time: audAll, sources_24h: srcs, bot_hits_24h: bots?.n ?? 0 }, billing: { api_key_set: !!env.WHOP_API_KEY, webhook_secret_set: !!env.WHOP_WEBHOOK_SECRET, plans: [env.WHOP_PLAN_SOLO, env.WHOP_PLAN_MULTI], last_webhook: bw ? { ...JSON.parse(bw.value), at: bw.updated_at } : null }, last_read: last?.t ?? null, age_s: last?.t ? Math.round((now() - last.t) / 1000) : null, counts: c,
       sources: Object.fromEntries(src.results.map((r) => [r.source, { status: r.status, http: Number(/\s(\d{3})\s/.exec(r.last_error ?? '')?.[1]) || null, err: String(r.last_error ?? '').replace(/https?:\/\/[^\s?]+\?[^\s]*/g, '').slice(0, 320), listings: r.listings, readings: r.readings, last_ok_s: r.last_ok_at ? Math.round((now() - r.last_ok_at) / 1000) : null }])) });
   }
   if (p === '/api/billing/webhook' && m === 'POST') return billingWebhook(env, req);
@@ -134,6 +135,7 @@ async function route(req, env, ctx) {
   if (p === '/press') return pub.press(env);
   if (p === '/best-pokemon-restock-trackers') return bestTrackers(env);
   if (p === '/how-it-works') return howItWorks(env);
+  if (p === '/pokemon-restock-data') return restockData(env);
   if (p.startsWith('/vs/')) return (await versus(env, p.slice(4))) ?? notFound(env);
   if (p === '/terms' || p === '/privacy') return pub.legal(env, p.slice(1));
   const seg = p.split('/').filter(Boolean);
