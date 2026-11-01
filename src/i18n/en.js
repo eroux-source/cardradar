@@ -175,5 +175,5 @@ export default {
   soon: 'coming soon',
   // time
   ago: { now: 'just now', min: (n) => `${n} min. ago`, hr: (n) => `${n} hr. ago`, day: (n) => `${n} day${n > 1 ? 's' : ''} ago`, never: 'never' },
-  dur: { lt1: 'under a minute', min: (n) => `${n} min`, hr: (n) => `${n} hr`, day: (n) => `${n} days` },
+  dur: { lt1: 'under a minute', min: (n) => `${n} min`, hr: (n) => `${n} hr`, day: (n) => `${n} day${n > 1 ? 's' : ''}` },
 };

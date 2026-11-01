@@ -9,6 +9,9 @@ import * as d from '../data.js';
 import { page, answers } from '../html.js';
 
 const shopName = (n) => String(n ?? '').replace(/ online$/, '');
+// sealed products only: no graded singles, plush, promos or vintage packs in the headline numbers
+const sealed = (k) => k.type && k.type !== 'other' && !/\bPSA\b|\bBGS\b|\bCGC\b|graded|plush|\bpromo\b|shadowless|1st edition|base set/i.test(k.name);
+const EN = new Intl.DisplayNames(['en'], { type: 'region' });
 
 export async function restockData(env) {
   const T = t('us');
@@ -25,18 +28,18 @@ export async function restockData(env) {
   const median = durs.length ? durs[Math.floor(durs.length / 2)] : null;
   const week = (await all(env, 'SELECT COUNT(*) AS n FROM restocks WHERE started_at > ?', ts - 7 * 864e5))[0]?.n ?? 0;
 
-  const us = await d.allSkus(env, 'us');
+  const us = (await d.allSkus(env, 'us')).filter(sealed);
   const tracked = us.length;
   const inNow = us.filter((k) => k.places_in > 0);
   const soldOut = us.filter((k) => k.places > 0 && !k.places_in).sort((a, b) => (b.last_restock ?? 0) - (a.last_restock ?? 0)).slice(0, 15);
   const easiest = [...inNow].sort((a, b) => b.places_in - a.places_in).slice(0, 15);
   const totals = byCountry.reduce((a, c) => ({ shops: a.shops + c.shops, products: a.products + c.products, in: a.in + c.products_in }), { shops: 0, products: 0, in: 0 });
   const when = T.f.when(ts);
-  const cname = (cc) => COUNTRIES[cc]?.name ?? cc;
+  const cname = (cc) => (COUNTRIES[cc] ? EN.of(cc === 'uk' ? 'GB' : cc.toUpperCase()) : cc);
   const home = (cc) => (cc === 'us' ? '/' : `/${cc}`);
   const money = (cc, v) => (v ? t(cc).f.money(v) : '—');
 
-  const lede = `As of ${when}, ${inNow.length} of the ${tracked} sealed Pokémon TCG products we track in the US are in stock at at least one independent card shop, and ${soldOut.length ? `${us.filter((k) => k.places > 0 && !k.places_in).length} are sold out everywhere we check` : 'none is sold out everywhere we check'}. Across ${byCountry.length} countries we read ${totals.shops} shops. ${week} restocks were seen in the last 7 days${median ? `; a restock typically stays in stock for ${T.f.dur(median)} (median of ${durs.length} measured)` : ''}.`;
+  const lede = `As of ${when}, ${inNow.length} of the ${tracked} sealed Pokémon TCG products we track in the US are in stock at at least one independent card shop, and ${us.filter((k) => k.places > 0 && !k.places_in).length} are sold out at every shop we check. Across ${byCountry.length} countries we read ${totals.shops} shops. ${week} restocks were seen in the last 7 days${median ? `; a restock typically stays in stock for ${T.f.dur(median)} (median of ${durs.length} measured)` : ''}.`;
 
   const a = answers([
     { q: 'Which Pokémon cards are easiest to find in stock right now in the US?', a: easiest.length ? `As of ${when}: ${easiest.slice(0, 5).map((k) => `${k.name} (${k.places_in} shops, from ${money('us', k.price_in)})`).join('; ')}.` : 'Nothing is in stock at the shops we check right now.' },

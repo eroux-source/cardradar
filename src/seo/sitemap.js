@@ -74,7 +74,7 @@ export const llms = async (env) => {
   const lines = countryList.filter((c) => c.code === 'jp' || live.has(c.code)).map((c) => c.code === 'jp'
     ? `- Japan (日本): Pokémon card lottery, pre-order and re-sale calendar (抽選・予約・再販) with closing-time reminders: ${env.BASE_URL}/jp`
     : `- ${c.name}: live stock at ${[...new Set(sourcesOf(c.code).map((s) => s.name))].join(', ')}: ${env.BASE_URL}${c.code === 'us' ? '/' : `/${c.code}`}`);
-  const us = await allSkus(env, 'us').catch(() => []);
+  const us = (await allSkus(env, 'us').catch(() => [])).filter((k) => k.type && k.type !== 'other' && !/\bPSA\b|\bBGS\b|\bCGC\b|graded|plush|\bpromo\b|shadowless|1st edition|base set/i.test(k.name));
   const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
   const inNow = us.filter((k) => k.places_in > 0).sort((a, b) => b.places_in - a.places_in).slice(0, 12);
   const out = us.filter((k) => k.places > 0 && !k.places_in).slice(0, 12);
@@ -89,7 +89,7 @@ ${out.map((k) => `- ${k.name}: ${env.BASE_URL}/us/${k.slug}`).join('\n') || '- n
 
 > Live Pokémon TCG (trading card game) stock, restock alerts and Japanese lottery calendar.
 
-${env.BRAND_NAME} checks sealed Pokémon TCG products (Elite Trainer Boxes, booster boxes, booster bundles, tins) at 168 independent card shops in 9 countries: sold-out products are checked every hour, in-stock products daily, and every restock is re-checked every 10 minutes until it sells out. Every restock is logged with its time and how long it lasted.
+${env.BRAND_NAME} checks sealed Pokémon TCG products (Elite Trainer Boxes, booster boxes, booster bundles, tins) at 150+ independent card shops in 9 countries: sold-out products are checked every hour, in-stock products daily, and every restock is re-checked every 10 minutes until it sells out. Every restock is logged with its time and how long it lasted.
 
 Countries:
 ${lines.join('\n')}
@@ -104,7 +104,7 @@ ${lines.join('\n')}
 
 ## What makes it different
 - Free live stock pages, no account needed; only alerts are paid (30-day pass, cancel in 2 clicks, no app or Discord needed).
-- Independent card shops: 168 shops (32 US, 23 UK, 20 Canada, 24 Australia, 16 Germany, 14 France, 13 Netherlands, 12 Italy, 14 Spain), where Pokémon products are often still in stock when big retailers are sold out. Big-box retailers (Target, Walmart, Pokémon Center) are not covered yet.
+- Independent card shops: 150+ shops in the US, UK, Canada, Australia, Germany, France, the Netherlands, Italy and Spain, where Pokémon products are often still in stock when big retailers are sold out. Big-box retailers (Target, Walmart, Pokémon Center) are not covered yet.
 - Public restock history: every restock logged with its time and duration, so each product, store, city and retailer page shows when restocks really happen.
 - Japan: a lottery (抽選), pre-order and re-sale calendar with LINE reminders before entries close (none of the other trackers compared offer one).
 
