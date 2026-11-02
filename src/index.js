@@ -178,6 +178,23 @@ export default {
   async fetch(req, env, ctx) {
     setEnv(env);
     try {
+      // Edge cache for public pages: bots read thousands of pages and the heavy stock queries
+      // exceeded D1's CPU limit. Pages are kept 10 minutes (data pages say "refreshed hourly").
+      const u = new URL(req.url);
+      const cacheable = req.method === 'GET' && !/^\/(api|account|alerts|signin|owner|dev|search)\b/.test(u.pathname) && !u.pathname.includes('/search')
+        && [...u.searchParams.keys()].every((k) => k.startsWith('utm_') || k === 'via' || k === 'ref');
+      if (cacheable && typeof caches !== 'undefined') {
+        const key = new Request(`${u.origin}${u.pathname}`);
+        const hit = await caches.default.match(key);
+        if (hit) return hit;
+        const res = await route(req, env, ctx);
+        if (res.status === 200 && /text\/html|xml|text\/plain/.test(res.headers.get('content-type') ?? '')) {
+          const copy = new Response(res.clone().body, res);
+          copy.headers.set('cache-control', 'public, max-age=60, s-maxage=600');
+          ctx.waitUntil(caches.default.put(key, copy));
+        }
+        return res;
+      }
       return await route(req, env, ctx);
     } catch (e) {
       console.error(e);
