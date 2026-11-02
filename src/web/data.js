@@ -68,19 +68,19 @@ export const storeStock = (env, storeId) => all(env, `
 
 /** Every product sold in a country, hardest to find first, with its photo. */
 export const allSkus = (env, cc) => all(env, `
-  SELECT k.*, st.name AS set_name,
-    (SELECT image FROM listings l WHERE l.sku_id = k.id AND l.image IS NOT NULL AND l.country = ?1 LIMIT 1) AS image,
-    (SELECT COUNT(*) FROM stock x JOIN listings l ON l.id = x.listing_id JOIN stores s ON s.id = x.store_id WHERE l.sku_id = k.id AND s.online = 0 AND s.country = ?1) AS stores,
-    (SELECT COUNT(*) FROM stock x JOIN listings l ON l.id = x.listing_id JOIN stores s ON s.id = x.store_id WHERE l.sku_id = k.id AND s.online = 0 AND s.country = ?1 AND x.in_stock = 1) AS stores_in,
-    (SELECT GROUP_CONCAT(DISTINCT s.source) FROM stock x JOIN listings l ON l.id = x.listing_id JOIN stores s ON s.id = x.store_id WHERE l.sku_id = k.id AND s.online = 1 AND s.country = ?1 AND x.in_stock = 1) AS online_in,
-    (SELECT MAX(r.started_at) FROM restocks r JOIN stores s ON s.id = r.store_id WHERE r.sku_id = k.id AND s.country = ?1) AS last_restock,
-    (SELECT MIN(price) FROM listings l WHERE l.sku_id = k.id AND l.price > 0 AND l.country = ?1) AS min_price,
-    (SELECT COUNT(*) FROM stock x JOIN listings l ON l.id = x.listing_id JOIN stores s ON s.id = x.store_id WHERE l.sku_id = k.id AND s.country = ?1) AS places,
-    (SELECT COUNT(*) FROM stock x JOIN listings l ON l.id = x.listing_id JOIN stores s ON s.id = x.store_id WHERE l.sku_id = k.id AND s.country = ?1 AND x.in_stock = 1) AS places_in,
-    (SELECT MIN(l.price) FROM stock x JOIN listings l ON l.id = x.listing_id JOIN stores s ON s.id = x.store_id WHERE l.sku_id = k.id AND s.country = ?1 AND x.in_stock = 1 AND l.price > 0) AS price_in
-  FROM skus k LEFT JOIN sets st ON st.id = k.set_id
-  WHERE k.active = 1 AND EXISTS (SELECT 1 FROM listings l WHERE l.sku_id = k.id AND l.country = ?1 AND l.active = 1)
-  ORDER BY (stores_in * 1.0 / MAX(stores, 1)) + (online_in IS NOT NULL) ASC, last_restock DESC NULLS LAST, k.name`, cc);
+  WITH agg AS (
+    SELECT l.sku_id, SUM(s.online = 0) AS stores, SUM(s.online = 0 AND x.in_stock = 1) AS stores_in,
+      GROUP_CONCAT(DISTINCT CASE WHEN s.online = 1 AND x.in_stock = 1 THEN s.source END) AS online_in,
+      COUNT(*) AS places, SUM(x.in_stock) AS places_in, MIN(CASE WHEN x.in_stock = 1 AND l.price > 0 THEN l.price END) AS price_in
+    FROM stores s JOIN stock x ON x.store_id = s.id JOIN listings l ON l.id = x.listing_id
+    WHERE s.country = ?1 GROUP BY l.sku_id),
+  li AS (SELECT sku_id, MIN(CASE WHEN price > 0 THEN price END) AS min_price, MAX(image) AS image FROM listings WHERE country = ?1 AND active = 1 GROUP BY sku_id),
+  rs AS (SELECT r.sku_id, MAX(r.started_at) AS last_restock FROM restocks r JOIN stores s ON s.id = r.store_id WHERE s.country = ?1 GROUP BY r.sku_id)
+  SELECT k.*, st.name AS set_name, li.image, COALESCE(a.stores, 0) AS stores, COALESCE(a.stores_in, 0) AS stores_in, a.online_in, rs.last_restock,
+    li.min_price, COALESCE(a.places, 0) AS places, COALESCE(a.places_in, 0) AS places_in, a.price_in
+  FROM li JOIN skus k ON k.id = li.sku_id AND k.active = 1 LEFT JOIN sets st ON st.id = k.set_id
+    LEFT JOIN agg a ON a.sku_id = k.id LEFT JOIN rs ON rs.sku_id = k.id
+  ORDER BY (COALESCE(a.stores_in, 0) * 1.0 / MAX(COALESCE(a.stores, 0), 1)) + (a.online_in IS NOT NULL) ASC, rs.last_restock DESC NULLS LAST, k.name`, cc);
 
 export const storesInMetro = (env, metro) => all(env, `
   SELECT s.*, (SELECT COUNT(*) FROM stock k WHERE k.store_id = s.id AND k.in_stock = 1) AS in_count,
