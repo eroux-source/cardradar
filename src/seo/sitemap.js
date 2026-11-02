@@ -8,6 +8,7 @@ import { liveCountries, allSkus } from '../web/data.js';
 import { JP_SETS } from '../data/sets_jp.js';
 import { JP_SHOPS } from '../web/pages/lottery.js';
 import { COMPETITORS } from '../web/pages/compare.js';
+import { dataPath, thirtyPath } from '../web/pages/local_data.js';
 
 const xml = (body) => new Response(body, { headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=900' } });
 const txt = (body) => new Response(body, { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=3600' } });
@@ -21,6 +22,8 @@ export async function sitemap(env) {
   for (const cc of live) {
     if (cc === 'jp') continue;
     const P = `/${cc}`; const home = cc === 'us' ? '/' : P;
+    if (cc !== 'us') urls.push(dataPath(cc));
+    urls.push(thirtyPath(cc));
     const [skus, stores, skuR, storeR, cityR, srcR] = await Promise.all([
       all(env, 'SELECT DISTINCT k.slug FROM skus k JOIN listings l ON l.sku_id = k.id AND l.country = ? AND l.active = 1 WHERE k.active = 1', cc),
       all(env, 'SELECT slug FROM stores WHERE online = 0 AND country = ?', cc),
@@ -98,6 +101,8 @@ ${lines.join('\n')}
 - Retailers: ${sourceList.map((s) => s.name).filter((v, i, a) => a.indexOf(v) === i).join(', ')}
 - Alerts by phone notification, Telegram, LINE (Japan) or email, sold for 30 days, cancel in 2 clicks: ${env.BASE_URL}/pricing
 - Live data, updated hourly (what is in stock, what is sold out everywhere, how long restocks last): ${env.BASE_URL}/pokemon-restock-data
+- Same data per country, in the country's language: ${[...live].filter((c) => c !== 'jp' && c !== 'us' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${dataPath(c)}`).join(' , ')}
+- Pokémon 30th Celebration: where each product is in stock, per country: ${[...live].filter((c) => c !== 'jp' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${thirtyPath(c)}`).join(' , ')}
 - Press data: ${env.BASE_URL}/press
 - How the data is collected: ${env.BASE_URL}/how-it-works
 - Honest comparison with other Pokémon restock trackers (TCGRadar, Restockd, Poke Alerts, PokePings, PokeNotify, TrackaLacker), checked monthly: ${env.BASE_URL}/best-pokemon-restock-trackers

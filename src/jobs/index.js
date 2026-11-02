@@ -6,6 +6,7 @@ import { heal } from '../alerts/pipeline.js';
 import { announce } from '../crawler/lotteries.js';
 import { sourceName } from '../sources/index.js';
 
+import { dataPath, thirtyPath } from '../web/pages/local_data.js';
 const HOUR = 3600e3;
 
 /** Once a day: hand every sitemap URL to IndexNow (Bing, which ChatGPT search reads), plus the hourly data pages. */
@@ -111,5 +112,5 @@ export async function scheduled(env, when) {
   if (d.getUTCHours() === 3 && d.getUTCMinutes() === 15) await nightly(env);
   if (d.getUTCHours() === 13 && d.getUTCMinutes() === 20) await dailyFree(env); // ≈ 9 am New York
   if (d.getUTCHours() === 14 && d.getUTCMinutes() === 10) await indexNowAll(env).catch(() => {});
-  else if (d.getUTCMinutes() === 12) await indexNowAll(env, ['/pokemon-restock-data', '/llms.txt', '/'].map((p) => `${env.BASE_URL}${p}`)).catch(() => {});
+  else if (d.getUTCMinutes() === 12) await indexNowAll(env, ['/pokemon-restock-data', '/llms.txt', '/', ...['uk', 'ca', 'au', 'de', 'fr', 'nl', 'it', 'es'].flatMap((c) => [dataPath(c), thirtyPath(c)]), thirtyPath('us')].map((p) => `${env.BASE_URL}${p}`)).catch(() => {});
 }

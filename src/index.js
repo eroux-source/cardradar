@@ -13,6 +13,7 @@ import * as pub from './web/pages/public.js';
 import { alertsPage, signinPage, accountPage } from './web/pages/funnel.js';
 import { sitemap, robots, llms } from './seo/sitemap.js';
 import { restockData } from './web/pages/data_page.js';
+import { countryData, thirtyPage, DATA_SLUG, THIRTY_SLUG } from './web/pages/local_data.js';
 import { ownerAllowed, monitor, marketing, ownerSettings, bakeoff } from './owner/index.js';
 import { jpHome, jpSet, jpShop } from './web/pages/lottery.js';
 import { bestTrackers, versus, howItWorks } from './web/pages/compare.js';
@@ -150,6 +151,12 @@ async function route(req, env, ctx) {
     if (seg.length === 1) return pub.home(env, cc);
     if (seg[1] === 'pricing' && seg.length === 2) return pub.pricing(env, cc);
     if (seg[1] === 'search' && seg.length === 2) return pub.search(env, cc, url.searchParams.get('q') ?? '');
+    const lang = COUNTRIES[cc].lang;
+    if (seg.length === 2 && seg[1] === (DATA_SLUG[lang] ?? DATA_SLUG.en)) {
+      if (cc === 'us') return Response.redirect(`${url.origin}/pokemon-restock-data`, 301);
+      return (await countryData(env, cc)) ?? notFound(env, cc);
+    }
+    if (seg.length === 2 && seg[1] === (THIRTY_SLUG[lang] ?? THIRTY_SLUG.en)) return (await thirtyPage(env, cc)) ?? notFound(env, cc);
     let res = null;
     if (seg[1] === 'restocks') res = seg[2] ? await pub.cityRestocks(env, cc, seg[2]) : await pub.allRestocks(env, cc);
     else if (seg[1] === 'cities' && seg.length === 2) res = await pub.cities(env, cc);
