@@ -121,3 +121,21 @@ export const lotteries = (env, where = '1=1', args = [], limit = 200) => all(env
 /** Countries that have at least one product listed (the others are "coming soon"). */
 export const liveCountries = async (env) => new Set((await all(env, 'SELECT DISTINCT country FROM listings WHERE active = 1')).map((r) => r.country)
   .concat((await all(env, "SELECT 'jp' AS country FROM lotteries LIMIT 1")).map((r) => r.country)));
+
+/** Popularity of each product in a country over 14 days: page views + 5 × clicks (buy, compare, alert). slug → score. */
+export async function popularity(env, cc) {
+  const since = now() - 14 * DAY;
+  const pre = `/${cc}/`;
+  const rows = await all(env, `SELECT name, path, json_extract(props, '$.sku') AS sku, json_extract(props, '$.page') AS page, COUNT(*) AS n
+    FROM events WHERE bot = 0 AND at > ? AND (
+      (name = 'view' AND path LIKE ?) OR (name IN ('buy', 'buy_out', 'sheet_open') AND (json_extract(props, '$.page') LIKE ? OR json_extract(props, '$.page') = ?)))
+    GROUP BY name, path, sku, page`, since, `${pre}%`, `${pre}%`, cc === 'us' ? '/' : `/${cc}`).catch(() => []);
+  const score = new Map();
+  const slugOf = (p) => (p && p.startsWith(pre) ? p.slice(pre.length).split('/')[0] : null);
+  for (const r of rows) {
+    const slug = r.name === 'view' ? slugOf(r.path) : (r.sku ?? slugOf(r.page));
+    if (!slug) continue;
+    score.set(slug, (score.get(slug) ?? 0) + r.n * (r.name === 'view' ? 1 : 5));
+  }
+  return score;
+}

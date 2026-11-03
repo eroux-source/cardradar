@@ -13,7 +13,7 @@ import { factsBlock } from '../facts.js';
 
 const maps = (s) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([sourceName(s.source), s.address, s.city, s.state, s.zip].filter(Boolean).join(' '))}`;
 
-function placeCard(T, cc, s, alertHref) {
+function placeCard(T, cc, s, alertHref, sku = null) {
   const S = T.sv;
   const name = s.online ? `${sourceName(s.source)}` : (s.name ?? s.store_name);
   const sub = s.online ? `${S.online} · ${S.ships}` : [sourceName(s.source), s.city].filter(Boolean).join(' · ');
@@ -21,7 +21,7 @@ function placeCard(T, cc, s, alertHref) {
   const meta = s.in_stock
     ? `${s.in_since ? `${e(S.since(T.f.ago(s.in_since)))} · ` : ''}${s.qty > 1 ? `${e(T.available(s.qty))} · ` : ''}${e(T.checkedAgo(T.f.ago(s.seen_at)))}`
     : s.seen_at ? `${e(s.last_restock ? T.lastRestockAgo(T.f.ago(s.last_restock)) : T.noRestockYet)} · ${e(T.checkedAgo(T.f.ago(s.seen_at)))}` : '';
-  const go = s.url ? `<a class="btn ${s.in_stock ? 'go' : 'dark'} small" href="${e(s.url)}" rel="nofollow noopener sponsored" target="_blank" data-ev="buy" data-shop="${e(s.l_source ?? s.source ?? '')}" data-in="${s.in_stock ? 1 : 0}">${e(s.online ? S.buy : S.reserve)} ↗</a>` : '';
+  const go = s.url ? `<a class="btn ${s.in_stock ? 'go' : 'dark'} small" href="${e(s.url)}" rel="nofollow noopener sponsored" target="_blank" data-ev="buy" data-shop="${e(s.l_source ?? s.source ?? '')}" data-sku="${e(sku ?? '')}" data-in="${s.in_stock ? 1 : 0}">${e(s.online ? S.buy : S.reserve)} ↗</a>` : '';
   const dir = !s.online && s.address ? `<a class="btn dark small" href="${e(maps(s))}" rel="noopener" target="_blank">${e(S.directions)}</a>` : '';
   const alert = !s.in_stock ? `<a class="btn go small" href="${e(alertHref)}" data-ev="sheet_open">🔔 ${e(S.alertBtn)}</a>` : `<a class="btn dark small" href="${e(alertHref)}" data-ev="sheet_open">🔔 ${e(S.alertBtn)}</a>`;
   const title = s.online ? e(name) : `<a href="${base(cc)}/store/${e(s.slug)}">${e(name)}</a>`;
@@ -101,7 +101,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
     </aside>
     <section class="main" aria-labelledby="now-h">
       <h2 id="now-h">${e(S.nowH(inNow.length))}</h2>
-      ${places.length ? `<p class="sub">${e(S.nowSub(places.length))}</p><ul class="places">${places.slice(0, metro ? 200 : 60).map((s) => placeCard(T, cc, s, alertHref)).join('')}</ul>` : `<p class="empty">${e(S.asOfNone(k.name))}</p>`}
+      ${places.length ? `<p class="sub">${e(S.nowSub(places.length))}</p><ul class="places">${places.slice(0, metro ? 200 : 60).map((s) => placeCard(T, cc, s, alertHref, k.slug)).join('')}</ul>` : `<p class="empty">${e(S.asOfNone(k.name))}</p>`}
       ${isHome ? '' : affiliateBlock(env, T, cc, k)}
     </section>
   </div>
@@ -132,11 +132,13 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
  */
 export async function homeList(env, T, cc, { live = null, alternates = null, extraLd = [] } = {}) {
   const H = T.hl; const S = T.sv;
-  const skus = await d.allSkus(env, cc);
+  const [skus, pop] = await Promise.all([d.allSkus(env, cc), d.popularity(env, cc)]);
   const shopsN = new Set(sourcesOf(cc).map((s) => s.id)).size;
-  const inNow = skus.filter((k) => k.places_in > 0).sort((a, b) => b.places_in - a.places_in || (b.last_restock ?? 0) - (a.last_restock ?? 0));
-  // sold out: the most watched first (checked in most places, restocked most recently)
-  const out = skus.filter((k) => !(k.places_in > 0)).sort((a, b) => (b.places ?? 0) - (a.places ?? 0) || (b.last_restock ?? 0) - (a.last_restock ?? 0));
+  // most clicked / viewed first (14 days), then the easiest to find
+  const p = (k) => pop.get(k.slug) ?? 0;
+  const inNow = skus.filter((k) => k.places_in > 0).sort((a, b) => p(b) - p(a) || b.places_in - a.places_in || (b.last_restock ?? 0) - (a.last_restock ?? 0));
+  // sold out: the most wanted first, then the most watched (checked in most places, restocked most recently)
+  const out = skus.filter((k) => !(k.places_in > 0)).sort((a, b) => p(b) - p(a) || (b.places ?? 0) - (a.places ?? 0) || (b.last_restock ?? 0) - (a.last_restock ?? 0));
   const OUT_SHOWN = 12;
   const types = [...new Set(skus.map((k) => k.type ?? 'other'))].filter((x) => H.types[x]);
   const order = Object.keys(H.types);
@@ -146,7 +148,7 @@ export async function homeList(env, T, cc, { live = null, alternates = null, ext
       <span class="pname">${e(k.name)}</span>
       <span class="pstatus">${isIn ? `<span class="chip in">${e(H.at(k.places_in))}</span>` : `<span class="chip out">${e(T.chip.out)}</span>`}</span>
       <span class="pmeta">${isIn && k.price_in ? `<strong>${e(H.from(T.f.money(k.price_in)))}</strong>` : k.min_price ? e(T.f.money(k.min_price)) : ''}${!isIn && k.last_restock ? ` · ${e(T.lastRestockAgo(T.f.ago(k.last_restock)))}` : ''}</span>
-      ${isIn ? `<span class="pgo">${e(H.see)} →</span>` : ''}</a>${isIn ? '' : `<a class="btn go small alert-btn" href="/alerts?${new URLSearchParams({ c: cc, sku: k.slug })}" data-ev="sheet_open">🔔 ${e(S.alertBtn)}</a>`}</li>`;
+      ${isIn ? `<span class="pgo">${e(H.see)} →</span>` : ''}</a>${isIn ? '' : `<a class="btn go small alert-btn" href="/alerts?${new URLSearchParams({ c: cc, sku: k.slug })}" data-ev="sheet_open" data-sku="${e(k.slug)}">🔔 ${e(S.alertBtn)}</a>`}</li>`;
   const body = `<section class="hl-head">
     <h1>${e(H.h1(T.cc.name))}</h1>
     <p class="lede">${e(inNow.length ? H.lede(inNow.length, shopsN) : H.ledeNone(shopsN))}</p>
