@@ -27,7 +27,7 @@ async function viaResend(env, to, subject, text, from = env.ALERTS_FROM) {
   if (!env.RESEND_API_KEY) { if (isLocal(env)) { console.log(`[email:dry-run:resend] ${to} — ${subject}`); return true; } throw new NoProvider('no email provider set (RESEND_API_KEY)'); }
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST', headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ from: env.RESEND_FROM || from, to, reply_to: env.SUPPORT_EMAIL, subject, text }),
+    body: JSON.stringify({ from: env.RESEND_FROM || from, to, reply_to: env.REPLY_TO || env.SUPPORT_EMAIL, subject, text }),
   });
   if (!r.ok) throw new Error(`resend ${r.status}: ${(await r.text()).slice(0, 160)}`);
   return true;

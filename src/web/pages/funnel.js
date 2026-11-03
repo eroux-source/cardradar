@@ -30,7 +30,8 @@ const WANT_PHONE = {
   nl: 'Ik wil mijn meldingen ook graag als pushbericht op mijn telefoon',
   ja: 'スマホへのプッシュ通知でも受け取りたい',
 };
-import { allSkus } from '../data.js';
+import { allSkus, popularity } from '../data.js';
+import { sealed } from './local_data.js';
 import { t } from '../../i18n/index.js';
 import { fun } from '../../i18n/funnel.js';
 import { sourcesOf } from '../../sources/index.js';
@@ -45,7 +46,11 @@ export async function alertsPage(env, url, user) {
   const sku = url.searchParams.get('sku') ?? '';
   const metro = url.searchParams.get('metro') ?? '';
   const pass = user ? await activePass(env, user.id) : null;
-  const sets = [...new Map(skus.filter((k) => k.set_id).map((k) => [k.set_id, k.set_name])).entries()];
+  // online shops only (store-by-store sources are blocked); real sealed products we have read, most wanted first
+  const pop = lottery ? new Map() : await popularity(env, cc);
+  const picks = skus.filter((k) => sealed(k) && (k.places > 0 || k.slug === sku)).sort((a, b) => (pop.get(b.slug) ?? 0) - (pop.get(a.slug) ?? 0) || (b.places_in ?? 0) - (a.places_in ?? 0) || a.name.localeCompare(b.name));
+  const setCount = new Map(); for (const k of picks) if (k.set_id) setCount.set(k.set_id, (setCount.get(k.set_id) ?? 0) + 1);
+  const sets = [...new Map(picks.filter((k) => k.set_id && setCount.get(k.set_id) >= 3).map((k) => [k.set_id, k.set_name])).entries()].sort((a, b) => setCount.get(b[0]) - setCount.get(a[0])).slice(0, 15);
   const shops = (kind) => [...new Set(sourcesOf(cc).filter((s) => (kind === 'stores' ? s.kind === 'stores' : s.kind !== 'stores')).map((s) => s.name))].join(', ');
   const metroOptions = T.cc.metros.map((m) => `<option value="${m.slug}"${m.slug === metro ? ' selected' : ''}>${e(m.name)}</option>`).join('');
   const productStep = lottery
@@ -53,16 +58,11 @@ export async function alertsPage(env, url, user) {
       <label for="f-sku">${e(F.product)}</label>
       <select id="f-sku" name="sku"><option value="jpset:*">${e(F.allSets)}</option>${JP_SETS.map((s) => `<option value="jpset:${s.slug}">${e(F.anything(s.name))}</option>`).join('')}</select>
       <button class="btn" type="submit">${e(F.cont)}</button></form>`
-    : `<form data-form="product">
+    : `<form data-form="product"><input type="hidden" name="kind" value="online">
       <label for="f-sku">${e(F.product)}</label>
       <select id="f-sku" name="sku" required><option value="">${e(F.pick)}</option>
-        ${sets.length ? `<optgroup label="${e(F.anySet)}">${sets.map(([id, n]) => `<option value="set:${id}">${e(F.anything(n))}</option>`).join('')}</optgroup>` : ''}
-        <optgroup label="${e(F.one)}">${skus.map((k) => `<option value="${e(k.slug)}"${k.slug === sku ? ' selected' : ''}>${e(k.name)}</option>`).join('')}</optgroup></select>
-      <fieldset><legend>${e(F.where)}</legend>
-        ${shops('stores') ? `<label class="radio"><input type="radio" name="kind" value="stores" ${metro || !sku ? 'checked' : ''}> ${e(F.storesIn(shops('stores')))}</label>` : ''}
-        <label class="radio"><input type="radio" name="kind" value="online" ${(!metro && sku) || !shops('stores') ? 'checked' : ''}> ${e(F.onlineAt(shops('online')))}</label>
-      </fieldset>
-      <label for="f-metro">${e(F.city)}</label><select id="f-metro" name="metro"><option value="">${e(F.pickCity)}</option>${metroOptions}</select>
+        <optgroup label="${e(F.one)}">${picks.map((k) => `<option value="${e(k.slug)}"${k.slug === sku ? ' selected' : ''}>${e(k.name)}</option>`).join('')}</optgroup>
+        ${sets.length ? `<optgroup label="${e(F.anySet)}">${sets.map(([id, n]) => `<option value="set:${id}">${e(F.anything(n))}</option>`).join('')}</optgroup>` : ''}</select>
       <button class="btn" type="submit">${e(F.cont)}</button></form>`;
   if (!lottery && !skus.length) {
     return page(env, T, { title: `${F.title} — ${env.BRAND_NAME}`, description: F.title, path: '/alerts', noindex: true, nav: 'alerts',

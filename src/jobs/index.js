@@ -10,6 +10,29 @@ import { sourceName } from '../sources/index.js';
 import { dataPath, thirtyPath } from '../web/pages/local_data.js';
 const HOUR = 3600e3;
 
+/** One-off relaunch email (approved by Eugène 2026-11-03): everyone who left an email but has no active alert. Runs once. */
+async function relaunchOnce(env) {
+  const s = await one(env, "SELECT value FROM settings WHERE key = 'relaunch.2026-11-03'");
+  if (s || !env.RESEND_API_KEY) return 'skip';
+  await run(env, "INSERT INTO settings (key, value, updated_at) VALUES ('relaunch.2026-11-03', 'sending', ?)", now());
+  const owners = String(env.OWNER_EMAILS ?? '').toLowerCase().split(',').map((x) => x.trim());
+  const rows = await all(env, `SELECT email, sku_id FROM leads WHERE email NOT IN (SELECT u.email FROM users u JOIN alerts a ON a.user_id = u.id AND a.status = 'active')
+    UNION SELECT u.email, NULL FROM users u WHERE NOT EXISTS (SELECT 1 FROM alerts a WHERE a.user_id = u.id AND a.status = 'active') AND u.email NOT IN (SELECT email FROM leads)`);
+  let n = 0;
+  for (const r of rows) {
+    const email = String(r.email).toLowerCase();
+    if (!email.includes('@') || owners.includes(email)) continue;
+    const k = r.sku_id ? await one(env, `SELECT k.name, k.slug, (SELECT l.country FROM listings l WHERE l.sku_id = k.id AND l.active = 1 GROUP BY l.country ORDER BY COUNT(*) DESC LIMIT 1) AS cc FROM skus k WHERE k.id = ?`, r.sku_id) : null;
+    const link = `${env.BASE_URL}/alerts?${new URLSearchParams({ c: k?.cc ?? 'us', ...(k ? { sku: k.slug } : {}) })}`;
+    const subject = k ? `Your ${k.name} alert is now free` : 'Your restock alert is now free';
+    const text = `Hi,\n\nYou started a restock alert on Card Restock Tracker${k ? ` for ${k.name}` : ''}, but it never switched on. That was a bug on our side, sorry about that.\n\nGood news: alerts are now free during our launch. Turn yours on in one minute:\n${link}\n\nWe check 190 card shops in 11 countries around the clock and email you as soon as it is back in stock.\n\nEugène, Card Restock Tracker\n\nDon't want these emails? Reply "stop" and we won't write again.`;
+    await queueEmail(env, { to: email, kind: 'relaunch', subject, text });
+    n++;
+  }
+  await run(env, "UPDATE settings SET value = ?, updated_at = ? WHERE key = 'relaunch.2026-11-03'", `queued ${n}`, now());
+  return n;
+}
+
 /** Once a day: hand every sitemap URL to IndexNow (Bing, which ChatGPT search reads), plus the hourly data pages. */
 export async function indexNowAll(env, only = null) {
   if (!env.INDEXNOW_KEY || !env.BASE_URL?.startsWith('https')) return 'skip';
@@ -29,6 +52,7 @@ export async function indexNowAll(env, only = null) {
 export async function everyMinute(env) {
   const out = {};
   out.plan = await planMinute(env).catch((e) => ({ error: e.message }));
+  out.relaunch = await relaunchOnce(env).catch((e) => ({ error: e.message }));
   out.emails = await flushOutbox(env).catch((e) => ({ error: e.message }));
   out.lotteries = await announce(env).then(() => 'ok').catch((e) => ({ error: e.message })); // Japan: opening / closing-soon notices
   // heartbeat + visible errors for the owner page
