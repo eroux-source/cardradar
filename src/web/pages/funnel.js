@@ -75,7 +75,7 @@ export async function alertsPage(env, url, user) {
   <section class="step" data-step="1"${user ? ' hidden' : ''}>
     <h2>${e(F.s1h)}</h2>
     <p class="sub">${e(F.s1sub)}</p>
-    <a class="btn ghost" href="/auth/google?next=${encodeURIComponent('/alerts?' + url.searchParams)}">${e(F.google)}</a>
+    ${env.GOOGLE_CLIENT_ID ? `<a class="btn ghost" href="/auth/google?next=${encodeURIComponent('/alerts?' + url.searchParams)}">${e(F.google)}</a>` : ''}
     <form data-form="email"><label for="f-email">${e(F.email)}</label><input id="f-email" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
       <button class="btn" type="submit">${e(F.cont)}</button></form>
     <form data-form="code" hidden><label for="f-code">${e(F.codeLabel)}</label><input id="f-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required>
@@ -109,7 +109,7 @@ export async function alertsPage(env, url, user) {
 export async function signinPage(env, url) {
   const next = url.searchParams.get('next') ?? '/account';
   const body = `<div class="funnel" id="signin" data-next="${e(next)}"><h1>Sign in</h1>
-  <a class="btn ghost" href="/auth/google?next=${encodeURIComponent(next)}">Continue with Google</a>
+  ${env.GOOGLE_CLIENT_ID ? `<a class="btn ghost" href="/auth/google?next=${encodeURIComponent(next)}">Continue with Google</a>` : ''}
   <form data-form="email"><label for="s-email">Email</label><input id="s-email" name="email" type="email" autocomplete="email" required><button class="btn" type="submit">Email me a code</button></form>
   <form data-form="code" hidden><label for="s-code">6-digit code (works for 1 hour)</label><input id="s-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required><button class="btn" type="submit">Sign in</button></form>
   <p class="err" role="alert"></p></div>`;
