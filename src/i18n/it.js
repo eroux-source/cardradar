@@ -35,7 +35,7 @@ export default {
     homeH1Online: (country) => `Disponibilità live delle carte Pokémon in ogni negozio online in ${country}`,
     skuH1: (name, city) => `${name}: disponibilità live${city ? ` a ${city}` : ''}`,
     lede: (shops) => `La disponibilità delle carte Pokémon sigillate da ${shops}, controllata giorno e notte. Scegli un prodotto, guarda chi ce l'ha, compra dal negozio.`,
-    asOf: (when, name, n, total, where, last, typical) => `Al ${when}: ${name} è ${n ? `disponibile in ${n} negozi su ${total}${where ? ` (${where})` : ''}` : `esaurito in tutti i ${total} negozi controllati`}.${last ? ` Ultimo restock: ${last}.` : ''}${typical ? ` Disponibile di solito per: ${typical}.` : ''}`,
+    asOf: (when, name, n, total, where, last, typical) => `Al ${when}: ${name} è ${n ? `disponibile in ${n} negozi su ${total}${where ? ` (${where})` : ''}` : (total === 1 ? 'esaurito nell\'unico negozio controllato finora' : `esaurito in tutti i ${total} negozi controllati`)}.${last ? ` Ultimo restock: ${last}.` : ''}${typical ? ` Disponibile di solito per: ${typical}.` : ''}`,
     asOfNone: (name) => `${name}: i primi controlli sono in corso. La disponibilità appare qui appena ogni negozio viene letto.`,
     live: 'Live', sorted: 'Ordinati per disponibilità', products: 'Prodotto', city: 'Città', allCities: 'Ovunque',
     nowH: (n) => (n ? `${n} negoz${n > 1 ? 'i ce l\'hanno' : 'io ce l\'ha'} adesso` : 'Esaurito ovunque adesso'),

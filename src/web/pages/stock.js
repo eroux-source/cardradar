@@ -33,13 +33,18 @@ function placeCard(T, cc, s, alertHref, sku = null) {
 
 export async function stockPage(env, T, cc, k, { metro = null, isHome = false, live = null, alternates = null, extraLd = [] } = {}) {
   const S = T.sv;
-  const [rows, rs, listings, skus, latest] = await Promise.all([
+  const [rows, rs, listings, allK, latest, pop] = await Promise.all([
     d.availability(env, cc, k.id, metro?.id),
     d.restocks(env, cc, metro ? 'r.sku_id = ? AND (s.online = 1 OR s.metro = ?)' : 'r.sku_id = ?', metro ? [k.id, metro.id] : [k.id]),
     d.listingsOf(env, k.id, cc),
     d.allSkus(env, cc),
     d.restocks(env, cc, '1=1', [], 30, 8),
+    d.popularity(env, cc),
   ]);
+  // other products: only ones we have read, most wanted first
+  const pv = (x) => pop.get(x.slug) ?? 0;
+  const skus = allK.filter((x) => x.places > 0 || x.id === k.id).sort((a, b) => pv(b) - pv(a) || (b.places_in ?? 0) - (a.places_in ?? 0));
+  const related = [...skus.filter((x) => x.id !== k.id && k.set_id && x.set_id === k.set_id), ...skus.filter((x) => x.id !== k.id && !(k.set_id && x.set_id === k.set_id))];
   const sum = d.summarize(rs);
   // Places not read yet still show, so the page says what we watch (online listings without a reading)
   const seen = new Set(rows.filter((r) => r.online).map((r) => r.source));
@@ -110,7 +115,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
   <section class="content"><h2>${e(S.howH(k.name))}</h2><ol class="steps-list">${S.how(k.name).map((x) => `<li>${e(x)}</li>`).join('')}</ol></section>
   <section class="content"><h2>${e(T.sku.when)}</h2>${hourChart(T, sum, k.name)}</section>
   ${latest.length ? `<section class="content"><h2>${e(S.latestH)}</h2>${latestTable(T, latest)}</section>` : ''}
-  <section class="content"><h2>${e(S.otherH)}</h2>${productGrid(T, skus.filter((x) => x.id !== k.id).slice(0, 12))}</section>
+  <section class="content"><h2>${e(S.otherH)}</h2>${productGrid(T, related.slice(0, 12))}</section>
   ${faq.html}
   ${await factsBlock(env, T)}`;
 
@@ -140,7 +145,7 @@ export async function homeList(env, T, cc, { live = null, alternates = null, ext
   const p = (k) => pop.get(k.slug) ?? 0;
   const inNow = skus.filter((k) => k.places_in > 0).sort((a, b) => p(b) - p(a) || b.places_in - a.places_in || (b.last_restock ?? 0) - (a.last_restock ?? 0));
   // sold out: the most wanted first, then the most watched (checked in most places, restocked most recently)
-  const out = skus.filter((k) => !(k.places_in > 0)).sort((a, b) => p(b) - p(a) || (b.places ?? 0) - (a.places ?? 0) || (b.last_restock ?? 0) - (a.last_restock ?? 0));
+  const out = skus.filter((k) => !(k.places_in > 0) && k.places > 0).sort((a, b) => p(b) - p(a) || (b.places ?? 0) - (a.places ?? 0) || (b.last_restock ?? 0) - (a.last_restock ?? 0));
   const OUT_SHOWN = 12;
   const types = [...new Set(skus.map((k) => k.type ?? 'other'))].filter((x) => H.types[x]);
   const order = Object.keys(H.types);

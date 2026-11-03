@@ -128,13 +128,13 @@ export function productGrid(T, skus) {
     const online = k.online_in ? k.online_in.split(',').map(sourceName) : [];
     const status = k.stores_in
       ? `<span class="chip in">${e(T.nInStock(k.stores_in))}</span><span class="where">${e(T.card.storesFrac(k.stores_in, k.stores))}</span>`
-      : online.length ? `<span class="chip in">${e(T.chip.in)}</span><span class="where">${e(`${T.card.online}: ${online.join(', ')}`)}</span>`
-        : k.stores || k.last_restock ? `<span class="chip out">${e(T.chip.out)}</span>` : `<span class="chip unknown">${e(T.chip.unknown)}</span>`;
+      : online.length ? `<span class="chip in">${e(T.chip.in)}</span><span class="where">${e(`${T.card.online}: ${online.slice(0, 3).join(', ')}${online.length > 3 ? ` +${online.length - 3}` : ''}`)}</span>`
+        : k.places || k.stores || k.last_restock ? `<span class="chip out">${e(T.chip.out)}</span>` : `<span class="chip unknown">${e(T.chip.unknown)}</span>`;
     return `<li><a class="product" href="${base(cc)}/${e(k.slug)}">
       <span class="ph">${k.image ? `<img src="${e(k.image)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '<span class="ph-empty" aria-hidden="true"></span>'}</span>
       <span class="pname">${e(k.name)}</span>
       <span class="pstatus">${status}</span>
-      <span class="pmeta">${k.min_price ? `<strong>${e(T.f.money(k.min_price))}</strong>` : ''}${k.last_restock ? ` · ${e(T.lastRestockAgo(T.f.ago(k.last_restock)))}` : ''}</span>
+      <span class="pmeta">${(k.price_in ?? k.min_price) ? `<strong>${e(T.f.money(k.price_in ?? k.min_price))}</strong>` : ''}${k.last_restock ? ` · ${e(T.lastRestockAgo(T.f.ago(k.last_restock)))}` : ''}</span>
     </a></li>`;
   }).join('')}</ul>`;
 }

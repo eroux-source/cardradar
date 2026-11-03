@@ -35,7 +35,7 @@ export default {
     homeH1Online: (country) => `Pokémon-Karten live auf Lager in jedem Shop in ${country}`,
     skuH1: (name, city) => `${name}: Bestand live${city ? ` in ${city}` : ''}`,
     lede: (shops) => `Bestand versiegelter Pokémon-Karten bei ${shops}, rund um die Uhr geprüft. Produkt wählen, sehen wer es hat, beim Händler kaufen.`,
-    asOf: (when, name, n, total, where, last, typical) => `Stand ${when}: ${name} ist ${n ? `bei ${n} von ${total} Händlern lieferbar${where ? ` (${where})` : ''}` : `bei allen ${total} geprüften Händlern ausverkauft`}.${last ? ` Letzter Restock: ${last}.` : ''}${typical ? ` Typisch verfügbar: ${typical}.` : ''}`,
+    asOf: (when, name, n, total, where, last, typical) => `Stand ${when}: ${name} ist ${n ? `bei ${n} von ${total} Händlern lieferbar${where ? ` (${where})` : ''}` : (total === 1 ? 'beim einzigen bisher geprüften Händler ausverkauft' : `bei allen ${total} geprüften Händlern ausverkauft`)}.${last ? ` Letzter Restock: ${last}.` : ''}${typical ? ` Typisch verfügbar: ${typical}.` : ''}`,
     asOfNone: (name) => `${name}: die ersten Prüfungen laufen. Der Bestand erscheint hier, sobald jeder Händler gelesen wurde.`,
     live: 'Live', sorted: 'Nach Verfügbarkeit sortiert', products: 'Produkt', city: 'Stadt', allCities: 'Überall',
     nowH: (n) => (n ? `${n} Händler ${n > 1 ? 'haben' : 'hat'} es gerade` : 'Gerade überall ausverkauft'),

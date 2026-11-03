@@ -35,7 +35,7 @@ export default {
     homeH1Online: (country) => `Stock de cartes Pokémon en direct dans chaque boutique en ${country}`,
     skuH1: (name, city) => `${name} : stock en direct${city ? ` à ${city}` : ''}`,
     lede: (shops) => `Le stock des cartes Pokémon scellées chez ${shops}, vérifié jour et nuit. Choisissez un produit, voyez qui l'a, achetez ou réservez sur le site de l'enseigne.`,
-    asOf: (when, name, n, total, where, last, typical) => `Au ${when} : ${name} est ${n ? `en stock dans ${n} lieux sur ${total}${where ? ` (${where})` : ''}` : `épuisé dans les ${total} lieux suivis`}.${last ? ` Dernier réassort : ${last}.` : ''}${typical ? ` Durée typique en stock : ${typical}.` : ''}`,
+    asOf: (when, name, n, total, where, last, typical) => `Au ${when} : ${name} est ${n ? `en stock dans ${n} lieux sur ${total}${where ? ` (${where})` : ''}` : (total === 1 ? 'épuisé dans la seule boutique suivie pour l\'instant' : `épuisé dans les ${total} lieux suivis`)}.${last ? ` Dernier réassort : ${last}.` : ''}${typical ? ` Durée typique en stock : ${typical}.` : ''}`,
     asOfNone: (name) => `${name} : les premières vérifications sont en cours. Le stock s'affiche dès que chaque enseigne est lue.`,
     live: 'En direct', sorted: 'Trié par disponibilité', products: 'Produit', city: 'Ville', allCities: 'Partout',
     nowH: (n) => (n ? `${n} lieu${n > 1 ? 'x l\'ont' : ' l\'a'} en ce moment` : 'Épuisé partout en ce moment'),

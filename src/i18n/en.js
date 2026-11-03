@@ -50,7 +50,7 @@ export default {
     homeH1Online: (country) => `Live Pokémon card stock at every shop in ${country === 'United States' ? 'the US' : country === 'United Kingdom' ? 'the UK' : country}`,
     skuH1: (name, city) => `${name}: live stock${city ? ` in ${city}` : ''}`,
     lede: (shops) => `Stock of sealed Pokémon cards at ${shops}, checked around the clock. Pick a product, see who has it, buy or reserve on the retailer's site.`,
-    asOf: (when, name, n, total, where, last, typical) => `As of ${when}: ${name} is ${n ? `in stock at ${n} of ${total} places${where ? ` (${where})` : ''}` : `sold out at all ${total} places we check`}.${last ? ` Last restock: ${last}.` : ''}${typical ? ` Typical time in stock: ${typical}.` : ''}`,
+    asOf: (when, name, n, total, where, last, typical) => `As of ${when}: ${name} is ${n ? `in stock at ${n} of ${total} places${where ? ` (${where})` : ''}` : (total === 1 ? 'sold out at the one place we check so far' : `sold out at all ${total} places we check`)}.${last ? ` Last restock: ${last}.` : ''}${typical ? ` Typical time in stock: ${typical}.` : ''}`,
     asOfNone: (name) => `${name}: first checks are running. Stock shows here as soon as each retailer is read.`,
     live: 'Live', sorted: 'Sorted by availability', products: 'Product', city: 'City', allCities: 'Everywhere',
     nowH: (n) => (n ? `${n} place${n > 1 ? 's have' : ' has'} it now` : 'Sold out everywhere right now'),

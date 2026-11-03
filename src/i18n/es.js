@@ -35,7 +35,7 @@ export default {
     homeH1Online: (country) => `Stock en directo de cartas Pokémon en cada tienda online de ${country}`,
     skuH1: (name, city) => `${name}: stock en directo${city ? ` en ${city}` : ''}`,
     lede: (shops) => `El stock de cartas Pokémon selladas en ${shops}, revisado día y noche. Elige un producto, mira quién lo tiene, compra en la tienda.`,
-    asOf: (when, name, n, total, where, last, typical) => `A ${when}: ${name} está ${n ? `en stock en ${n} de ${total} tiendas${where ? ` (${where})` : ''}` : `agotado en las ${total} tiendas que seguimos`}.${last ? ` Última reposición: ${last}.` : ''}${typical ? ` Suele durar: ${typical}.` : ''}`,
+    asOf: (when, name, n, total, where, last, typical) => `A ${when}: ${name} está ${n ? `en stock en ${n} de ${total} tiendas${where ? ` (${where})` : ''}` : (total === 1 ? 'agotado en la única tienda que seguimos por ahora' : `agotado en las ${total} tiendas que seguimos`)}.${last ? ` Última reposición: ${last}.` : ''}${typical ? ` Suele durar: ${typical}.` : ''}`,
     asOfNone: (name) => `${name}: las primeras revisiones están en marcha. El stock aparece aquí en cuanto se lee cada tienda.`,
     live: 'En directo', sorted: 'Ordenado por disponibilidad', products: 'Producto', city: 'Ciudad', allCities: 'En todas partes',
     nowH: (n) => (n ? `${n} tienda${n > 1 ? 's lo tienen' : ' lo tiene'} ahora` : 'Agotado en todas partes ahora'),

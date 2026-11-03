@@ -35,7 +35,7 @@ export default {
     homeH1Online: (country) => `Live voorraad Pokémon-kaarten in elke webshop in ${country}`,
     skuH1: (name, city) => `${name}: live voorraad${city ? ` in ${city}` : ''}`,
     lede: (shops) => `Voorraad van verzegelde Pokémon-kaarten bij ${shops}, dag en nacht gecontroleerd. Kies een product, zie wie het heeft, koop bij de winkel.`,
-    asOf: (when, name, n, total, where, last, typical) => `Per ${when}: ${name} is ${n ? `op voorraad bij ${n} van ${total} winkels${where ? ` (${where})` : ''}` : `uitverkocht bij alle ${total} winkels die we volgen`}.${last ? ` Laatste restock: ${last}.` : ''}${typical ? ` Meestal op voorraad: ${typical}.` : ''}`,
+    asOf: (when, name, n, total, where, last, typical) => `Per ${when}: ${name} is ${n ? `op voorraad bij ${n} van ${total} winkels${where ? ` (${where})` : ''}` : (total === 1 ? 'uitverkocht bij de enige winkel die we tot nu toe volgen' : `uitverkocht bij alle ${total} winkels die we volgen`)}.${last ? ` Laatste restock: ${last}.` : ''}${typical ? ` Meestal op voorraad: ${typical}.` : ''}`,
     asOfNone: (name) => `${name}: de eerste controles lopen. De voorraad verschijnt hier zodra elke winkel is gelezen.`,
     live: 'Live', sorted: 'Gesorteerd op voorraad', products: 'Product', city: 'Stad', allCities: 'Overal',
     nowH: (n) => (n ? `${n} winkel${n > 1 ? 's hebben' : ' heeft'} het nu` : 'Nu overal uitverkocht'),
