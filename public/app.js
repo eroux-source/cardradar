@@ -15,7 +15,7 @@
   if (!source && standalone) source = 'homescreen';
   const ev = (n, x) => { try { if (n !== 'view' && window.gtag) window.gtag('event', n, x && typeof x === 'object' ? x : {}); } catch {} try { navigator.sendBeacon('/api/e', new Blob([JSON.stringify({ n, v: visit, p: location.pathname, s: source, x })], { type: 'application/json' })); } catch {} };
   ev('view');
-  document.addEventListener('click', (e) => { const a = e.target.closest('[data-ev]'); if (a) ev(a.dataset.ev); });
+  document.addEventListener('click', (e) => { const a = e.target.closest('[data-ev]'); if (!a) return; const { ev: n, ...x } = a.dataset; ev(n, Object.keys(x).length ? { ...x, page: location.pathname } : undefined); });
 
   const post = async (url, body) => {
     const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body ?? {}) });

@@ -7,6 +7,7 @@
 import { escapeHtml as e } from '../../lib/util.js';
 import { sourceName, sourcesOf } from '../../sources/index.js';
 import * as d from '../data.js';
+import { affiliateBlock } from '../affiliate.js';
 import { page, home as homePath, base, crumbs, answers, hourChart, latestTable, shopsText, productGrid, placeLabel, alertCta } from '../html.js';
 import { factsBlock } from '../facts.js';
 
@@ -20,7 +21,7 @@ function placeCard(T, cc, s, alertHref) {
   const meta = s.in_stock
     ? `${s.in_since ? `${e(S.since(T.f.ago(s.in_since)))} · ` : ''}${s.qty > 1 ? `${e(T.available(s.qty))} · ` : ''}${e(T.checkedAgo(T.f.ago(s.seen_at)))}`
     : s.seen_at ? `${e(s.last_restock ? T.lastRestockAgo(T.f.ago(s.last_restock)) : T.noRestockYet)} · ${e(T.checkedAgo(T.f.ago(s.seen_at)))}` : '';
-  const go = s.url ? `<a class="btn ${s.in_stock ? 'go' : 'dark'} small" href="${e(s.url)}" rel="nofollow noopener sponsored" target="_blank">${e(s.online ? S.buy : S.reserve)} ↗</a>` : '';
+  const go = s.url ? `<a class="btn ${s.in_stock ? 'go' : 'dark'} small" href="${e(s.url)}" rel="nofollow noopener sponsored" target="_blank" data-ev="buy" data-shop="${e(s.l_source ?? s.source ?? '')}" data-in="${s.in_stock ? 1 : 0}">${e(s.online ? S.buy : S.reserve)} ↗</a>` : '';
   const dir = !s.online && s.address ? `<a class="btn dark small" href="${e(maps(s))}" rel="noopener" target="_blank">${e(S.directions)}</a>` : '';
   const alert = !s.in_stock ? `<a class="btn go small" href="${e(alertHref)}" data-ev="sheet_open">🔔 ${e(S.alertBtn)}</a>` : `<a class="btn dark small" href="${e(alertHref)}" data-ev="sheet_open">🔔 ${e(S.alertBtn)}</a>`;
   const title = s.online ? e(name) : `<a href="${base(cc)}/store/${e(s.slug)}">${e(name)}</a>`;
@@ -101,6 +102,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
     <section class="main" aria-labelledby="now-h">
       <h2 id="now-h">${e(S.nowH(inNow.length))}</h2>
       ${places.length ? `<p class="sub">${e(S.nowSub(places.length))}</p><ul class="places">${places.slice(0, metro ? 200 : 60).map((s) => placeCard(T, cc, s, alertHref)).join('')}</ul>` : `<p class="empty">${e(S.asOfNone(k.name))}</p>`}
+      ${isHome ? '' : affiliateBlock(env, T, cc, k)}
     </section>
   </div>
   <section class="content"><h2>${e(S.howH(k.name))}</h2><ol class="steps-list">${S.how(k.name).map((x) => `<li>${e(x)}</li>`).join('')}</ol></section>

@@ -341,3 +341,6 @@ html, body { overflow-x: clip; }
 .geo-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 12px 0 0; padding: 10px 12px 10px 16px; background: var(--navy); color: #fff; border-radius: 10px; font-weight: 600; font-size: 15px; }
 .geo-bar a { color: #fff; }
 .geo-bar button { background: none; border: 0; color: #fff; font-size: 22px; line-height: 1; cursor: pointer; padding: 4px 8px; min-width: 40px; min-height: 40px; }
+
+.compare-out { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 0 0; }
+.compare-out .fine { width: 100%; margin: 0; }
