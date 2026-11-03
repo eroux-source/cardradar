@@ -12,6 +12,7 @@ jobs:
     steps:
       - name: Probe
         run: |
+          set +e
           out=""
           for d in ${{ github.event.inputs.domains }}; do
             r=$(curl -s -L --max-time 20 -A 'Mozilla/5.0' "https://$d/search/suggest.json?q=pokemon&resources%5Btype%5D=product&resources%5Blimit%5D=10" -w '|%{http_code}')
