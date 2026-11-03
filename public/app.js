@@ -126,7 +126,7 @@
       const t = e.target;
       state.push = !!t.push?.checked; state.telegram = !!t.telegram?.checked; state.line = !!t.line?.checked;
       if (state.push) { try { await enablePush(f.dataset.vapid); } catch (x) { state.push = false; t.push.checked = false; return err(3, x.message); } }
-      submitAlert(f.dataset.pass || $('input[name=plan]:checked', f).value, t);
+      submitAlert(f.dataset.pass || ($('input[name=plan]:checked', f) || $('input[name=plan]', f)).value, t);
     });
   }
 

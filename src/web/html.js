@@ -1,6 +1,7 @@
 // Page shell + shared components. One country per page (cc), its language via t(cc).
 // Design: simple and literal — real product photos from the retailers, a clear
 // "in stock / sold out" status, the price. No metaphors.
+import { freeMode, freeWords } from './free.js';
 import { escapeHtml as e } from '../lib/util.js';
 import { COUNTRIES, countryList } from '../data/countries.js';
 import { sourcesOf, sourceName } from '../sources/index.js';
@@ -147,5 +148,5 @@ export function alertCta(env, T, { sku = null, metro = '' } = {}) {
     <div><h2 id="cta-h">${e(T.cta.h2(sku?.name))}</h2>
       <p>${T.cta.effect.replace(/<strong>[^<]*<\/strong>\s*/, '').replace(/^\p{Ll}/u, (c) => c.toUpperCase())}</p>
       <p><a class="btn" href="${href}" data-ev="sheet_open">${e(T.cta.btn)}</a></p>
-      <p class="fine">${e(T.cta.fine(T.f.money(T.cc.prices.solo)))}</p></div></section>`;
+      <p class="fine">${e(freeMode(env) ? freeWords(T).cta : T.cta.fine(T.f.money(T.cc.prices.solo)))}</p></div></section>`;
 }

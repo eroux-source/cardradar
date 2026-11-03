@@ -2,6 +2,7 @@
 // Push + Telegram in parallel; email only if neither reached the person
 // (cut emails ~85 % on InStock Radar). Email alerts: max 1 per hour per person,
 // the rest is held in email_outbox and sent as a digest, never dropped.
+import { freeMode } from '../web/free.js';
 import { one, run, now, isFlagOn } from '../lib/db.js';
 import { sourceName } from '../sources/index.js';
 import { sendTelegram } from './channels/telegram.js';
@@ -28,7 +29,7 @@ export async function deliver(env, { alertId, restockId }) {
     FROM restocks r JOIN skus k ON k.id = r.sku_id JOIN listings l ON l.id = r.listing_id JOIN stores s ON s.id = r.store_id WHERE r.id = ?`, restockId);
   if (!a || !r) return;
   // Free alert (no pass): kept for tomorrow's daily email, never sent live
-  if (a.free && !(await one(env, "SELECT 1 FROM passes WHERE user_id = ? AND status IN ('active','refunded_kept') AND ends_at > ?", a.user_id, now()))) {
+  if (a.free && !freeMode(env) && !(await one(env, "SELECT 1 FROM passes WHERE user_id = ? AND status IN ('active','refunded_kept') AND ends_at > ?", a.user_id, now()))) {
     await run(env, "UPDATE alert_sent SET status = 'daily' WHERE alert_id = ? AND restock_id = ?", alertId, restockId);
     return;
   }

@@ -344,3 +344,4 @@ html, body { overflow-x: clip; }
 
 .compare-out { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 0 0; }
 .compare-out .fine { width: 100%; margin: 0; }
+.quick-links { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 4px 0 0; font-weight: 600; font-size: 15px; }

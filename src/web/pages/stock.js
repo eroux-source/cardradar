@@ -4,6 +4,8 @@
 //   two columns: left = 30-day stats + alert card; right = one card per place, in stock first
 //   below: how to get it today, when it restocks, latest restocks, other products, good to know
 // Used by the country home (hardest product to find) and every product page.
+import { freeMode, freeWords } from '../free.js';
+import { dataPath, thirtyPath, words } from './local_data.js';
 import { escapeHtml as e } from '../../lib/util.js';
 import { sourceName, sourcesOf } from '../../sources/index.js';
 import * as d from '../data.js';
@@ -96,7 +98,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
         <div><dt>${e(S.stats.most)}</dt><dd>${e(top ? top[0] : '—')}</dd></div>
         <div><dt>${e(S.stats.last)}</dt><dd>${e(rs[0] ? T.f.ago(rs[0].started_at) : '—')}</dd></div></dl>
         <p class="fine">${e(S.statsNote)}</p><p><a href="${base(cc)}/${e(k.slug)}/restocks">${e(S.whenLink(k.name))} →</a></p></div>
-      <div class="side-card alert-card" id="alerts"><h2>${e(S.alertH)}</h2><p>${e(S.alertP(T.f.money(T.cc.prices.solo), sum.typical ? T.f.dur(sum.typical) : null))}</p>
+      <div class="side-card alert-card" id="alerts"><h2>${e(S.alertH)}</h2><p>${e(freeMode(env) ? freeWords(T).side : S.alertP(T.f.money(T.cc.prices.solo), sum.typical ? T.f.dur(sum.typical) : null))}</p>
         <a class="btn go" href="${e(alertHref)}" data-ev="sheet_open">🔔 ${e(S.alertBtn)}</a></div>
     </aside>
     <section class="main" aria-labelledby="now-h">
@@ -152,6 +154,7 @@ export async function homeList(env, T, cc, { live = null, alternates = null, ext
   const body = `<section class="hl-head">
     <h1>${e(H.h1(T.cc.name))}</h1>
     <p class="lede">${e(inNow.length ? H.lede(inNow.length, shopsN) : H.ledeNone(shopsN))}</p>
+    ${cc === 'jp' ? '' : `<p class="quick-links"><a href="${dataPath(cc)}">${e(words(cc).data)}</a><a href="${thirtyPath(cc)}">${e(words(cc).thirty)}</a></p>`}
     <form class="find" action="${base(cc)}/search" method="get" role="search">
       <input name="q" list="sku-list" autocomplete="off" placeholder="${e(S.findPh)}" aria-label="${e(S.findPh)}" data-find>
       <datalist id="sku-list">${skus.map((x) => `<option value="${e(x.name)}" data-href="${base(cc)}/${e(x.slug)}"></option>`).join('')}</datalist>

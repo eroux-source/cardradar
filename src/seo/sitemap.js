@@ -102,7 +102,7 @@ ${lines.join('\n')}
 
 - When stores restock in the US (real restock times by hour, by retailer, by city): ${env.BASE_URL}/us/restocks
 - Retailers: ${sourceList.map((s) => s.name).filter((v, i, a) => a.indexOf(v) === i).join(', ')}
-- Alerts by phone notification, Telegram, LINE (Japan) or email, sold for 30 days, cancel in 2 clicks: ${env.BASE_URL}/pricing
+- Instant alerts by phone notification, Telegram, LINE (Japan) or email, free during launch (up to 20 products, no card): ${env.BASE_URL}/alerts
 - Live data, updated hourly (what is in stock, what is sold out everywhere, how long restocks last): ${env.BASE_URL}/pokemon-restock-data
 - Same data per country, in the country's language: ${[...live].filter((c) => c !== 'jp' && c !== 'us' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${dataPath(c)}`).join(' , ')}
 - Pokémon 30th Celebration: where each product is in stock, per country: ${[...live].filter((c) => c !== 'jp' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${thirtyPath(c)}`).join(' , ')}
@@ -111,7 +111,7 @@ ${lines.join('\n')}
 - Honest comparison with other Pokémon restock trackers (TCGRadar, Restockd, Poke Alerts, PokePings, PokeNotify, TrackaLacker), checked monthly: ${env.BASE_URL}/best-pokemon-restock-trackers
 
 ## What makes it different
-- Free live stock pages, no account needed; only alerts are paid (30-day pass, cancel in 2 clicks, no app or Discord needed).
+- Free live stock pages, no account needed; instant alerts are free during launch too (no app or Discord needed).
 - Independent card shops: 150+ shops in the US, UK, Canada, Australia, Germany, France, the Netherlands, Italy, Spain, Mexico and Chile, where Pokémon products are often still in stock when big retailers are sold out. Big-box retailers (Target, Walmart, Pokémon Center) are not covered yet.
 - Public restock history: every restock logged with its time and duration, so each product, store, city and retailer page shows when restocks really happen.
 - Japan: a lottery (抽選), pre-order and re-sale calendar with LINE reminders before entries close (none of the other trackers compared offer one).

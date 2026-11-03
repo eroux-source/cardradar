@@ -2,6 +2,7 @@
 // /alerts : 1 email → 2 product (skipped when the product page already chose it) → 3 plan + optional channels → checkout.
 // The email is captured at step 1 (lead), so a visitor who stops still gets one
 // follow-up. Steps run client-side (public/app.js) against /api/funnel/*.
+import { freeMode, freeWords } from '../free.js';
 import { escapeHtml as e, timeAgo, formatUtc } from '../../lib/util.js';
 import { COUNTRIES, metroById } from '../../data/countries.js';
 import { JP_SETS } from '../../data/sets_jp.js';
@@ -68,17 +69,17 @@ export async function alertsPage(env, url, user) {
   </section>
 
   <section class="step" data-step="3" hidden>
-    <h2>${e(F.s4h)}</h2>
+    <h2>${e(freeMode(env) ? F.s3h : F.s4h)}</h2>
     <form data-form="plan">
-      <label class="plan"><input type="radio" name="plan" value="solo" checked><span><strong>Solo · ${e(T.f.money(T.cc.prices.solo))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.solo)}</span></span></label>
+      ${freeMode(env) ? `<input type="hidden" name="plan" value="launch"><p class="lede"><strong>${e(freeWords(T).plan)}</strong> · ${e(freeWords(T).planDesc)}</p>` : `<label class="plan"><input type="radio" name="plan" value="solo" checked><span><strong>Solo · ${e(T.f.money(T.cc.prices.solo))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.solo)}</span></span></label>
       <label class="plan"><input type="radio" name="plan" value="multi"><span><strong>Multi · ${e(T.f.money(T.cc.prices.multi))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.multi)}</span></span></label>
       ${!lottery && F.free ? `<label class="plan"><input type="radio" name="plan" value="free"><span><strong>${e(F.freeName)} · ${e(T.f.money(0))}</strong><br><span class="fine">${e(F.free)}</span></span></label>` : ''}
-      <p class="fine">${e(F.renew)}</p>
+      <p class="fine">${e(F.renew)}</p>`}
       <fieldset class="channels"><legend>${e(F.s3h)} <span class="fine">${e(F.emailAlways)}</span></legend>
         <label class="radio"><input type="checkbox" name="push" value="1"> ${e(F.push)} <span class="fine">${e(F.pushFine)}</span></label>
         ${cc === 'jp' ? `<label class="radio"><input type="checkbox" name="line" value="1" checked> ${e(F.line)} <span class="fine">${e(F.lineFine)}</span></label>` : ''}
         <label class="radio"><input type="checkbox" name="telegram" value="1"> ${e(F.telegram)} <span class="fine">${e(F.tgFine)}</span></label></fieldset>
-      <button class="btn" type="submit">${e(F.checkout)}</button></form>
+      <button class="btn" type="submit">${e(freeMode(env) ? freeWords(T).btn : F.checkout)}</button></form>
     <p class="err" role="alert"></p>
   </section>
   </div>`;

@@ -1,4 +1,5 @@
 // JSON API used by the funnel, the account page, the service worker and the beacon.
+import { freeMode, FREE_MAX_ALERTS } from './free.js';
 import { one, all, run, now } from '../lib/db.js';
 import { currentUser, startSession, endSession, userByEmail, EMAIL_RE } from '../auth/session.js';
 import { requestCode, verifyCode } from '../auth/codes.js';
@@ -81,6 +82,20 @@ export async function api(env, req, url, ctx) {
     const metro = kind === 'stores' ? metroInCountry(cc, b.metro) : null;
     if (kind === 'stores' && !metro) return bad('Pick your city.');
     const pass = await activePass(env, user.id);
+    if (freeMode(env) && !pass) {
+      // launch: free instant alerts on every channel, up to FREE_MAX_ALERTS products (stored as free alerts: they fall back to the daily email when launch mode ends)
+      const n = (await one(env, "SELECT COUNT(*) n FROM alerts WHERE user_id = ? AND status = 'active'", user.id)).n;
+      if (n >= FREE_MAX_ALERTS) return bad(`You already have ${FREE_MAX_ALERTS} alerts. Delete one in your account first.`);
+      const ch = ['email', ...(b.push ? ['push'] : []), ...(b.telegram ? ['telegram'] : []), ...(b.line ? ['line'] : [])];
+      const t0 = now();
+      await run(env, 'INSERT INTO alerts (user_id, kind, sku_id, set_id, set_slug, metro, store_ids, channels, status, created_at, updated_at, country, free) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
+        user.id, kind, skuId, setId, setSlug, metro?.id ?? null, '[]', JSON.stringify(ch), 'active', t0, t0, cc);
+      await run(env, 'UPDATE users SET country = COALESCE(country, ?) WHERE id = ?', cc, user.id);
+      await lead(env, user.email, { step: 'free', skuId, metro: metro?.id ?? null });
+      await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', t0, b.visit ?? null, 'free_alert', JSON.stringify({ kind, cc, launch: 1 }));
+      if (ch.includes('telegram')) return json({ ok: true, next: `/account?free=1&c=${cc}` });
+      return json({ ok: true, next: `/account?free=1&c=${cc}` });
+    }
     const free = !pass && b.plan === 'free';
     if (free && (setId || kind === 'lottery')) return bad('The free plan covers one product. Pick a single product or a paid plan.');
     const effPlan = pass?.plan ?? plan;
