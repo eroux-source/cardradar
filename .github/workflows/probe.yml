@@ -1,0 +1,22 @@
+name: probe
+# Checks whether candidate shops run Shopify with a public search (needed to track them).
+on:
+  workflow_dispatch:
+    inputs:
+      domains:
+        description: space-separated domains
+        required: true
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe
+        run: |
+          out=""
+          for d in ${{ github.event.inputs.domains }}; do
+            r=$(curl -s -L --max-time 20 -A 'Mozilla/5.0' "https://$d/search/suggest.json?q=pokemon&resources%5Btype%5D=product&resources%5Blimit%5D=10" -w '|%{http_code}')
+            code=${r##*|}; body=${r%|*}
+            n=$(echo "$body" | node -e "let t='';process.stdin.on('data',x=>t+=x).on('end',()=>{try{const j=JSON.parse(t);const p=j.resources.results.products;console.log(p.length+':'+p.filter(x=>x.available).length+':'+(p[0]?.title||'').slice(0,40)+':'+(p[0]?.price||''))}catch(e){console.log('nojson')}})")
+            out="$out $d=$code/$n ;"
+          done
+          echo "::notice title=probe::$out"
