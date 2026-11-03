@@ -347,3 +347,6 @@ html, body { overflow-x: clip; }
 .quick-links { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 4px 0 0; font-weight: 600; font-size: 15px; }
 .place-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .place-price { font-weight: 700; font-size: 16px; }
+.survey{margin-top:1.2rem;padding:1rem;border:1px solid var(--line,#ddd);border-radius:10px}
+.survey .radio{display:block;margin:.35rem 0}
+.survey[data-open]{border-color:currentColor}

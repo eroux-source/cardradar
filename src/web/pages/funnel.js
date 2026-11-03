@@ -98,7 +98,6 @@ export async function alertsPage(env, url, user) {
       <p class="fine">${e(F.renew)}</p>`}
       ${cc === 'jp' ? `<fieldset class="channels"><label class="radio"><input type="checkbox" name="line" value="1" checked> ${e(F.line)} <span class="fine">${e(F.lineFine)}</span></label></fieldset>` : ''}
       <p class="sub">${e(EMAIL_OK[T.cc.lang] ?? EMAIL_OK.en)}</p>
-      <label class="radio"><input type="checkbox" name="wantphone" value="1"> ${e(WANT_PHONE[T.cc.lang] ?? WANT_PHONE.en)}</label>
       <button class="btn" type="submit">${e(freeMode(env) ? freeWords(T).btn : F.checkout)}</button></form>
     <p class="err" role="alert"></p>
   </section>
@@ -128,8 +127,8 @@ export async function accountPage(env, url, user) {
   const paid = url.searchParams.get('paid');
   const body = `<div class="account" id="account" data-vapid="${e(env.VAPID_PUBLIC_KEY ?? '')}">
   <h1>Your alerts</h1>
-  ${paid ? '<p class="ok" role="status">Payment received. Your alerts are live. Connect Telegram or phone notifications below so you hear about restocks first.</p>' : ''}
-  ${url.searchParams.get('free') ? '<p class="ok" role="status">Your free alert is on. Every morning you get one email with the restocks it caught the day before.</p>' : ''}
+  ${paid ? '<p class="ok" role="status">Payment received. Your alerts are live: we email you the moment a restock is detected.</p>' : ''}
+  ${url.searchParams.get('free') ? (freeMode(env) ? '<p class="ok" role="status">Your alert is on. We email you as soon as it is back in stock.</p>' : '<p class="ok" role="status">Your free alert is on. Every morning you get one email with the restocks it caught the day before.</p>') : ''}
   <p class="lede">${e(user.email)} · ${pass ? `<strong>${e(PLANS[pass.plan]?.name ?? pass.plan)}</strong> until ${formatUtc(pass.ends_at)}${pass.renews ? ' (renews)' : ' (will not renew)'}` : alerts.some((a) => a.free) ? '<strong>Free plan</strong>: one email a day with yesterday\'s restocks. Paid alerts arrive within seconds of a restock.' : '<strong>No active plan</strong>: alerts are paused until you pick one.'}</p>
   ${pass ? (pass.renews ? '<p><button class="btn ghost" data-act="cancel">Cancel renewal</button></p>' : '') : `<p><a class="btn" href="/alerts">${alerts.some((a) => a.free) ? 'Get instant alerts' : 'Pick a plan'}</a></p>`}
 
@@ -147,10 +146,12 @@ export async function accountPage(env, url, user) {
       <button class="btn" value="ok">Delete alert</button> <button class="link" value="cancel">Keep it</button></form></dialog></section>
 
   <section><h2>How we reach you</h2><ul class="rows">
-    <li class="row"><span class="name">Phone notification</span><span class="meta">${user.push_endpoint ? 'On for this device' : 'Off'}</span><span class="side"><button class="link" data-act="push">${user.push_endpoint ? 'Use this device' : 'Turn on'}</button>${user.push_endpoint ? ' <button class="link" data-act="test" data-ch="push">Send a test</button>' : ''}</span></li>
-    <li class="row"><span class="name">Telegram</span><span class="meta">${user.telegram_chat_id ? 'Connected' : 'Not connected'}</span><span class="side">${env.TELEGRAM_BOT_NAME ? `<button class="link" data-act="telegram">${user.telegram_chat_id ? 'Reconnect' : 'Connect'}</button>` : ''}${user.telegram_chat_id ? ' <button class="link" data-act="test" data-ch="telegram">Send a test</button>' : ''}</span></li>
     ${user.country === 'jp' || alerts.some((a) => a.country === 'jp') ? `<li class="row"><span class="name">LINE</span><span class="meta">${user.line_user_id ? 'Connected' : 'Not connected'}</span><span class="side">${env.LINE_BOT_ID ? `<button class="link" data-act="line">${user.line_user_id ? 'Reconnect' : 'Connect'}</button>` : ''}</span></li>` : ''}
-    <li class="row"><span class="name">Email</span><span class="meta">${e(user.email)} · backup, at most one per hour</span><span class="side"></span></li></ul></section>
+    <li class="row"><span class="name">Email</span><span class="meta">${e(user.email)}</span><span class="side"></span></li></ul>
+    <form class="survey" data-form="channels-survey"${url.searchParams.get('free') || paid ? ' data-open="1"' : ''}>
+      <p><strong>Which other ways would you like to get your alerts?</strong> <span class="fine">Tick all that apply: we build the most requested first.</span></p>
+      ${[['push', 'Phone notification'], ['whatsapp', 'WhatsApp'], ['telegram', 'Telegram'], ['discord', 'Discord'], ['sms', 'Text message (SMS)']].map(([v, l]) => `<label class="radio"><input type="checkbox" name="ch" value="${v}"> ${l}</label>`).join('')}
+      <button class="btn small" type="submit">Send</button><p class="ok" role="status" hidden>Thanks, noted.</p></form></section>
 
   <section><h2>Latest alerts sent</h2>${recent.length ? `<table><thead><tr><th>Product</th><th>Where</th><th>When</th><th>Via</th></tr></thead><tbody>${recent.map((r) => `<tr><td>${e(r.name)}</td><td>${e(r.online ? 'online' : r.store)}</td><td>${timeAgo(r.claimed_at)}</td><td>${e(r.status === 'held' ? 'email (next digest)' : r.channels_ok ?? '')}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">Nothing yet. You will see each alert here.</p>'}</section>
   <p><button class="link" data-act="signout">Sign out</button></p></div>`;

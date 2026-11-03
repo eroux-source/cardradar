@@ -125,7 +125,6 @@
       e.preventDefault(); err(3);
       const t = e.target;
       state.push = !!t.push?.checked; state.telegram = !!t.telegram?.checked; state.line = !!t.line?.checked;
-      if (t.wantphone?.checked) ev('wants_phone', { page: location.pathname });
       if (state.push) { try { await enablePush(f.dataset.vapid); } catch (x) { state.push = false; t.push.checked = false; return err(3, x.message); } }
       submitAlert(f.dataset.pass || ($('input[name=plan]:checked', f) || $('input[name=plan]', f)).value, t);
     });
@@ -145,6 +144,16 @@
       try { await post('/api/auth/verify', { email, code: e.target.code.value }); location.href = si.dataset.next || '/account'; } catch (x) { err(x.message); busy(e.target, false); }
     });
   }
+
+  /* ---------- which other channels people want (counted, not built yet) ---------- */
+  const sv = $('[data-form=channels-survey]');
+  if (sv) sv.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const ch = $$('input[name=ch]:checked', sv).map((x) => x.value);
+    if (!ch.length) return;
+    ev('wants_channel', { ch: ch.join(',') });
+    $$('label, button', sv).forEach((x) => { x.hidden = true; }); $('.ok', sv).hidden = false;
+  });
 
   /* ---------- account ---------- */
   const acc = $('#account');

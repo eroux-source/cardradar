@@ -5,6 +5,7 @@ import { planMinute } from '../crawler/plan.js';
 import { flushOutbox, queueEmail } from '../email/outbox.js';
 import { heal } from '../alerts/pipeline.js';
 import { announce } from '../crawler/lotteries.js';
+import { alertText } from '../alerts/deliver.js';
 import { sourceName } from '../sources/index.js';
 
 import { dataPath, thirtyPath } from '../web/pages/local_data.js';
@@ -33,6 +34,25 @@ async function relaunchOnce(env) {
   return n;
 }
 
+// One-off: a real alert email to the owner's account, built exactly like a live restock alert.
+async function testAlertOnce(env) {
+  const key = 'testalert.2026-11-03b';
+  if (await one(env, 'SELECT 1 FROM settings WHERE key = ?', key) || !env.RESEND_API_KEY) return 'skip';
+  await run(env, 'INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)', key, 'sending', now());
+  const owner = String(env.OWNER_EMAILS ?? '').split(',')[0].trim().toLowerCase();
+  const u = await one(env, 'SELECT id, email FROM users WHERE lower(email) = ?', owner);
+  const sql = `SELECT r.*, k.name AS sku_name, k.slug AS sku_slug, l.url, s.name AS store_name, s.city, s.online, s.country
+    FROM restocks r JOIN skus k ON k.id = r.sku_id JOIN listings l ON l.id = r.listing_id JOIN stores s ON s.id = r.store_id`;
+  const r = (u && await one(env, `${sql} WHERE r.sku_id IN (SELECT sku_id FROM alerts WHERE user_id = ? AND status = 'active') ORDER BY r.started_at DESC LIMIT 1`, u.id))
+    ?? await one(env, `${sql} ORDER BY r.started_at DESC LIMIT 1`);
+  if (!r) { await run(env, 'UPDATE settings SET value = ? WHERE key = ?', 'no restock', key); return 'none'; }
+  const msg = alertText(env, r);
+  await queueEmail(env, { userId: u?.id, to: u?.email ?? owner, kind: 'alert', subject: `[Test] ${msg.title}`,
+    text: `${msg.line}\n\nBuy or reserve: ${msg.url}\nLive stock: ${msg.page}\n\nStock moves within minutes. Check the retailer before you travel.` });
+  await run(env, 'UPDATE settings SET value = ?, updated_at = ? WHERE key = ?', `queued ${r.sku_slug}`, now(), key);
+  return 'queued';
+}
+
 /** Once a day: hand every sitemap URL to IndexNow (Bing, which ChatGPT search reads), plus the hourly data pages. */
 export async function indexNowAll(env, only = null) {
   if (!env.INDEXNOW_KEY || !env.BASE_URL?.startsWith('https')) return 'skip';
@@ -52,6 +72,7 @@ export async function indexNowAll(env, only = null) {
 export async function everyMinute(env) {
   const out = {};
   out.plan = await planMinute(env).catch((e) => ({ error: e.message }));
+  out.test = await testAlertOnce(env).catch((e) => ({ error: e.message }));
   out.relaunch = await relaunchOnce(env).catch((e) => ({ error: e.message }));
   out.emails = await flushOutbox(env).catch((e) => ({ error: e.message }));
   out.lotteries = await announce(env).then(() => 'ok').catch((e) => ({ error: e.message })); // Japan: opening / closing-soon notices
