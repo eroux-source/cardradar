@@ -1,0 +1,16 @@
+name: dns
+# Shows the public DNS records email depends on (Resend sending, Cloudflare Email Routing).
+on:
+  workflow_dispatch:
+jobs:
+  dns:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Look up
+        run: |
+          D=cardrestocktracker.com
+          out=""
+          for q in "CNAME send.$D" "CNAME rsend.$D" "TXT resend._domainkey.$D" "TXT _dmarc.$D" "MX $D" "TXT $D" "TXT send.$D" "MX send.$D"; do
+            set -- $q; v=$(dig +short $1 $2 @1.1.1.1 | tr '\n' ' ' | cut -c1-90); out="$out $2 $1=[${v}] ;"
+          done
+          echo "::notice title=dns::$out"
