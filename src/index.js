@@ -15,7 +15,7 @@ import { alertsPage, signinPage, accountPage } from './web/pages/funnel.js';
 import { sitemap, robots, llms } from './seo/sitemap.js';
 import { restockData } from './web/pages/data_page.js';
 import { countryData, thirtyPage, DATA_SLUG, THIRTY_SLUG } from './web/pages/local_data.js';
-import { ownerAllowed, monitor, marketing, ownerSettings, bakeoff } from './owner/index.js';
+import { ownerAllowed, monitor, marketing, ownerSettings, bakeoff , ownerSignedIn, ownerUsers } from './owner/index.js';
 import { jpHome, jpSet, jpShop } from './web/pages/lottery.js';
 import { bestTrackers, versus, howItWorks } from './web/pages/compare.js';
 import { lineWebhook } from './alerts/channels/line.js';
@@ -108,7 +108,8 @@ async function route(req, env, ctx) {
 
   // --- owner ---
   if (p.startsWith('/owner')) {
-    if (!ownerAllowed(env, req, url)) return new Response('Accès réservé.', { status: 403 });
+    if (!ownerAllowed(env, req, url) && !(await ownerSignedIn(env, req))) return new Response('Accès réservé. Connecte-toi sur le site avec ton e-mail propriétaire.', { status: 403 });
+    if (p === '/owner/users') return ownerUsers(env);
     if (p === '/owner/monitor') return monitor(env, url);
     if (p === '/owner/marketing') return marketing(env, url);
     if (p === '/owner/bakeoff') return bakeoff(env, url);

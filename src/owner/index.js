@@ -148,3 +148,33 @@ export async function bakeoff(env, url) {
   return shell('Test des sources', `<h1>Test des sources (${n} essais chacune)</h1><table><thead><tr><th>Source</th><th>Proxy</th><th>Réussis</th><th>Bloqués</th><th>Produits lus</th><th>Temps médian</th></tr></thead><tbody>${rows.map((r) => r.note ? `<tr><td>${e(r.id)}</td><td colspan="5">${e(r.note)}</td></tr>` : `<tr><td>${e(r.id)}</td><td>${r.proxy ? 'oui' : 'non'}</td><td>${r.ok}/${r.n}</td><td>${r.blocked}</td><td>${r.items}</td><td>${r.p50} ms</td></tr>`).join('')}</tbody></table>
   <p class="sub">Règle : on n'augmente le budget d'une source (et on ne promet une vitesse) qu'après un test à 100 % réussi, sur plusieurs jours.</p>`, key);
 }
+
+/** Signed-in owner (site account whose email is in OWNER_EMAILS): no admin key needed. */
+export async function ownerSignedIn(env, req) {
+  const owners = String(env.OWNER_EMAILS ?? '').toLowerCase().split(',').map((x) => x.trim()).filter(Boolean);
+  if (!owners.length) return false;
+  const { currentUser } = await import('../auth/session.js');
+  const u = await currentUser(env, req).catch(() => null);
+  return !!u && owners.includes(String(u.email).toLowerCase());
+}
+
+/** /owner/users: every account and every email left in the alert form, newest first. */
+export async function ownerUsers(env) {
+  const users = await all(env, `SELECT u.email, u.created_at, u.country, u.first_source,
+      (SELECT COUNT(*) FROM alerts a WHERE a.user_id = u.id AND a.status = 'active') AS alerts,
+      (SELECT GROUP_CONCAT(k.name, ' · ') FROM alerts a JOIN skus k ON k.id = a.sku_id WHERE a.user_id = u.id AND a.status = 'active') AS products,
+      (SELECT p.plan FROM passes p WHERE p.user_id = u.id AND p.status IN ('active','refunded_kept') AND p.ends_at > ?) AS pass
+    FROM users u ORDER BY u.created_at DESC`, now());
+  const leads = await all(env, `SELECT l.email, l.step, l.created_at, k.name AS product FROM leads l LEFT JOIN skus k ON k.id = l.sku_id
+    WHERE l.email NOT IN (SELECT email FROM users) ORDER BY l.created_at DESC LIMIT 200`).catch(() => []);
+  const d = (ts) => new Date(ts).toISOString().slice(0, 16).replace('T', ' ');
+  const body = `<h1>Comptes (${users.length})</h1>
+  <table><thead><tr><th>E-mail</th><th>Créé</th><th>Pays</th><th>Alertes</th><th>Produits suivis</th><th>Accès payant</th><th>Venu de</th></tr></thead><tbody>
+  ${users.map((u) => `<tr><td>${e(u.email)}</td><td>${e(d(u.created_at))}</td><td>${e(u.country ?? '')}</td><td>${u.alerts}</td><td>${e(u.products ?? '')}</td><td>${e(u.pass ?? '')}</td><td>${e(u.first_source ?? '')}</td></tr>`).join('')}
+  </tbody></table>
+  <h2>E-mails laissés sans finir l'inscription (${leads.length})</h2>
+  <table><thead><tr><th>E-mail</th><th>Étape</th><th>Produit</th><th>Date</th></tr></thead><tbody>
+  ${leads.map((l) => `<tr><td>${e(l.email)}</td><td>${e(l.step ?? '')}</td><td>${e(l.product ?? '')}</td><td>${e(d(l.created_at))}</td></tr>`).join('')}
+  </tbody></table>`;
+  return shell('Comptes', body, '');
+}
