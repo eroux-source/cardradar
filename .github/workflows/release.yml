@@ -61,11 +61,14 @@ jobs:
           [ $rc -eq 0 ] || { echo "::error title=migrations::$(echo "$out" | tail -12 | tr '\n' ' ' | cut -c1-900)"; exit 1; }
 
       - name: Deploy
+        timeout-minutes: 15
         run: |
           set +e
+          # the relay container is rebuilt only when a commit says [relay] (rebuilding every time made deploys hang)
+          ROLL=none; case "${{ github.event.head_commit.message }}" in *"[relay]"*) ROLL=immediate;; esac
           B="${{ vars.BRAND_NAME }}"; B="${B:-Card Restock Tracker}"
           S="${{ vars.SUPPORT_EMAIL }}"; S="${S:-hello@$DOMAIN}"
-          out=$(npx wrangler deploy \
+          out=$(timeout 600 npx wrangler deploy --containers-rollout $ROLL \
             --var "BASE_URL:https://$DOMAIN" --var "BRAND_NAME:$B" --var "SUPPORT_EMAIL:$S" \
             --var "CODES_FROM:$B <hello@$DOMAIN>" --var "ALERTS_FROM:$B alerts <alerts@notify.$DOMAIN>" \
             --var "TELEGRAM_BOT_NAME:${{ vars.TELEGRAM_BOT_NAME }}" 2>&1); rc=$?; echo "$out"
