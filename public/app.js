@@ -63,10 +63,10 @@
   (async () => {
     const page = document.body.dataset.cc; if (!page || page === 'jp' || f0()) return;
     try { if (localStorage.getItem('geo-off')) return; } catch {}
-    const MAP = { US: 'us', GB: 'uk', CA: 'ca', AU: 'au', NZ: 'au', DE: 'de', AT: 'de', CH: 'de', FR: 'fr', BE: 'fr', LU: 'fr', NL: 'nl', IT: 'it', ES: 'es' };
-    const NAME = { us: 'the United States', uk: 'the UK', ca: 'Canada', au: 'Australia', de: 'Deutschland', fr: 'France', nl: 'Nederland', it: 'Italia', es: 'España' };
+    const MAP = { US: 'us', GB: 'uk', CA: 'ca', AU: 'au', NZ: 'au', DE: 'de', AT: 'de', CH: 'de', FR: 'fr', BE: 'fr', LU: 'fr', NL: 'nl', IT: 'it', ES: 'es', MX: 'mx', CL: 'cl' };
+    const NAME = { us: 'the United States', uk: 'the UK', ca: 'Canada', au: 'Australia', de: 'Deutschland', fr: 'France', nl: 'Nederland', it: 'Italia', es: 'España', mx: 'México', cl: 'Chile' };
     const SAY = { us: (n) => `Shopping in ${n}? See stock there`, uk: (n) => `Shopping in ${n}? See stock there`, ca: (n) => `Shopping in ${n}? See stock there`, au: (n) => `Shopping in ${n}? See stock there`,
-      de: (n) => `Du kaufst in ${n}? Bestand dort ansehen`, fr: (n) => `Vous achetez en ${n} ? Voir le stock en ${n}`, nl: (n) => `Je koopt in ${n}? Bekijk de voorraad daar`, it: (n) => `Compri in ${n}? Vedi la disponibilità`, es: (n) => `¿Compras en ${n}? Ver el stock allí` };
+      de: (n) => `Du kaufst in ${n}? Bestand dort ansehen`, fr: (n) => `Vous achetez en ${n} ? Voir le stock en ${n}`, nl: (n) => `Je koopt in ${n}? Bekijk de voorraad daar`, it: (n) => `Compri in ${n}? Vedi la disponibilità`, es: (n) => `¿Compras en ${n}? Ver el stock allí`, mx: (n) => `¿Compras en ${n}? Ver el stock en ${n}`, cl: (n) => `¿Compras en ${n}? Ver el stock en ${n}` };
     let cc = null;
     try { cc = MAP[(await (await fetch('/api/geo')).json()).country]; } catch {}
     if (!cc || cc === page) return;

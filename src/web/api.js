@@ -181,8 +181,8 @@ export async function api(env, req, url, ctx) {
     const name = String(b.n ?? '').slice(0, 40);
     if (!name) return new Response(null, { status: 204 });
     const device = /iphone|ipad/i.test(ua) ? 'ios' : /android/i.test(ua) ? 'android' : 'desktop';
-    ctx.waitUntil(run(env, 'INSERT INTO events (at, visit, name, path, source, device, bot, props) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      now(), String(b.v ?? '').slice(0, 40), name, String(b.p ?? '').slice(0, 200), String(b.s ?? '').slice(0, 60), device, BOT_RE.test(ua) ? 1 : 0, b.x ? JSON.stringify(b.x).slice(0, 500) : null));
+    ctx.waitUntil(run(env, 'INSERT INTO events (at, visit, name, path, source, device, bot, props, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      now(), String(b.v ?? '').slice(0, 40), name, String(b.p ?? '').slice(0, 200), String(b.s ?? '').slice(0, 60), device, BOT_RE.test(ua) ? 1 : 0, b.x ? JSON.stringify(b.x).slice(0, 500) : null, req.cf?.country ?? null));
     return new Response(null, { status: 204 });
   }
 

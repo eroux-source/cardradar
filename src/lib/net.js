@@ -44,7 +44,7 @@ async function countBytes(env, n) {
   } catch {}
 }
 // Proxies per country: PROXY_LIST_UK, PROXY_LIST_JP… (retailers geo-block foreign IPs); PROXY_LIST = US/default.
-const COUNTRY_OF = (source) => (/_(uk|ca|au|jp|de|fr|nl|it|es)$/.exec(source)?.[1] ?? '');
+const COUNTRY_OF = (source) => (/_(uk|ca|au|jp|de|fr|nl|it|es|mx|cl)$/.exec(source)?.[1] ?? '');
 function pickProxy(env, source = '') {
   const cc = COUNTRY_OF(source).toUpperCase();
   env.__proxies ??= {};

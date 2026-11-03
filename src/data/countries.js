@@ -32,6 +32,10 @@ export const COUNTRIES = {
     metros: m('it', [['roma', 'Roma', 'LAZ', '00184'], ['milano', 'Milano', 'LOM', '20121'], ['napoli', 'Napoli', 'CAM', '80133'], ['torino', 'Torino', 'PIE', '10121'], ['palermo', 'Palermo', 'SIC', '90133'], ['genova', 'Genova', 'LIG', '16121'], ['bologna', 'Bologna', 'EMR', '40121'], ['firenze', 'Firenze', 'TOS', '50123'], ['bari', 'Bari', 'PUG', '70121'], ['catania', 'Catania', 'SIC', '95124']]) },
   es: { code: 'es', name: 'España', lang: 'es', locale: 'es-ES', currency: 'EUR', prices: { solo: '5.99', multi: '13.99' }, tz: 'Europe/Madrid',
     metros: m('es', [['madrid', 'Madrid', 'MD', '28013'], ['barcelona', 'Barcelona', 'CT', '08002'], ['valencia', 'Valencia', 'VC', '46002'], ['sevilla', 'Sevilla', 'AN', '41004'], ['zaragoza', 'Zaragoza', 'AR', '50001'], ['malaga', 'Málaga', 'AN', '29015'], ['murcia', 'Murcia', 'MC', '30004'], ['palma', 'Palma', 'IB', '07001'], ['bilbao', 'Bilbao', 'PV', '48001'], ['alicante', 'Alicante', 'VC', '03002']]) },
+  mx: { code: 'mx', name: 'México', lang: 'es', locale: 'es-MX', currency: 'MXN', prices: { solo: '109', multi: '269' }, tz: 'America/Mexico_City',
+    metros: m('mx', [['cdmx', 'Ciudad de México', 'CDMX', '06000'], ['guadalajara', 'Guadalajara', 'JAL', '44100'], ['monterrey', 'Monterrey', 'NL', '64000']]) },
+  cl: { code: 'cl', name: 'Chile', lang: 'es', locale: 'es-CL', currency: 'CLP', prices: { solo: '5490', multi: '13490' }, tz: 'America/Santiago',
+    metros: m('cl', [['santiago', 'Santiago', 'RM', '8320000'], ['valparaiso', 'Valparaíso', 'VS', '2340000'], ['concepcion', 'Concepción', 'BI', '4030000']]) },
 };
 
 export const countryList = Object.values(COUNTRIES);

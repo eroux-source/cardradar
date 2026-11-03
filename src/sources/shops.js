@@ -170,4 +170,16 @@ export const SHOPS = [
   { id: 'shop_danireon_ca', name: 'Danireon', domain: 'www.danireon.com', country: 'ca', lang: 'en' },
   { id: 'shop_elitecardstoronto_ca', name: 'Elite Cards Toronto', domain: 'elitecardstoronto.com', country: 'ca', lang: 'en' },
   { id: 'shop_thepokeoffice_ca', name: 'The Poke Office', domain: 'www.thepokeoffice.com', country: 'ca', lang: 'en' },
+  // Mexico (found 2026-11-03: Shopify search answers)
+  { id: 'shop_akibaraxpress_mx', name: 'Akibara Xpress', domain: 'akibaraxpress.com', country: 'mx', lang: 'es' },
+  { id: 'shop_yellowrabbit_mx', name: 'Yellow Rabbit', domain: 'yellowrabbit.mx', country: 'mx', lang: 'es' },
+  { id: 'shop_masterforce_mx', name: 'MasterForce TCG', domain: 'masterforcemx.com', country: 'mx', lang: 'es' },
+  { id: 'shop_colecciona_mx', name: 'Colecciona', domain: 'colecciona.mx', country: 'mx', lang: 'es' },
+  { id: 'shop_evolutioncoapa_mx', name: 'Evolution Coapa', domain: 'www.evolutioncoapa.com', country: 'mx', lang: 'es' },
+  { id: 'shop_loftytcg_mx', name: 'Lofty TCG', domain: 'loftytcg.com', country: 'mx', lang: 'es' },
+  // Chile
+  { id: 'shop_piedrabruja_cl', name: 'Piedra Bruja', domain: 'piedrabruja.cl', country: 'cl', lang: 'es' },
+  { id: 'shop_oasisgames_cl', name: 'Oasis Games', domain: 'www.oasisgames.cl', country: 'cl', lang: 'es' },
+  { id: 'shop_collectorcenter_cl', name: 'Collector Center', domain: 'collectorcenter.cl', country: 'cl', lang: 'es' },
+  { id: 'shop_arcadiacollects_cl', name: 'Arcadia Collects', domain: 'arcadiacollects.cl', country: 'cl', lang: 'es' },
 ];

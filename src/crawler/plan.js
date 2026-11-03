@@ -56,6 +56,12 @@ export async function planMinute(env) {
       const day = 1440, minute = Math.floor(t / 60e3);
       const slot = [...src.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7) % day;
       src.queries.forEach((q, i) => { if (minute % day === (slot + i * 60) % day) tasks.push({ t: 'snapshot', source: src.id, q }); });
+      // a new shop: run its searches once right away (spread by the queue), then daily
+      if (!s[`firstsearch.${src.id}`]) {
+        src.queries.forEach((q) => tasks.push({ t: 'snapshot', source: src.id, q }));
+        await env.DB.prepare('INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO NOTHING').bind(`firstsearch.${src.id}`, String(t), t).run();
+        s[`firstsearch.${src.id}`] = String(t);
+      }
     } else if (src.snapshot) {
       // one query every `everyMinutes`, rotating through the list
       const every = src.everyMinutes ?? 1;

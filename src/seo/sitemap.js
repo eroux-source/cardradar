@@ -57,7 +57,10 @@ export async function sitemap(env) {
       ...JP_SETS.filter((s) => jp.some((l) => l.set_slug === s.slug)).map((s) => `/jp/set/${s.slug}`),
       ...Object.keys(JP_SHOPS).filter((id) => jp.some((l) => l.source === id)).map((id) => `/jp/shop/${id}`));
   }
-  return xml(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...new Set(urls)].map((u) => `<url><loc>${B}${u}</loc></url>`).join('\n')}\n</urlset>`);
+  // pages rebuilt every hour from live data say so (lastmod = today)
+  const today = new Date().toISOString().slice(0, 10);
+  const fresh = (u) => u === '/' || /^\/[a-z]{2}$/.test(u) || u.includes('restock-data') || u.includes('bestand') || u.includes('stock-cart') || u.includes('disponibilita') || u.includes('voorraad') || /\/(30th-celebration|30-[a-z]+-pokemon|30-aniversario-pokemon)$/.test(u);
+  return xml(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...new Set(urls)].map((u) => `<url><loc>${B}${u}</loc>${fresh(u) ? `<lastmod>${today}</lastmod>` : ''}</url>`).join('\n')}\n</urlset>`);
 }
 
 export const robots = (env) => txt(`User-agent: *
@@ -92,7 +95,7 @@ ${out.map((k) => `- ${k.name}: ${env.BASE_URL}/us/${k.slug}`).join('\n') || '- n
 
 > Live Pokémon TCG (trading card game) stock, restock alerts and Japanese lottery calendar.
 
-${env.BRAND_NAME} checks sealed Pokémon TCG products (Elite Trainer Boxes, booster boxes, booster bundles, tins) at 150+ independent card shops in 9 countries: sold-out products are checked every hour, in-stock products daily, and every restock is re-checked every 10 minutes until it sells out. Every restock is logged with its time and how long it lasted.
+${env.BRAND_NAME} checks sealed Pokémon TCG products (Elite Trainer Boxes, booster boxes, booster bundles, tins) at 150+ independent card shops in 11 countries: sold-out products are checked every hour, in-stock products daily, and every restock is re-checked every 10 minutes until it sells out. Every restock is logged with its time and how long it lasted.
 
 Countries:
 ${lines.join('\n')}
@@ -109,7 +112,7 @@ ${lines.join('\n')}
 
 ## What makes it different
 - Free live stock pages, no account needed; only alerts are paid (30-day pass, cancel in 2 clicks, no app or Discord needed).
-- Independent card shops: 150+ shops in the US, UK, Canada, Australia, Germany, France, the Netherlands, Italy and Spain, where Pokémon products are often still in stock when big retailers are sold out. Big-box retailers (Target, Walmart, Pokémon Center) are not covered yet.
+- Independent card shops: 150+ shops in the US, UK, Canada, Australia, Germany, France, the Netherlands, Italy, Spain, Mexico and Chile, where Pokémon products are often still in stock when big retailers are sold out. Big-box retailers (Target, Walmart, Pokémon Center) are not covered yet.
 - Public restock history: every restock logged with its time and duration, so each product, store, city and retailer page shows when restocks really happen.
 - Japan: a lottery (抽選), pre-order and re-sale calendar with LINE reminders before entries close (none of the other trackers compared offer one).
 

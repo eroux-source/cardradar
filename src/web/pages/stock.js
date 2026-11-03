@@ -115,7 +115,10 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
   const minPrice = Math.min(...listings.map((l) => l.price || Infinity));
   const productLd = { '@context': 'https://schema.org', '@type': 'Product', name: k.name, ...(k.image ? { image: k.image } : {}),
     ...(Number.isFinite(minPrice) ? { offers: { '@type': 'AggregateOffer', priceCurrency: T.cc.currency, lowPrice: minPrice, offerCount: listings.length, availability: inNow.length ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' } } : {}) };
-  const title = isHome ? T.home.title(env.BRAND_NAME) : T.sku.title(k.name, metro?.name);
+  // SEO: name the country in every non-US title ("… (Deutschland) — …"), where searchers type it
+  const cName = cc === 'us' ? null : cc === 'uk' ? 'UK' : T.cc.name;
+  const withCountry = (x) => (cName && !metro ? x.replace(' — ', ` (${cName}) — `) : x);
+  const title = withCountry(isHome ? T.home.title(env.BRAND_NAME) : T.sku.title(k.name, metro?.name));
   const description = isHome ? T.home.desc(shops) : T.sku.desc(k.name, inNow.filter((r) => !r.online).length, rows.filter((r) => !r.online).length, metro?.name ?? T.cc.name, inNow.some((r) => r.online) ? T.f.list([...new Set(inNow.filter((r) => r.online).map((r) => sourceName(r.source)))]) : null);
   return page(env, T, { title, description, path, body, live, alternates, jsonLd: [c.ld, faq.ld, productLd, ...extraLd], noindex: !isHome && !rows.length && !rs.length });
 }
@@ -163,5 +166,8 @@ export async function homeList(env, T, cc, { live = null, alternates = null, ext
   ${alertCta(env, T)}
   ${await factsBlock(env, T)}`;
   const ld = { '@context': 'https://schema.org', '@type': 'ItemList', name: H.inH, itemListElement: inNow.slice(0, 50).map((k, i) => ({ '@type': 'ListItem', position: i + 1, name: k.name, url: `${env.BASE_URL}${base(cc)}/${k.slug}` })) };
-  return page(env, T, { title: T.home.title(env.BRAND_NAME), description: T.home.desc(shopsText(T, cc)), path: homePath(cc), body, live, alternates, jsonLd: [ld, ...extraLd] });
+  const where = cc === 'us' ? null : cc === 'uk' ? 'UK' : T.cc.name;
+  const base0 = T.home.title(env.BRAND_NAME);
+  const homeTitle = !where ? base0 : base0.includes(' — ') ? base0.replace(' — ', ` (${where}) — `) : `${where} ${base0}`;
+  return page(env, T, { title: homeTitle, description: T.home.desc(shopsText(T, cc)), path: homePath(cc), body, live, alternates, jsonLd: [ld, ...extraLd] });
 }

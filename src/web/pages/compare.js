@@ -15,9 +15,9 @@ const CHECKED_LABEL = 'November 1, 2026';
 const US = {
   name: 'Card Restock Tracker', url: '/',
   price: 'Free: live stock pages (no account) + 1 product alert as a daily email. Instant alerts $5.99 for 30 days (Solo) or $14.99 (Multi), cancel in 2 clicks',
-  where: 'United States, UK, Canada, Australia, Germany, France, Netherlands, Italy, Spain (live); Japan lottery calendar',
+  where: 'United States, UK, Canada, Australia, Germany, France, Netherlands, Italy, Spain, Mexico, Chile (live); Japan lottery calendar',
   inStore: 'No (online stock only for now)',
-  online: '150+ independent card shops in the US, UK, Canada, Australia, Germany, France, the Netherlands, Italy and Spain',
+  online: '150+ independent card shops in the US, UK, Canada, Australia, Germany, France, the Netherlands, Italy, Spain, Mexico and Chile',
   channels: 'Phone notification (web push, no app), Telegram, LINE (Japan), email',
   history: 'Yes: every restock logged with its time and how long it lasted (re-checked every 10 minutes until it sells out), per product and shop',
   japan: 'Yes: lottery (抽選), pre-order and re-sale calendar with closing-time reminders',
@@ -40,7 +40,7 @@ export const COMPETITORS = {
     inStore: 'Not described', online: 'Pokémon Center, Walmart, Target, Amazon and others', channels: 'App push notifications',
     history: 'Release and update dates', japan: 'No', app: 'iPhone and Android app', updates: 'Not stated',
     strengths: 'a free app and many other brands (Pop Mart, One Piece, Lorcana, GPUs, consoles)',
-    us: 'stock at 150+ independent card shops in 9 countries, a public restock history with how long each restock lasted, and alerts without installing an app',
+    us: 'stock at 150+ independent card shops in 11 countries, a public restock history with how long each restock lasted, and alerts without installing an app',
   },
   'poke-alerts': {
     name: 'Poke Alerts', site: 'https://tcgdropradar.com/blog/best-pokemon-restock-app/', sources: ['https://tcgdropradar.com/blog/best-pokemon-restock-app/'],
@@ -64,7 +64,7 @@ export const COMPETITORS = {
     inStore: 'Not stated', online: 'Custom TCG monitors', channels: 'App notifications',
     history: 'Not stated', japan: 'Not stated', app: 'Mobile app', updates: 'Not stated',
     strengths: 'custom monitors in a mobile app',
-    us: 'free live stock pages anyone can check, 150+ independent card shops in 9 countries and a restock history',
+    us: 'free live stock pages anyone can check, 150+ independent card shops in 11 countries and a restock history',
   },
   trackalacker: {
     name: 'TrackaLacker', site: 'https://www.trackalacker.com', sources: ['https://www.trackalacker.com', 'https://tcgdropradar.com/blog/best-pokemon-restock-app/'],
@@ -72,7 +72,7 @@ export const COMPETITORS = {
     inStore: 'Not stated', online: 'Many retailers and product types', channels: 'App notifications, web',
     history: 'Not stated', japan: 'No', app: 'Website and app', updates: 'Not stated',
     strengths: 'a free tracker covering many product types beyond Pokémon',
-    us: 'a Pokémon-only focus on independent card shops in 9 countries, measured restock durations, and a Japanese lottery calendar',
+    us: 'a Pokémon-only focus on independent card shops in 11 countries, measured restock durations, and a Japanese lottery calendar',
   },
 };
 
@@ -91,7 +91,7 @@ export async function bestTrackers(env) {
   const a = answers([
     { q: 'What is the best Pokémon restock tracker?', a: `It depends on where you buy. To find sealed Pokémon products in stock at independent card shops (150+ shops in the US, UK, Canada, Australia and 5 European countries) with a free live stock page and a public restock history, Card Restock Tracker. For the widest list of European online shops, TCGRadar. For big-box retailers (Target, Walmart, Pokémon Center) in a free multi-brand app, Restockd. For a Discord community with in-store sightings, PokePings or Poke Alerts.` },
     { q: 'Is there a free Pokémon restock tracker?', a: 'Yes. Card Restock Tracker shows live stock and restock times for free, without an account, and its free plan emails you once a day about one product; instant alerts are paid ($5.99 for 30 days). Restockd and TrackaLacker are free apps; TCGRadar has a free plan without restock alerts.' },
-    { q: 'Where can I find Pokémon cards in stock when big retailers are sold out?', a: 'Independent card shops often still have Elite Trainer Boxes, booster bundles and tins when Target or Pokémon Center are sold out. Card Restock Tracker checks 150+ of them in 9 countries and lists, product by product, which shops have it right now and at what price, for free and without an account.' },
+    { q: 'Where can I find Pokémon cards in stock when big retailers are sold out?', a: 'Independent card shops often still have Elite Trainer Boxes, booster bundles and tins when Target or Pokémon Center are sold out. Card Restock Tracker checks 150+ of them in 11 countries and lists, product by product, which shops have it right now and at what price, for free and without an account.' },
     { q: 'How do I get Pokémon Center restock alerts?', a: 'Restockd, Poke Alerts and PokePings watch Pokémon Center. Card Restock Tracker focuses on independent card shops for now and sends its alerts by phone notification, Telegram or email with a direct link, without installing an app.' },
     { q: 'Where can I follow Japanese Pokémon card lotteries (抽選)?', a: 'Card Restock Tracker lists Pokémon Center Online, Rakuten Books, Yodobashi, Joshin and other Japanese shops\' lotteries, pre-orders and re-sales with their closing times at /jp, and can remind you by LINE before they close.' },
   ], 'Short answers');
@@ -151,7 +151,7 @@ export async function howItWorks(env) {
     { q: 'Do you buy products or use bots?', a: 'No. We never buy for you and never hold stock. We tell you where it is; you buy from the retailer like anyone else.' },
   ], 'How it works');
   const body = `<div class="answer"><h1>How Card Restock Tracker checks Pokémon card stock</h1>
-  <p class="lede">Card Restock Tracker reads the public stock of 150+ independent card shops in the US, UK, Canada, Australia, Germany, France, the Netherlands, Italy and Spain: the same "in stock" or "sold out" their own website shows. Each change from sold out to in stock is logged with its time and how long it lasted: that history is what the restock pages show.</p></div>
+  <p class="lede">Card Restock Tracker reads the public stock of 150+ independent card shops in the US, UK, Canada, Australia, Germany, France, the Netherlands, Italy, Spain, Mexico and Chile: the same "in stock" or "sold out" their own website shows. Each change from sold out to in stock is logged with its time and how long it lasted: that history is what the restock pages show.</p></div>
   ${a.html}
   <p><a href="/best-pokemon-restock-trackers">How we compare with other trackers</a> · <a href="/press">Restock data for journalists</a></p>
   ${await factsBlock(env, T)}`;

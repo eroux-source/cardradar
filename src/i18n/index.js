@@ -16,6 +16,7 @@ export function t(cc) {
   if (cache[c.code]) return cache[c.code];
   const s = { ...en, ...(DICTS[c.lang] ?? {}) };
   if (!s.lot) s.lot = ja.lot; // lottery strings exist only in Japanese for now
+  if (c.lang === 'es' && c.code !== 'es') { s.shipsNationwide = `Envío a todo ${c.name}`; s.sku = { ...s.sku, theCountry: c.name }; } // Mexico, Chile
   const loc = c.locale;
   const days = [...Array(7)].map((_, i) => new Intl.DateTimeFormat(loc, { weekday: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(2024, 0, 7 + i))));
   const hourFmt = new Intl.DateTimeFormat(loc, { hour: 'numeric', timeZone: 'UTC' });
