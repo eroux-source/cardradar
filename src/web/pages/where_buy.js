@@ -20,7 +20,21 @@ export const GUIDES = {
     name: { en: 'Pokémon 30th Celebration Elite Trainer Box', de: 'Pokémon 30 Jahre Top-Trainer-Box (30th Celebration Elite Trainer Box)', fr: 'Coffret Dresseur d\'Élite Pokémon 30 ans (30th Celebration Elite Trainer Box)', it: 'Set Allenatore Fuoriclasse Pokémon 30 anni (30th Celebration Elite Trainer Box)', es: 'Caja de Entrenador Élite Pokémon 30 aniversario (30th Celebration Elite Trainer Box)', nl: 'Pokémon 30 jaar Elite Trainer Box (30th Celebration)' },
     short: { en: '30th Celebration ETB', de: '30 Jahre Top-Trainer-Box', fr: 'coffret Dresseur d\'Élite 30 ans', it: 'Set Allenatore Fuoriclasse 30 anni', es: 'Caja de Entrenador Élite 30 aniversario', nl: '30 jaar Elite Trainer Box' },
   },
+  // next expansion (English street date 2026-11-06): pages exist before release so they are indexed when people start asking
+  'delta-reign': {
+    multi: true, release: '2026-11-06',
+    match: (n) => /delta[\s-]*reign|delta[\s-]*herrschaft|\bME\s?0?6\b/i.test(n),
+    slug: { en: 'where-to-buy-delta-reign', de: 'wo-kaufen-delta-reign-delta-herrschaft', fr: 'ou-acheter-delta-reign', it: 'dove-comprare-delta-reign', es: 'donde-comprar-delta-reign', nl: 'waar-kopen-delta-reign' },
+    name: { en: 'Pokémon TCG Mega Evolution—Delta Reign', de: 'Pokémon Mega-Entwicklung: Delta-Herrschaft (ME06, Delta Reign)', fr: 'Pokémon Méga-Évolution Delta Reign (ME06)', it: 'Pokémon Megaevoluzione Delta Reign (ME06)', es: 'Pokémon Megaevolución Delta Reign (ME06)', nl: 'Pokémon Mega Evolution Delta Reign (ME06)' },
+    short: { en: 'Delta Reign', de: 'Delta-Herrschaft (Delta Reign)', fr: 'Delta Reign', it: 'Delta Reign', es: 'Delta Reign', nl: 'Delta Reign' },
+  },
 };
+const REL = { en: (d) => `English release: ${d}. Booster boxes, Elite Trainer Boxes and bundles appear here as soon as shops list them (pre-orders included).`,
+  de: (d) => `Englischer Release: ${d}. Displays, Top-Trainer-Boxen und Bundles erscheinen hier, sobald Shops sie listen (auch Vorbestellungen).`,
+  fr: (d) => `Sortie en anglais : ${d}. Displays, coffrets Dresseur d'Élite et bundles apparaissent ici dès que les boutiques les listent (précommandes comprises).`,
+  it: (d) => `Uscita in inglese: ${d}. Box, Set Allenatore Fuoriclasse e bundle compaiono qui appena i negozi li elencano (preordini inclusi).`,
+  es: (d) => `Lanzamiento en inglés: ${d}. Cajas de sobres, Cajas de Entrenador Élite y bundles aparecen aquí en cuanto las tiendas los listan (preventas incluidas).`,
+  nl: (d) => `Engelse release: ${d}. Booster boxes, Elite Trainer Boxes en bundels verschijnen hier zodra winkels ze tonen (pre-orders inbegrepen).` };
 export const guidePath = (cc, id) => `/${cc}/${GUIDES[id].slug[COUNTRIES[cc]?.lang] ?? GUIDES[id].slug.en}`;
 export const guideIdForSlug = (lang, slug) => Object.keys(GUIDES).find((id) => (GUIDES[id].slug[lang] ?? GUIDES[id].slug.en) === slug) ?? null;
 
@@ -29,7 +43,7 @@ const EDITION = [['de', /jahre|top[-\s]*trainer|\(de\)|deutsch/i], ['fr', /30\s*
 const editionOf = (name) => EDITION.find(([, re]) => re.test(name))?.[0] ?? 'en';
 
 const L = {
-  en: { ed: { en: 'English edition', de: 'German edition', fr: 'French edition', it: 'Italian edition', es: 'Spanish edition', nl: 'Dutch edition', ja: 'Japanese edition' },
+  en: { prod: 'Product', ed: { en: 'English edition', de: 'German edition', fr: 'French edition', it: 'Italian edition', es: 'Spanish edition', nl: 'Dutch edition', ja: 'Japanese edition' },
     h1: (p, c) => `Where to buy the ${p} in ${c}`, upd: (w) => `Updated ${w} · from the shops' own stock, re-checked every hour`,
     yes: (w, p, n, list, cheap) => `As of ${w}, the ${p} is in stock at ${n} independent card shop${n > 1 ? 's' : ''}: ${list}. Cheapest right now: ${cheap}.`,
     no: (w, p, n) => `As of ${w}, the ${p} is sold out at all ${n} card shops we check. Set a free alert below and we tell you the moment one restocks.`,
@@ -38,7 +52,7 @@ const L = {
     q1: (p, c) => `Where can I buy the ${p} in ${c} right now?`, q2: (p) => `How much does the ${p} cost?`, a2: (lo, hi) => `At independent shops today: from ${lo}${hi ? ` to ${hi}` : ''}. Prices above the shelf price are common while stock is short.`,
     q3: (p) => `How fast does the ${p} sell out?`, a3: (d) => `Restocks we measured stayed in stock for ${d} (median). Check the shops above or set an alert.`, a3n: 'We are still measuring how long its restocks last: every restock is re-checked every 10 minutes until it sells out.',
     other: 'Other countries', all: 'All countries' },
-  de: { ed: { en: 'Englische Version', de: 'Deutsche Version', fr: 'Französische Version', it: 'Italienische Version', es: 'Spanische Version', nl: 'Niederländische Version', ja: 'Japanische Version' },
+  de: { prod: 'Produkt', ed: { en: 'Englische Version', de: 'Deutsche Version', fr: 'Französische Version', it: 'Italienische Version', es: 'Spanische Version', nl: 'Niederländische Version', ja: 'Japanische Version' },
     h1: (p, c) => `Wo kaufen: ${p} in ${c}`, upd: (w) => `Aktualisiert ${w} · Bestand direkt aus den Shops, stündlich geprüft`,
     yes: (w, p, n, list, cheap) => `Stand ${w}: ${p} ist bei ${n} unabhängigen Kartenläden auf Lager: ${list}. Gerade am günstigsten: ${cheap}.`,
     no: (w, p, n) => `Stand ${w}: ${p} ist bei allen ${n} geprüften Kartenläden ausverkauft. Richte unten einen kostenlosen Alarm ein, wir melden uns beim nächsten Restock.`,
@@ -47,7 +61,7 @@ const L = {
     q1: (p, c) => `Wo bekomme ich die ${p} gerade in ${c}?`, q2: (p) => `Was kostet die ${p}?`, a2: (lo, hi) => `Heute bei unabhängigen Shops: ab ${lo}${hi ? ` bis ${hi}` : ''}. Aufpreise über UVP sind üblich, solange die Ware knapp ist.`,
     q3: (p) => `Wie schnell ist die ${p} ausverkauft?`, a3: (d) => `Gemessene Restocks blieben im Mittel ${d} verfügbar. Schau bei den Shops oben oder richte einen Alarm ein.`, a3n: 'Wir messen noch, wie lange Restocks dauern: jeder Restock wird alle 10 Minuten geprüft, bis er ausverkauft ist.',
     other: 'Andere Länder', all: 'Alle Länder' },
-  fr: { ed: { en: 'Version anglaise', de: 'Version allemande', fr: 'Version française', it: 'Version italienne', es: 'Version espagnole', nl: 'Version néerlandaise', ja: 'Version japonaise' },
+  fr: { prod: 'Produit', ed: { en: 'Version anglaise', de: 'Version allemande', fr: 'Version française', it: 'Version italienne', es: 'Version espagnole', nl: 'Version néerlandaise', ja: 'Version japonaise' },
     h1: (p, c) => `Où acheter le ${p} en ${c}`, upd: (w) => `Mis à jour le ${w} · stock relevé directement chez les boutiques, toutes les heures`,
     yes: (w, p, n, list, cheap) => `Au ${w}, le ${p} est en stock dans ${n} boutique${n > 1 ? 's' : ''} indépendante${n > 1 ? 's' : ''} : ${list}. Le moins cher en ce moment : ${cheap}.`,
     no: (w, p, n) => `Au ${w}, le ${p} est en rupture dans les ${n} boutiques que nous suivons. Activez une alerte gratuite ci-dessous : on vous prévient au prochain réassort.`,
@@ -56,7 +70,7 @@ const L = {
     q1: (p, c) => `Où trouver le ${p} en ${c} en ce moment ?`, q2: (p) => `Combien coûte le ${p} ?`, a2: (lo, hi) => `Aujourd'hui en boutique indépendante : à partir de ${lo}${hi ? ` et jusqu'à ${hi}` : ''}. Les prix au-dessus du prix conseillé sont fréquents tant que le stock est rare.`,
     q3: (p) => `En combien de temps le ${p} est-il épuisé ?`, a3: (d) => `Les réassorts mesurés sont restés en stock ${d} (médiane). Regardez les boutiques ci-dessus ou activez une alerte.`, a3n: 'Mesure en cours : chaque réassort est revérifié toutes les 10 minutes jusqu\'à la rupture.',
     other: 'Autres pays', all: 'Tous les pays' },
-  it: { ed: { en: 'Edizione inglese', de: 'Edizione tedesca', fr: 'Edizione francese', it: 'Edizione italiana', es: 'Edizione spagnola', nl: 'Edizione olandese', ja: 'Edizione giapponese' },
+  it: { prod: 'Prodotto', ed: { en: 'Edizione inglese', de: 'Edizione tedesca', fr: 'Edizione francese', it: 'Edizione italiana', es: 'Edizione spagnola', nl: 'Edizione olandese', ja: 'Edizione giapponese' },
     h1: (p, c) => `Dove comprare il ${p} in ${c}`, upd: (w) => `Aggiornato ${w} · disponibilità letta dai negozi, ogni ora`,
     yes: (w, p, n, list, cheap) => `Al ${w}, il ${p} è disponibile in ${n} negozi indipendenti: ${list}. Il più economico ora: ${cheap}.`,
     no: (w, p, n) => `Al ${w}, il ${p} è esaurito in tutti i ${n} negozi che controlliamo. Attiva un avviso gratuito qui sotto.`,
@@ -65,7 +79,7 @@ const L = {
     q1: (p, c) => `Dove trovo il ${p} in ${c} adesso?`, q2: (p) => `Quanto costa il ${p}?`, a2: (lo, hi) => `Oggi nei negozi indipendenti: da ${lo}${hi ? ` a ${hi}` : ''}.`,
     q3: (p) => `Quanto velocemente si esaurisce il ${p}?`, a3: (d) => `I restock misurati sono rimasti disponibili ${d} (mediana).`, a3n: 'Stiamo ancora misurando: ogni restock viene ricontrollato ogni 10 minuti.',
     other: 'Altri paesi', all: 'Tutti i paesi' },
-  es: { ed: { en: 'Edición en inglés', de: 'Edición alemana', fr: 'Edición francesa', it: 'Edición italiana', es: 'Edición en español', nl: 'Edición neerlandesa', ja: 'Edición japonesa' },
+  es: { prod: 'Producto', ed: { en: 'Edición en inglés', de: 'Edición alemana', fr: 'Edición francesa', it: 'Edición italiana', es: 'Edición en español', nl: 'Edición neerlandesa', ja: 'Edición japonesa' },
     h1: (p, c) => `Dónde comprar la ${p} en ${c}`, upd: (w) => `Actualizado ${w} · stock leído en las tiendas, cada hora`,
     yes: (w, p, n, list, cheap) => `A ${w}, la ${p} está en stock en ${n} tienda${n > 1 ? 's' : ''} independiente${n > 1 ? 's' : ''}: ${list}. La más barata ahora: ${cheap}.`,
     no: (w, p, n) => `A ${w}, la ${p} está agotada en las ${n} tiendas que seguimos. Activa una alerta gratuita abajo.`,
@@ -74,7 +88,7 @@ const L = {
     q1: (p, c) => `¿Dónde consigo la ${p} en ${c} ahora?`, q2: (p) => `¿Cuánto cuesta la ${p}?`, a2: (lo, hi) => `Hoy en tiendas independientes: desde ${lo}${hi ? ` hasta ${hi}` : ''}.`,
     q3: (p) => `¿Qué tan rápido se agota la ${p}?`, a3: (d) => `Las reposiciones medidas duraron ${d} (mediana).`, a3n: 'Aún medimos: cada reposición se revisa cada 10 minutos hasta agotarse.',
     other: 'Otros países', all: 'Todos los países' },
-  nl: { ed: { en: 'Engelse editie', de: 'Duitse editie', fr: 'Franse editie', it: 'Italiaanse editie', es: 'Spaanse editie', nl: 'Nederlandse editie', ja: 'Japanse editie' },
+  nl: { prod: 'Product', ed: { en: 'Engelse editie', de: 'Duitse editie', fr: 'Franse editie', it: 'Italiaanse editie', es: 'Spaanse editie', nl: 'Nederlandse editie', ja: 'Japanse editie' },
     h1: (p, c) => `Waar koop je de ${p} in ${c}`, upd: (w) => `Bijgewerkt ${w} · voorraad rechtstreeks uit de winkels, elk uur`,
     yes: (w, p, n, list, cheap) => `Per ${w} is de ${p} op voorraad bij ${n} onafhankelijke kaartwinkel${n > 1 ? 's' : ''}: ${list}. Nu het goedkoopst: ${cheap}.`,
     no: (w, p, n) => `Per ${w} is de ${p} uitverkocht bij alle ${n} winkels die we volgen. Zet hieronder een gratis melding aan.`,
@@ -103,29 +117,30 @@ export async function guidePage(env, cc, id) {
   const ts = now(); const w = T.f.when(ts); const C = countryIn(cc);
   const P = G.name[lang] ?? G.name.en; const PS = G.short[lang] ?? G.short.en;
   const { skus, rows } = await offers(env, cc, id);
-  if (!skus.length) return null;
+  if (!skus.length && !G.release) return null;
+  const rel = G.release ? (REL[lang] ?? REL.en)(new Intl.DateTimeFormat(T.cc.locale, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(G.release))) : '';
   const money = (v) => (v ? T.f.money(v) : '—');
   const inRows = rows.filter((r) => r.in_stock);
   const shopsN = new Set(rows.map((r) => r.shop)).size;
-  const list = inRows.slice(0, 6).map((r) => `${shopName(r.shop)} (${money(r.price)}, ${W.ed[r.edition]})`).join(', ');
+  const list = inRows.slice(0, 6).map((r) => `${G.multi ? `${r.product} – ` : ''}${shopName(r.shop)} (${money(r.price)}, ${W.ed[r.edition]})`).join(', ');
   const cheap = inRows.filter((r) => r.price).sort((a, b) => a.price - b.price)[0];
   const lede = inRows.length ? W.yes(w, PS, new Set(inRows.map((r) => r.shop)).size, list, cheap ? `${shopName(cheap.shop)}, ${money(cheap.price)}` : '—') : shopsN ? W.no(w, PS, shopsN) : W.none(PS);
   const prices = inRows.map((r) => r.price).filter(Boolean).sort((a, b) => a - b);
-  const durs = (await all(env, `SELECT r.ended_at - r.started_at AS d FROM restocks r JOIN stores s ON s.id = r.store_id WHERE s.country = ? AND r.ended_at IS NOT NULL AND r.sku_id IN (${skus.map(() => '?').join(',')}) ORDER BY d`, cc, ...skus.map((k) => k.id))).map((r) => r.d);
+  const durs = skus.length ? (await all(env, `SELECT r.ended_at - r.started_at AS d FROM restocks r JOIN stores s ON s.id = r.store_id WHERE s.country = ? AND r.ended_at IS NOT NULL AND r.sku_id IN (${skus.map(() => '?').join(',')}) ORDER BY d`, cc, ...skus.map((k) => k.id))).map((r) => r.d) : [];
   const med = durs.length ? T.f.dur(durs[Math.floor(durs.length / 2)]) : null;
   const a = answers([
     { q: W.q1(PS, C), a: lede },
     ...(prices.length ? [{ q: W.q2(PS), a: W.a2(money(prices[0]), prices.length > 1 ? money(prices[prices.length - 1]) : null) }] : []),
     { q: W.q3(PS), a: med ? W.a3(med) : W.a3n },
   ], 'FAQ');
-  const alertHref = `/alerts?${new URLSearchParams({ c: cc, sku: (skus.find((k) => k.places_in > 0) ?? skus[0]).slug })}`;
+  const alertHref = `/alerts?${new URLSearchParams({ c: cc, ...(skus.length ? { sku: (skus.find((k) => k.places_in > 0) ?? skus[0]).slug } : {}) })}`;
   const live = await d.liveCountries(env);
   const others = [...live].filter((c) => c !== cc && COUNTRIES[c] && c !== 'jp');
   const path = guidePath(cc, id);
-  const body = `<div class="answer"><h1>${e(W.h1(P, C))}</h1><p class="asof">${e(W.upd(w))}</p><p class="lede">${e(lede)}</p>
+  const body = `<div class="answer"><h1>${e(W.h1(P, C))}</h1><p class="asof">${e(W.upd(w))}</p><p class="lede">${e(lede)}</p>${rel ? `<p class="answer-line">${e(rel)}</p>` : ''}
     <p><a class="btn go" href="${e(alertHref)}" data-ev="sheet_open">🔔 ${e(freeMode(env) ? W.alert : W.alertPaid)}</a></p></div>
-  <section><div class="table-scroll"><table><thead><tr>${W.th.map((x) => `<th>${e(x)}</th>`).join('')}<th></th></tr></thead><tbody>
-  ${rows.slice(0, 40).map((r) => `<tr><td><a href="/${cc}/${e(r.slug)}">${e(shopName(r.shop))}</a></td><td>${e(W.ed[r.edition])}</td><td>${e(money(r.price))}</td><td>${r.in_stock ? `<span class="tag in">✓ ${e(W.in)}</span>` : `<span class="tag out">${e(W.out)}</span>`}</td><td>${r.url ? `<a class="btn small ${r.in_stock ? 'go' : 'dark'}" href="${e(r.url)}" rel="nofollow noopener sponsored" target="_blank" data-ev="buy" data-sku="${e(r.slug)}">${e(W.buy)} ↗</a>` : ''}</td></tr>`).join('')}
+  <section><div class="table-scroll"><table><thead><tr>${G.multi ? `<th>${e(W.prod)}</th>` : ''}${W.th.map((x) => `<th>${e(x)}</th>`).join('')}<th></th></tr></thead><tbody>
+  ${rows.slice(0, 60).map((r) => `<tr>${G.multi ? `<td><a href="/${cc}/${e(r.slug)}">${e(r.product)}</a></td>` : ''}<td><a href="/${cc}/${e(r.slug)}">${e(shopName(r.shop))}</a></td><td>${e(W.ed[r.edition])}</td><td>${e(money(r.price))}</td><td>${r.in_stock ? `<span class="tag in">✓ ${e(W.in)}</span>` : `<span class="tag out">${e(W.out)}</span>`}</td><td>${r.url ? `<a class="btn small ${r.in_stock ? 'go' : 'dark'}" href="${e(r.url)}" rel="nofollow noopener sponsored" target="_blank" data-ev="buy" data-sku="${e(r.slug)}">${e(W.buy)} ↗</a>` : ''}</td></tr>`).join('')}
   </tbody></table></div></section>
   ${a.html}
   ${others.length ? `<section><h2>${e(W.other)}</h2><p class="quick-links">${others.map((c) => `<a href="${guidePath(c, id)}">${e(countryIn(c))}</a>`).join('')}<a href="/${G.slug.en}">${e(W.all)}</a></p></section>` : ''}`;
