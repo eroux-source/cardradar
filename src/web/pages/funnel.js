@@ -9,6 +9,27 @@ import { JP_SETS } from '../../data/sets_jp.js';
 import { all } from '../../lib/db.js';
 import { activePass, PLANS } from '../../billing/pass.js';
 import { page } from '../html.js';
+
+// Email only for now: restocks at independent shops usually last hours, so an email is fast enough.
+// The checkbox counts who would like phone notifications (event "wants_phone"), to decide whether to build them.
+const EMAIL_OK = {
+  en: 'Alerts come by email. That is fast enough: at the shops we track, a restock usually stays in stock for several hours before it sells out.',
+  fr: 'Les alertes arrivent par e-mail. C\'est assez rapide : dans les boutiques suivies, un réassort reste généralement en stock plusieurs heures avant la rupture.',
+  de: 'Alarme kommen per E-Mail. Das reicht: In den Shops, die wir prüfen, bleibt ein Restock meist mehrere Stunden verfügbar, bevor er ausverkauft ist.',
+  it: 'Gli avvisi arrivano via email. È abbastanza veloce: nei negozi che seguiamo un restock di solito resta disponibile per diverse ore prima di esaurirsi.',
+  es: 'Las alertas llegan por email. Es suficiente: en las tiendas que seguimos, una reposición suele durar varias horas antes de agotarse.',
+  nl: 'Meldingen komen per e-mail. Dat is snel genoeg: bij de winkels die we volgen blijft een restock meestal enkele uren op voorraad voordat hij uitverkocht is.',
+  ja: '通知はメールで届きます。追跡しているショップでは再入荷は通常数時間続くため、メールで十分間に合います。',
+};
+const WANT_PHONE = {
+  en: 'I would like my alerts as a notification on my phone too',
+  fr: 'J\'aimerais aussi recevoir mes alertes en notification sur mon téléphone',
+  de: 'Ich hätte meine Alarme gern auch als Benachrichtigung auf dem Handy',
+  it: 'Vorrei ricevere gli avvisi anche come notifica sul telefono',
+  es: 'Me gustaría recibir mis alertas también como notificación en el móvil',
+  nl: 'Ik wil mijn meldingen ook graag als pushbericht op mijn telefoon',
+  ja: 'スマホへのプッシュ通知でも受け取りたい',
+};
 import { allSkus } from '../data.js';
 import { t } from '../../i18n/index.js';
 import { fun } from '../../i18n/funnel.js';
@@ -76,7 +97,8 @@ export async function alertsPage(env, url, user) {
       ${!lottery && F.free ? `<label class="plan"><input type="radio" name="plan" value="free"><span><strong>${e(F.freeName)} · ${e(T.f.money(0))}</strong><br><span class="fine">${e(F.free)}</span></span></label>` : ''}
       <p class="fine">${e(F.renew)}</p>`}
       ${cc === 'jp' ? `<fieldset class="channels"><label class="radio"><input type="checkbox" name="line" value="1" checked> ${e(F.line)} <span class="fine">${e(F.lineFine)}</span></label></fieldset>` : ''}
-      <p class="fine">${e(F.emailAlways)}</p>
+      <p class="sub">${e(EMAIL_OK[T.cc.lang] ?? EMAIL_OK.en)}</p>
+      <label class="radio"><input type="checkbox" name="wantphone" value="1"> ${e(WANT_PHONE[T.cc.lang] ?? WANT_PHONE.en)}</label>
       <button class="btn" type="submit">${e(freeMode(env) ? freeWords(T).btn : F.checkout)}</button></form>
     <p class="err" role="alert"></p>
   </section>
