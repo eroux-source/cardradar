@@ -9,8 +9,13 @@ export async function queueEmail(env, { userId = null, to, kind, subject, text, 
   if (notBefore <= now() && (kind === 'code' || !(await isFlagOn(env, 'email_pause')))) await flushOutbox(env, 20);
 }
 
+class NoProvider extends Error {}
+const isLocal = (env) => !env.BASE_URL?.startsWith('https');
+
 async function viaPostmark(env, to, subject, text) {
-  if (!env.POSTMARK_TOKEN) { console.log(`[email:dry-run:postmark] ${to} — ${subject}`); return true; }
+  // no Postmark: sign-in codes go through Resend too (one provider is enough to start)
+  if (!env.POSTMARK_TOKEN && env.RESEND_API_KEY) return viaResend(env, to, subject, text, env.CODES_FROM);
+  if (!env.POSTMARK_TOKEN) { if (isLocal(env)) { console.log(`[email:dry-run:postmark] ${to} — ${subject}`); return true; } throw new NoProvider('no email provider set (RESEND_API_KEY)'); }
   const r = await fetch('https://api.postmarkapp.com/email', {
     method: 'POST', headers: { 'X-Postmark-Server-Token': env.POSTMARK_TOKEN, 'content-type': 'application/json', accept: 'application/json' },
     body: JSON.stringify({ From: env.CODES_FROM, To: to, Subject: subject, TextBody: text, MessageStream: 'outbound' }),
@@ -18,13 +23,14 @@ async function viaPostmark(env, to, subject, text) {
   return r.ok;
 }
 
-async function viaResend(env, to, subject, text) {
-  if (!env.RESEND_API_KEY) { console.log(`[email:dry-run:resend] ${to} — ${subject}`); return true; }
+async function viaResend(env, to, subject, text, from = env.ALERTS_FROM) {
+  if (!env.RESEND_API_KEY) { if (isLocal(env)) { console.log(`[email:dry-run:resend] ${to} — ${subject}`); return true; } throw new NoProvider('no email provider set (RESEND_API_KEY)'); }
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST', headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ from: env.ALERTS_FROM, to, reply_to: env.SUPPORT_EMAIL, subject, text }),
+    body: JSON.stringify({ from: env.RESEND_FROM || from, to, reply_to: env.SUPPORT_EMAIL, subject, text }),
   });
-  return r.ok;
+  if (!r.ok) throw new Error(`resend ${r.status}: ${(await r.text()).slice(0, 160)}`);
+  return true;
 }
 
 /** Send what is due. Alert emails to the same person are merged into one digest. */
@@ -47,7 +53,11 @@ export async function flushOutbox(env, limit = 50) {
     let ok = false; let err = null;
     try {
       ok = key.startsWith('alert:') ? await viaResend(env, first.to_email, subject, text) : await viaPostmark(env, first.to_email, subject, text);
-    } catch (e) { err = String(e.message); }
+    } catch (e) {
+      // nothing configured yet: keep the mail waiting (no attempt used), it leaves once a provider is set
+      if (e instanceof NoProvider) continue;
+      err = String(e.message);
+    }
     const ids = msgs.map((m) => m.id);
     const placeholders = ids.map(() => '?').join(',');
     if (ok) {
