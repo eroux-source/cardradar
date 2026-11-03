@@ -23,3 +23,4 @@ jobs:
             title=$(echo "$body" | grep -o '<title>[^<]*' | head -1 | cut -c8-140); lede=$(echo "$body" | grep -o 'class="lede">[^<]*' | head -1 | cut -c14-260)
             echo "::notice title=page $u::$code $title — $lede"
           done
+          echo "$j" | node -e "let t='';process.stdin.on('data',d=>t+=d).on('end',()=>{try{const j=JSON.parse(t);for(const k of ['daily_7d','funnel_7d','top_pages_7d','sources_7d','devices_7d','users','audience'])console.log('::notice title='+k+'::'+JSON.stringify(j[k]).slice(0,3500))}catch(e){console.log('::notice title=err::'+e.message)}})"
