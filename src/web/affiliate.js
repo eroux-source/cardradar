@@ -14,7 +14,7 @@ const CM_LANG = { de: 'de', fr: 'fr', it: 'it', es: 'es', nl: 'en', uk: 'en' };
 const wrap = (tpl, url) => (tpl && tpl.includes('{url}') ? tpl.replace('{url}', encodeURIComponent(url)) : url);
 
 export function affiliateLinks(env, cc, name) {
-  const q = `Pokemon ${name}`.replace(/\s+/g, ' ').trim();
+  const q = `Pokemon ${name}`.replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
   const links = [];
   if (AMAZON[cc]) {
     const tag = env[`AFF_AMAZON_${cc.toUpperCase()}`];
