@@ -170,6 +170,9 @@ export const SHOPS = [
   { id: 'shop_danireon_ca', name: 'Danireon', domain: 'www.danireon.com', country: 'ca', lang: 'en' },
   { id: 'shop_elitecardstoronto_ca', name: 'Elite Cards Toronto', domain: 'elitecardstoronto.com', country: 'ca', lang: 'en' },
   { id: 'shop_thepokeoffice_ca', name: 'The Poke Office', domain: 'www.thepokeoffice.com', country: 'ca', lang: 'en' },
+  // Germany, cited by ChatGPT for 30 Jahre (2026-11-03)
+  { id: 'shop_tcgbuddy_de', name: 'TCGBuddy', domain: 'www.tcgbuddy.de', country: 'de', lang: 'de' },
+  { id: 'shop_toytreasure_de', name: 'Toy Treasure', domain: 'www.toy-treasure.de', country: 'de', lang: 'de' },
   // Mexico (found 2026-11-03: Shopify search answers)
   { id: 'shop_akibaraxpress_mx', name: 'Akibara Xpress', domain: 'akibaraxpress.com', country: 'mx', lang: 'es' },
   { id: 'shop_yellowrabbit_mx', name: 'Yellow Rabbit', domain: 'yellowrabbit.mx', country: 'mx', lang: 'es' },

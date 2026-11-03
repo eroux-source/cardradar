@@ -19,6 +19,7 @@ function placeCard(T, cc, s, alertHref, sku = null) {
   const S = T.sv;
   const name = s.online ? `${sourceName(s.source)}` : (s.name ?? s.store_name);
   const sub = s.online ? `${S.online} · ${S.ships}` : [sourceName(s.source), s.city].filter(Boolean).join(' · ');
+  const price = s.price ? `<span class="place-price">${e(T.f.money(s.price))}</span>` : '';
   const chip = s.in_stock ? `<span class="tag in">✓ ${e(T.chip.in)}</span>` : s.seen_at ? `<span class="tag out">${e(T.chip.out)}</span>` : `<span class="tag wait">${e(S.checking)}</span>`;
   const meta = s.in_stock
     ? `${s.in_since ? `${e(S.since(T.f.ago(s.in_since)))} · ` : ''}${s.qty > 1 ? `${e(T.available(s.qty))} · ` : ''}${e(T.checkedAgo(T.f.ago(s.seen_at)))}`
@@ -27,7 +28,7 @@ function placeCard(T, cc, s, alertHref, sku = null) {
   const dir = !s.online && s.address ? `<a class="btn dark small" href="${e(maps(s))}" rel="noopener" target="_blank">${e(S.directions)}</a>` : '';
   const alert = !s.in_stock ? `<a class="btn go small" href="${e(alertHref)}" data-ev="sheet_open">🔔 ${e(S.alertBtn)}</a>` : `<a class="btn dark small" href="${e(alertHref)}" data-ev="sheet_open">🔔 ${e(S.alertBtn)}</a>`;
   const title = s.online ? e(name) : `<a href="${base(cc)}/store/${e(s.slug)}">${e(name)}</a>`;
-  return `<li class="place${s.in_stock ? ' in' : ''}"><div class="place-head"><div><strong>${title}</strong><span>${e(sub)}</span></div>${chip}</div>
+  return `<li class="place${s.in_stock ? ' in' : ''}"><div class="place-head"><div><strong>${title}</strong><span>${e(sub)}</span></div><div class="place-right">${chip}${price}</div></div>
     ${meta ? `<p class="place-meta">${meta}</p>` : ''}<div class="place-actions">${s.in_stock ? go + dir + alert : alert + go + dir}</div></li>`;
 }
 
@@ -59,7 +60,8 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
   const path = isHome ? homePath(cc) : metro ? `${base(cc)}/${k.slug}/${metro.slug}` : `${base(cc)}/${k.slug}`;
 
   // answer line
-  const where = inNow.slice(0, 4).map((r) => (r.online ? sourceName(r.source) : r.city ?? r.name)).filter((v, i, a) => a.indexOf(v) === i);
+  // cheapest first, with the price: what an assistant quotes ("in stock at TCGBuddy (€89.99)")
+  const where = [...inNow].sort((a, b) => (a.price || 1e9) - (b.price || 1e9)).slice(0, 4).map((r) => `${r.online ? sourceName(r.source) : r.city ?? r.name}${r.price ? ` (${T.f.money(r.price)})` : ''}`).filter((v, i, a) => a.indexOf(v) === i);
   const last = rs[0] ? `${T.f.ago(rs[0].started_at)} · ${placeLabel(T, rs[0])}` : null;
   const answer = rows.length ? S.asOf(T.f.when(lastCheck), k.name, inNow.length, rows.length, T.f.list(where), last, sum.typical ? T.f.dur(sum.typical) : null) : S.asOfNone(k.name);
 
