@@ -14,7 +14,10 @@ const DISCOVERY_EVERY = 6 * 3600e3;
 //   test group    → sold-out products whose id ends in 0 (1 in 10) are read every 10 min,
 //                   to measure how long restocks last and so which interval catches them
 //   just restocked → every 10 min until sold out (restock watch below), to time the sell-out
-export const SHOP_EVERY = { in: 24 * 3600e3, out: 3600e3, test: 10 * 60e3, watch: 10 * 60e3 };
+export const SHOP_EVERY = { in: 24 * 3600e3, out: 3600e3, test: 10 * 60e3, watch: 10 * 60e3, hotOut: 10 * 60e3, hotIn: 3600e3 };
+// Hot products (the new expansion and the 30th Celebration ETB): sold out → every 10 min, in stock → every hour
+const HOT_SQL = `l.title LIKE '%delta%reign%' OR l.title LIKE '%delta%herrschaft%' OR l.title LIKE '%ME06%'
+  OR ((l.title LIKE '%30th%' OR l.title LIKE '%30 jahre%' OR l.title LIKE '%30 ans%' OR l.title LIKE '%30 anni%' OR l.title LIKE '%30 aniversario%') AND (l.title LIKE '%elite trainer%' OR l.title LIKE '%top%trainer%' OR l.title LIKE '%ETB%' OR l.title LIKE '%dresseur%'))`;
 export const isTestLane = (listingId) => listingId % 10 === 0;
 
 export async function planMinute(env) {
@@ -104,8 +107,9 @@ export async function planMinute(env) {
   const due = await all(env, `SELECT ln.listing_id, ln.source FROM lanes ln JOIN listings l ON l.id = ln.listing_id AND l.active = 1
     LEFT JOIN stock st ON st.listing_id = ln.listing_id AND st.store_id = ln.source || ':online'
     WHERE ln.metro = '' AND ln.source LIKE 'shop\\_%' ESCAPE '\\' AND ln.last_checked_at < CASE
+      WHEN (${HOT_SQL}) THEN (CASE WHEN st.in_stock = 1 THEN ? ELSE ? END)
       WHEN st.in_stock = 1 THEN ? WHEN ln.listing_id % 10 = 0 THEN ? ELSE ? END
-    ORDER BY ln.last_checked_at LIMIT ?`, t - SHOP_EVERY.in, t - SHOP_EVERY.test, t - SHOP_EVERY.out, 600);
+    ORDER BY (${HOT_SQL}) DESC, ln.last_checked_at LIMIT ?`, t - SHOP_EVERY.hotIn, t - SHOP_EVERY.hotOut, t - SHOP_EVERY.in, t - SHOP_EVERY.test, t - SHOP_EVERY.out, 600);
   const perShop = {}; const shopTasks = [];
   const tasksBySource = Object.fromEntries(messages.map((m) => [m.body.source, true]));
   const shopBudget = await numSetting(env, 'budget.shopcalls', 20); // calls per minute, all shops together (Shopify limits per IP)
