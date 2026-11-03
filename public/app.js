@@ -92,7 +92,7 @@
     const metroField = () => { const m = $('#f-metro'); if (!m) return; const k = kindOf(); m.required = k === 'stores'; m.disabled = k !== 'stores'; };
     $$('input[name=kind]', f).forEach((r) => r.addEventListener('change', metroField)); metroField();
     const next = () => (f.dataset.sku ? 3 : 2); // product already chosen on the product page: straight to the plan
-    if (f.dataset.sku) { state.sku = f.dataset.sku; state.kind = 'online'; }
+    if (f.dataset.sku) { state.sku = f.dataset.sku; state.kind = 'online'; const li = $('.steps li[data-s="2"]', f); if (li) li.hidden = true; }
     show(f.dataset.signed === '1' ? next() : 1);
     let email = '';
 
