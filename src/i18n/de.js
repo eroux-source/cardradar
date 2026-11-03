@@ -134,13 +134,13 @@ export default {
   cta: {
     kicker: 'Itemkarte · Restock-Alarm', item: 'Item', name: 'Restock-Alarm', flavor: 'Spielen, wenn der Bestand knapp ist. Nie wieder einen Restock verpassen.',
     h2: (name) => `Sofort wissen, wenn ${name || 'es'} wieder da ist`,
-    effect: '<strong>Effekt:</strong> Der Bestand ist oft in Minuten weg. Wir prüfen jede Filiale und jeden Shop rund um die Uhr und benachrichtigen dich per Push, Telegram oder E-Mail, mit direktem Kauflink.',
+    effect: '<strong>Effekt:</strong> Der Bestand ist oft in Minuten weg. Wir prüfen jede Filiale und jeden Shop rund um die Uhr und benachrichtigen dich per E-Mail, mit direktem Kauflink.',
     btn: 'Alarm einrichten', fine: (price) => `Ab ${price} für 30 Tage. Mit 2 Klicks kündbar.`,
   },
   facts: {
     h: 'Über diesen Tracker',
     what: (brand, stores, online, n, country) => `${brand} prüft den Bestand von Pokémon-Karten${stores ? ` bei ${stores} in den ${n} größten Städten (${country})` : ''}${stores && online ? ' und' : ''}${online ? ` online bei ${online}` : ''}, rund um die Uhr.`,
-    alerts: 'Push, Telegram oder E-Mail, sobald ein Restock erkannt wird, mit direktem Link zum Händler.',
+    alerts: 'E-Mail, sobald ein Restock erkannt wird, mit direktem Link zum Händler.',
     speedYes: (p50, p90, n) => `Median ${p50}, 90 % der Alarme innerhalb von ${p90} (gemessen über 7 Tage, ${n} Alarme).`,
     speedNo: 'Alarme gehen raus, sobald ein Restock bestätigt ist; gemessene Zeiten veröffentlichen wir hier, sobald genug Alarme verschickt wurden.',
     price: (solo, multi) => `Bestandsseiten kostenlos. Alarme: Solo ${solo} oder Multi ${multi} für 30 Tage; mit 2 Klicks kündbar.`,

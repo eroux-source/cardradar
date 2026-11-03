@@ -75,10 +75,8 @@ export async function alertsPage(env, url, user) {
       <label class="plan"><input type="radio" name="plan" value="multi"><span><strong>Multi · ${e(T.f.money(T.cc.prices.multi))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.multi)}</span></span></label>
       ${!lottery && F.free ? `<label class="plan"><input type="radio" name="plan" value="free"><span><strong>${e(F.freeName)} · ${e(T.f.money(0))}</strong><br><span class="fine">${e(F.free)}</span></span></label>` : ''}
       <p class="fine">${e(F.renew)}</p>`}
-      <fieldset class="channels"><legend>${e(F.s3h)} <span class="fine">${e(F.emailAlways)}</span></legend>
-        <label class="radio"><input type="checkbox" name="push" value="1"> ${e(F.push)} <span class="fine">${e(F.pushFine)}</span></label>
-        ${cc === 'jp' ? `<label class="radio"><input type="checkbox" name="line" value="1" checked> ${e(F.line)} <span class="fine">${e(F.lineFine)}</span></label>` : ''}
-        <label class="radio"><input type="checkbox" name="telegram" value="1"> ${e(F.telegram)} <span class="fine">${e(F.tgFine)}</span></label></fieldset>
+      ${cc === 'jp' ? `<fieldset class="channels"><label class="radio"><input type="checkbox" name="line" value="1" checked> ${e(F.line)} <span class="fine">${e(F.lineFine)}</span></label></fieldset>` : ''}
+      <p class="fine">${e(F.emailAlways)}</p>
       <button class="btn" type="submit">${e(freeMode(env) ? freeWords(T).btn : F.checkout)}</button></form>
     <p class="err" role="alert"></p>
   </section>

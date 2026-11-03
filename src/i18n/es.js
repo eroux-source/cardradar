@@ -134,13 +134,13 @@ export default {
   cta: {
     kicker: 'Carta de Objeto · Alerta de reposición', item: 'Objeto', name: 'Alerta de reposición', flavor: 'Juégala cuando el stock escasea. No vuelvas a perder una reposición.',
     h2: (name) => `Entérate en el segundo en que ${name || 'vuelva'} llegue`,
-    effect: '<strong>Efecto:</strong> el stock suele durar minutos. Revisamos cada tienda física y online día y noche y te avisamos por notificación, Telegram o email, con un enlace directo para comprar.',
+    effect: '<strong>Efecto:</strong> el stock suele durar minutos. Revisamos cada tienda física y online día y noche y te avisamos email, con un enlace directo para comprar.',
     btn: 'Crear mi alerta', fine: (price) => `Desde ${price} por 30 días. Cancelable en 2 clics.`,
   },
   facts: {
     h: 'Sobre este rastreador',
     what: (brand, stores, online, n, country) => `${brand} revisa el stock de cartas Pokémon${stores ? ` en ${stores} en las ${n} ciudades más grandes (${country})` : ''}${stores && online ? ' y' : ''}${online ? ` online en ${online}` : ''}, día y noche.`,
-    alerts: 'Notificación, Telegram o email en cuanto se detecta una reposición, con enlace directo a la tienda.',
+    alerts: 'email en cuanto se detecta una reposición, con enlace directo a la tienda.',
     speedYes: (p50, p90, n) => `Mediana ${p50}, el 90 % de las alertas en menos de ${p90} (medido en 7 días, ${n} alertas).`,
     speedNo: 'Las alertas salen en cuanto se confirma una reposición; publicaremos aquí los tiempos medidos cuando haya suficientes.',
     price: (solo, multi) => `Páginas gratis. Alertas: Solo ${solo} o Multi ${multi} por 30 días; cancelables en 2 clics.`,

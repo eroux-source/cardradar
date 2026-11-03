@@ -134,13 +134,13 @@ export default {
   cta: {
     kicker: 'Carta Strumento · Avviso restock', item: 'Strumento', name: 'Avviso restock', flavor: 'Da giocare quando lo stock scarseggia. Non perdere più un restock.',
     h2: (name) => `Avvisato nell'istante in cui ${name || 'torna'} arriva`,
-    effect: '<strong>Effetto:</strong> lo stock spesso finisce in pochi minuti. Controlliamo ogni negozio e shop online giorno e notte e ti avvisiamo con notifica, Telegram o email, con un link diretto per comprare.',
+    effect: '<strong>Effetto:</strong> lo stock spesso finisce in pochi minuti. Controlliamo ogni negozio e shop online giorno e notte e ti avvisiamo via email, con un link diretto per comprare.',
     btn: 'Crea il mio avviso', fine: (price) => `Da ${price} per 30 giorni. Disdici in 2 clic.`,
   },
   facts: {
     h: 'Su questo tracker',
     what: (brand, stores, online, n, country) => `${brand} controlla la disponibilità delle carte Pokémon${stores ? ` da ${stores} nelle ${n} città più grandi (${country})` : ''}${stores && online ? ' e' : ''}${online ? ` online da ${online}` : ''}, giorno e notte.`,
-    alerts: 'Notifica, Telegram o email appena viene rilevato un restock, con link diretto al negozio.',
+    alerts: 'email appena viene rilevato un restock, con link diretto al negozio.',
     speedYes: (p50, p90, n) => `Mediana ${p50}, 90 % degli avvisi entro ${p90} (misurato su 7 giorni, ${n} avvisi).`,
     speedNo: 'Gli avvisi partono appena un restock è confermato; pubblicheremo qui i tempi misurati quando ci saranno abbastanza avvisi.',
     price: (solo, multi) => `Pagine gratuite. Avvisi: Solo ${solo} o Multi ${multi} per 30 giorni; disdici in 2 clic.`,

@@ -134,13 +134,13 @@ export default {
   cta: {
     kicker: 'Itemkaart · Restock-melding', item: 'Item', name: 'Restock-melding', flavor: 'Speel als de voorraad schaars is. Mis nooit meer een restock.',
     h2: (name) => `Direct een seintje als ${name || 'het'} terug is`,
-    effect: '<strong>Effect:</strong> de voorraad is vaak binnen minuten weg. We controleren elke winkel en webshop dag en nacht en melden het via pushbericht, Telegram of e-mail, met een directe kooplink.',
+    effect: '<strong>Effect:</strong> de voorraad is vaak binnen minuten weg. We controleren elke winkel en webshop dag en nacht en melden het e-mail, met een directe kooplink.',
     btn: 'Melding instellen', fine: (price) => `Vanaf ${price} voor 30 dagen. Opzegbaar in 2 klikken.`,
   },
   facts: {
     h: 'Over deze tracker',
     what: (brand, stores, online, n, country) => `${brand} controleert de voorraad Pokémon-kaarten${stores ? ` bij ${stores} in de ${n} grootste steden (${country})` : ''}${stores && online ? ' en' : ''}${online ? ` online bij ${online}` : ''}, dag en nacht.`,
-    alerts: 'Pushbericht, Telegram of e-mail zodra een restock wordt gezien, met een directe link naar de winkel.',
+    alerts: 'e-mail zodra een restock wordt gezien, met een directe link naar de winkel.',
     speedYes: (p50, p90, n) => `Mediaan ${p50}, 90 % van de meldingen binnen ${p90} (gemeten over 7 dagen, ${n} meldingen).`,
     speedNo: 'Meldingen gaan uit zodra een restock bevestigd is; gemeten tijden publiceren we hier zodra er genoeg zijn.',
     price: (solo, multi) => `Voorraadpagina's gratis. Meldingen: Solo ${solo} of Multi ${multi} voor 30 dagen; opzegbaar in 2 klikken.`,

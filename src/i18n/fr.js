@@ -134,13 +134,13 @@ export default {
   cta: {
     kicker: 'Carte Objet · Alerte réassort', item: 'Objet', name: 'Alerte réassort', flavor: 'À jouer quand le stock est rare. Ne ratez plus aucun réassort.',
     h2: (name) => `Soyez prévenu à la seconde où ${name || 'il'} revient`,
-    effect: '<strong>Effet :</strong> le stock part souvent en quelques minutes. Nous vérifions chaque magasin et boutique en ligne jour et nuit, et vous prévenons par notification, Telegram ou e-mail, avec un lien direct pour acheter.',
+    effect: '<strong>Effet :</strong> le stock part souvent en quelques minutes. Nous vérifions chaque magasin et boutique en ligne jour et nuit, et vous prévenons par e-mail, avec un lien direct pour acheter.',
     btn: 'Créer mon alerte', fine: (price) => `Gratuit en e-mail quotidien, ou instantané dès ${price} pour 30 jours. Résiliable en 2 clics.`,
   },
   facts: {
     h: 'À propos de ce suivi',
     what: (brand, stores, online, n, country) => `${brand} vérifie le stock de cartes Pokémon${stores ? ` chez ${stores}, dans les ${n} plus grandes villes (${country})` : ''}${stores && online ? ', et' : ''}${online ? ` en ligne chez ${online}` : ''}, jour et nuit.`,
-    alerts: 'Notification sur téléphone, Telegram ou e-mail dès qu\'un réassort est détecté, avec un lien direct vers l\'enseigne.',
+    alerts: 'e-mail dès qu\'un réassort est détecté, avec un lien direct vers l\'enseigne.',
     speedYes: (p50, p90, n) => `Médiane ${p50}, 90 % des alertes en moins de ${p90} après détection (mesuré sur 7 jours, ${n} alertes).`,
     speedNo: 'Les alertes partent dès qu\'un réassort est confirmé ; nous publierons ici les délais mesurés dès qu\'il y aura assez d\'alertes.',
     price: (solo, multi) => `Pages de stock gratuites. Alertes : Solo ${solo} ou Multi ${multi} pour 30 jours ; résiliable en 2 clics.`,

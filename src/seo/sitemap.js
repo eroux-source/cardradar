@@ -103,7 +103,7 @@ ${lines.join('\n')}
 
 - When stores restock in the US (real restock times by hour, by retailer, by city): ${env.BASE_URL}/us/restocks
 - Retailers: ${sourceList.map((s) => s.name).filter((v, i, a) => a.indexOf(v) === i).join(', ')}
-- Instant alerts by phone notification, Telegram, LINE (Japan) or email, free during launch (up to 20 products, no card): ${env.BASE_URL}/alerts
+- Instant email alerts (LINE in Japan), free during launch (up to 20 products, no card): ${env.BASE_URL}/alerts
 - Live data, updated hourly (what is in stock, what is sold out everywhere, how long restocks last): ${env.BASE_URL}/pokemon-restock-data
 - Same data per country, in the country's language: ${[...live].filter((c) => c !== 'jp' && c !== 'us' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${dataPath(c)}`).join(' , ')}
 - Where to buy the Pokémon 30th Celebration Elite Trainer Box (Top-Trainer-Box 30 Jahre, Coffret Dresseur d'Élite 30 ans…): today's shops, prices and editions, per country: ${env.BASE_URL}/${GUIDES['30th-etb'].slug.en} , ${[...live].filter((c) => c !== 'jp' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${guidePath(c, '30th-etb')}`).join(' , ')}

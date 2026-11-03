@@ -79,14 +79,14 @@ export default {
     faqH: 'Questions',
     faq: (shops, solo) => [
       { q: 'What is Card Restock Tracker?', a: `A free website that checks ${shops} around the clock (sold-out products every hour) and shows where sealed Pokémon cards (Elite Trainer Boxes, booster boxes, bundles, tins) are in stock right now, shop by shop, with prices.` },
-      { q: 'Is it free?', a: `Yes. Checking stock is free, without an account, and the free plan emails you once a day about one product. Instant alerts (phone notification, Telegram or email, within seconds) cost ${solo} for 30 days; cancel in 2 clicks.` },
+      { q: 'Is it free?', a: `Yes. Checking stock is free, without an account, and the free plan emails you once a day about one product. Instant alerts (email, within seconds) cost ${solo} for 30 days; cancel in 2 clicks.` },
       { q: 'Do you sell Pokémon cards?', a: 'No. We only tell you where they are. You buy or reserve from the retailer, at the retailer\'s price.' },
     ],
   },
   // home
   home: {
     title: (brand) => `Pokémon Restock Tracker: Free Live Stock & Restock Alerts | ${brand}`,
-    desc: (shops) => `Free Pokémon restock tracker: live stock at ${shops}, real restock times and how long each restock lasted, and alerts by phone, Telegram or email.`,
+    desc: (shops) => `Free Pokémon restock tracker: live stock at ${shops}, real restock times and how long each restock lasted, and alerts email.`,
     h1: 'Pokémon cards in stock near you, live',
     lede: (a, b) => `Right now <strong>${a} of ${b} stores</strong> we track have Pokémon cards on the shelf.`,
     latest: (name, place, ago) => ` Latest restock: <strong>${name}</strong> at ${place}, ${ago}.`,
@@ -155,13 +155,13 @@ export default {
   cta: {
     kicker: 'Item card · Restock Alert', item: 'Item', name: 'Restock Alert', flavor: 'Play when stock is scarce. Never miss a restock again.',
     h2: (name) => `Get pinged the second ${name || 'it'} lands`,
-    effect: '<strong>Effect:</strong> stock usually lasts minutes. We check every tracked store and shop around the clock and alert you by phone notification, Telegram or email, with a direct link to buy.',
+    effect: '<strong>Effect:</strong> stock usually lasts minutes. We check every tracked store and shop around the clock and alert you by email, with a direct link to buy.',
     btn: 'Set up my alert', fine: (price) => `Free as a daily email, or instant from ${price} for 30 days. Cancel in 2 clicks.`,
   },
   facts: {
     h: 'About this tracker',
     what: (brand, stores, online, n, country) => `${brand} checks Pokémon TCG stock${stores ? ` at ${stores} stores in the ${n} largest cities of ${country}` : ''}${stores && online ? ', and' : ''}${online ? ` online at ${online}` : ''}, around the clock.`,
-    alerts: 'Phone notification, Telegram or email the moment a restock is detected, with a direct link to buy from the retailer.',
+    alerts: 'An email the moment a restock is detected, with a direct link to buy from the retailer.',
     speedYes: (p50, p90, n) => `Median ${p50}, 90 % of alerts within ${p90} from detection (measured over the last 7 days, ${n} alerts).`,
     speedNo: 'Alerts go out as soon as a restock is confirmed; we publish measured delivery times here once enough alerts have been sent.',
     price: (solo, multi) => `Live stock pages are free, and a free plan emails one product's restocks once a day. Instant alerts: Solo ${solo} or Multi ${multi} for 30 days; cancel in 2 clicks.`,
