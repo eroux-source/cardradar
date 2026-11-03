@@ -18,6 +18,15 @@ export const shopsText = (T, cc, max = 6) => {
 
 const LOGO = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="12" r="5.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 12 19 5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>';
 
+const AFF_NOTE = {
+  en: 'Some links are affiliate links: we may earn a commission when you buy, at no extra cost to you. As an Amazon Associate we earn from qualifying purchases.',
+  fr: 'Certains liens sont affiliés : nous pouvons toucher une commission si vous achetez, sans surcoût pour vous. En tant que Partenaire Amazon, nous réalisons un bénéfice sur les achats remplissant les conditions requises.',
+  de: 'Einige Links sind Affiliate-Links: Wir erhalten ggf. eine Provision, für dich ohne Mehrkosten. Als Amazon-Partner verdienen wir an qualifizierten Verkäufen.',
+  it: 'Alcuni link sono di affiliazione: potremmo ricevere una commissione, senza costi aggiuntivi per te. In qualità di Affiliato Amazon riceviamo un guadagno dagli acquisti idonei.',
+  es: 'Algunos enlaces son de afiliado: podemos recibir una comisión, sin coste extra para ti. Como Afiliado de Amazon, obtenemos ingresos por las compras adscritas que cumplen los requisitos aplicables.',
+  nl: 'Sommige links zijn affiliate-links: we kunnen een commissie ontvangen, zonder extra kosten voor jou. Als Amazon-partner verdienen we aan in aanmerking komende aankopen.',
+  ja: '一部のリンクはアフィリエイトリンクです。購入時に手数料を受け取る場合がありますが、お客様の負担は増えません。',
+};
 export function page(env, T, { title, description, path, body, jsonLd = [], noindex = false, nav = '', alternates = null, live = null }) {
   const cc = T.cc.code;
   const canonical = `${env.BASE_URL}${path}`;
@@ -58,6 +67,7 @@ ${jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).repl
   <nav aria-label="Footer"><a href="${home(cc)}">${e(T.nav.live)}</a>${cc === 'jp' ? '' : `<a href="${b}/restocks">${e(T.nav.restocks)}</a><a href="${b}/retailers">${e(T.nav.retailers)}</a><a href="${b}/cities">${e(T.nav.cities)}</a>`}<a href="/pricing?c=${cc}">${e(T.nav.pricing)}</a><a href="/account?c=${cc}">${e(T.nav.account)}</a><a href="${cc === 'jp' ? '/pokemon-restock-data' : dataPath(cc)}">${e(cc === 'jp' ? 'Restock data' : words(cc).data)}</a>${cc === 'jp' ? '' : `<a href="${thirtyPath(cc)}">${e(words(cc).thirty)}</a>`}<a href="/press">${e(T.nav.press)}</a><a href="/best-pokemon-restock-trackers">Compare trackers</a><a href="/how-it-works">How it works</a><a href="/terms">${e(T.nav.terms)}</a><a href="/privacy">${e(T.nav.privacy)}</a><a href="mailto:${e(env.SUPPORT_EMAIL)}">${e(T.nav.contact)}</a></nav>
   <nav class="countries" aria-label="${e(T.nav.countries)}"><span>${e(T.countryPicker)}:</span> ${countries}</nav>
   <p>${e(T.disclaimer(env.BRAND_NAME, shops))}</p>
+  ${Object.keys(env).some((k) => k.startsWith('AFF_') && env[k]) ? `<p class="fine">${e(AFF_NOTE[T.cc.lang] ?? AFF_NOTE.en)}</p>` : ''}
 </div></footer>
 <script src="/app.js" defer></script>
 </body></html>`, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=30' } });

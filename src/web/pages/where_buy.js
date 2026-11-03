@@ -9,6 +9,7 @@ import * as d from '../data.js';
 import { page, answers, home } from '../html.js';
 import { sealed } from './local_data.js';
 import { freeMode } from '../free.js';
+import { affiliateBlock } from '../affiliate.js';
 
 const shopName = (n) => String(n ?? '').replace(/ online$/, '');
 
@@ -154,9 +155,10 @@ export async function guidePage(env, cc, id) {
   const facts = factsHtml(id, lang);
   const body = `<div class="answer"><h1>${e(W.h1(P, C))}</h1><p class="asof">${e(W.upd(w))}</p><p class="lede">${e(lede)}</p>${rel ? `<p class="answer-line">${e(rel)}</p>` : ''}
     <p><a class="btn go" href="${e(alertHref)}" data-ev="sheet_open">🔔 ${e(freeMode(env) ? W.alert : W.alertPaid)}</a></p></div>
-  ${rows.length ? '' : '<!--'}<section><div class="table-scroll"><table><thead><tr>${G.multi ? `<th>${e(W.prod)}</th>` : ''}${W.th.map((x) => `<th>${e(x)}</th>`).join('')}<th></th></tr></thead><tbody>
+  ${rows.length ? `<section><div class="table-scroll"><table><thead><tr>${G.multi ? `<th>${e(W.prod)}</th>` : ''}${W.th.map((x) => `<th>${e(x)}</th>`).join('')}<th></th></tr></thead><tbody>
   ${rows.slice(0, 60).map((r) => `<tr>${G.multi ? `<td><a href="/${cc}/${e(r.slug)}">${e(r.product)}</a></td>` : ''}<td><a href="/${cc}/${e(r.slug)}">${e(shopName(r.shop))}</a></td><td>${e(W.ed[r.edition])}</td><td>${e(money(r.price))}</td><td>${r.in_stock ? `<span class="tag in">✓ ${e(W.in)}</span>` : `<span class="tag out">${e(W.out)}</span>`}</td><td>${r.url ? `<a class="btn small ${r.in_stock ? 'go' : 'dark'}" href="${e(r.url)}" rel="nofollow noopener sponsored" target="_blank" data-ev="buy" data-sku="${e(r.slug)}">${e(W.buy)} ↗</a>` : ''}</td></tr>`).join('')}
-  </tbody></table></div></section>${rows.length ? '' : '-->'}
+  </tbody></table></div></section>` : ''}
+  ${affiliateBlock(env, T, cc, { name: PS, slug: id })}
   ${facts}
   ${a.html}
   ${others.length ? `<section><h2>${e(W.other)}</h2><p class="quick-links">${others.map((c) => `<a href="${guidePath(c, id)}">${e(countryIn(c))}</a>`).join('')}<a href="/${G.slug.en}">${e(W.all)}</a></p></section>` : ''}`;
