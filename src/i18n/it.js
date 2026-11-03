@@ -22,7 +22,7 @@ export default {
   hl: {
     showIn: (n) => `Mostra altri ${n} prodotti disponibili`,
     h1: (country) => `Carte Pokémon disponibili ora in ${country}`,
-    lede: (n, shops) => `${n} prodotti sigillati sono disponibili ora in ${shops} negozi che controlliamo ogni pochi minuti. Tocca un prodotto per vedere quali negozi ce l'hanno.`,
+    lede: (n, shops) => `${n} prodotti sigillati sono disponibili ora in ${shops} negozi che controlliamo giorno e notte (gli esauriti ogni ora). Tocca un prodotto per vedere quali negozi ce l'hanno.`,
     ledeNone: (shops) => `Ora non c'è niente disponibile nei ${shops} negozi che controlliamo. Crea un avviso.`,
     all: 'Tutti', inH: 'Disponibili ora', outH: 'Esauriti ora', outSub: 'Crea un avviso: lo saprai appena torna.',
     at: (n) => `disponibile in ${n} negoz${n > 1 ? 'i' : 'io'}`, from: (p) => `da ${p}`, see: 'Dove?', none: 'Niente di questa categoria è disponibile ora.',
@@ -54,16 +54,16 @@ export default {
   },
   intro: {
     h1: 'Trova carte Pokémon disponibili',
-    what: (shops) => `Controlliamo ${shops} ogni pochi minuti e mostriamo dove le carte Pokémon sigillate sono disponibili adesso. Guardare è gratis. Ricevi un avviso quando il tuo prodotto torna.`,
+    what: (shops) => `Controlliamo ${shops} giorno e notte e mostriamo dove le carte Pokémon sigillate sono disponibili adesso. Guardare è gratis. Ricevi un avviso quando il tuo prodotto torna.`,
     now: (a, b, ago) => `Adesso: <strong>${a} negozi su ${b}</strong> hanno carte Pokémon disponibili · controllato ${ago}`,
     seeStock: 'Vedi cosa è disponibile', freeAlert: 'Crea un avviso gratis',
     howH: 'Come funziona',
-    steps: ['Scegli il prodotto: Set Allenatore Fuoriclasse, box di buste, tin…', 'Controlliamo ogni negozio ogni pochi minuti, giorno e notte.', 'Appena torna, ricevi un avviso con il link per comprarlo.'],
+    steps: ['Scegli il prodotto: Set Allenatore Fuoriclasse, box di buste, tin…', 'Controlliamo i negozi giorno e notte (ogni ora finché è esaurito).', 'Appena torna, ricevi un avviso con il link per comprarlo.'],
     productsH: 'Prodotti che seguiamo', productsSub: 'Verde = disponibile da qualche parte adesso. Tocca un prodotto per vedere i negozi.',
     latestH: 'Appena tornati', allTimes: 'Quando i negozi riassortiscono', placesH: 'Per negozio',
     faqH: 'Domande',
     faq: (shops, solo) => [
-      { q: 'Cos\'è Card Restock Tracker?', a: `Un sito gratuito che controlla ${shops} ogni pochi minuti e mostra dove le carte Pokémon sigillate sono disponibili.` },
+      { q: 'Cos\'è Card Restock Tracker?', a: `Un sito gratuito che controlla ${shops} giorno e notte e mostra dove le carte Pokémon sigillate sono disponibili.` },
       { q: 'È gratis?', a: `Sì. Guardare è gratis e senza account, e il piano gratuito ti invia una e-mail al giorno per un prodotto. Gli avvisi istantanei costano ${solo} per 30 giorni, disdici in 2 clic.` },
       { q: 'Vendete carte?', a: 'No. Ti diciamo solo dove sono; compri dal negozio, al suo prezzo.' },
     ],

@@ -22,7 +22,7 @@ export default {
   hl: {
     showIn: (n) => `Voir ${n} autres produits en stock`,
     h1: (country) => `Cartes Pokémon en stock maintenant en ${country}`,
-    lede: (n, shops) => `${n} produits scellés sont en stock en ce moment dans les ${shops} boutiques que nous vérifions toutes les quelques minutes. Touchez un produit pour voir quelles boutiques l'ont et l'acheter chez elles.`,
+    lede: (n, shops) => `${n} produits scellés sont en stock en ce moment dans les ${shops} boutiques que nous vérifions jour et nuit (les produits en rupture toutes les heures). Touchez un produit pour voir quelles boutiques l'ont et l'acheter chez elles.`,
     ledeNone: (shops) => `Rien n'est en stock en ce moment dans les ${shops} boutiques que nous vérifions. Créez une alerte : on vous prévient dès que ça revient.`,
     all: 'Tout', inH: 'En stock maintenant', outH: 'Épuisé en ce moment', outSub: 'Créez une alerte sur l\'un d\'eux : vous êtes prévenu à la seconde où il revient.',
     at: (n) => `en stock dans ${n} boutique${n > 1 ? 's' : ''}`, from: (p) => `dès ${p}`, see: 'Voir où', none: 'Rien de cette catégorie n\'est en stock en ce moment.',
@@ -54,16 +54,16 @@ export default {
   },
   intro: {
     h1: 'Trouvez des cartes Pokémon en stock près de chez vous',
-    what: (shops) => `Nous vérifions ${shops} toutes les quelques minutes et montrons quels magasins ont des cartes Pokémon scellées en rayon en ce moment. Consulter est gratuit. Recevez une alerte quand votre produit revient.`,
+    what: (shops) => `Nous vérifions ${shops} jour et nuit et montrons quels magasins ont des cartes Pokémon scellées en rayon en ce moment. Consulter est gratuit. Recevez une alerte quand votre produit revient.`,
     now: (a, b, ago) => `En ce moment : <strong>${a} magasins sur ${b}</strong> ont des cartes Pokémon en stock · vérifié ${ago}`,
     seeStock: 'Voir ce qui est en stock', freeAlert: 'Créer une alerte gratuite',
     howH: 'Comment ça marche',
-    steps: ['Choisissez le produit voulu : coffret Dresseur d\'élite, display, pokébox…', 'Nous le cherchons dans chaque magasin et site toutes les quelques minutes, jour et nuit.', 'Dès qu\'il revient, vous recevez une alerte avec un lien pour l\'acheter ou le réserver.'],
+    steps: ['Choisissez le produit voulu : coffret Dresseur d\'élite, display, pokébox…', 'Nous vérifions les boutiques jour et nuit (toutes les heures tant qu\'il est en rupture).', 'Dès qu\'il revient, vous recevez une alerte avec un lien pour l\'acheter ou le réserver.'],
     productsH: 'Les produits suivis', productsSub: 'Vert = en stock quelque part en ce moment. Touchez un produit pour voir les magasins.',
     latestH: 'Tout juste réassortis', allTimes: 'Voir quand chaque magasin réassortit', placesH: 'Par enseigne ou par ville',
     faqH: 'Questions',
     faq: (shops, solo) => [
-      { q: 'Qu\'est-ce que Card Restock Tracker ?', a: `Un site gratuit qui vérifie ${shops} toutes les quelques minutes et montre où les cartes Pokémon scellées sont en stock, magasin par magasin.` },
+      { q: 'Qu\'est-ce que Card Restock Tracker ?', a: `Un site gratuit qui vérifie ${shops} jour et nuit et montre où les cartes Pokémon scellées sont en stock, magasin par magasin.` },
       { q: 'C\'est gratuit ?', a: `Oui. Consulter le stock est gratuit et sans compte, et la formule gratuite vous envoie un e-mail par jour pour un produit. Les alertes instantanées coûtent ${solo} pour 30 jours, résiliables en 2 clics.` },
       { q: 'Vous vendez des cartes ?', a: 'Non. Nous vous disons où elles sont ; vous achetez chez l\'enseigne, au prix de l\'enseigne.' },
     ],

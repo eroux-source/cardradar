@@ -22,7 +22,7 @@ export default {
   hl: {
     showIn: (n) => `Toon nog ${n} producten op voorraad`,
     h1: (country) => `Pokémon-kaarten nu op voorraad in ${country}`,
-    lede: (n, shops) => `${n} verzegelde producten zijn nu op voorraad bij ${shops} winkels die we om de paar minuten controleren. Tik op een product om te zien welke winkels het hebben.`,
+    lede: (n, shops) => `${n} verzegelde producten zijn nu op voorraad bij ${shops} winkels die we dag en nacht controleren (uitverkochte producten elk uur). Tik op een product om te zien welke winkels het hebben.`,
     ledeNone: (shops) => `Nu is niets op voorraad bij de ${shops} winkels die we controleren. Stel een melding in.`,
     all: 'Alles', inH: 'Nu op voorraad', outH: 'Nu uitverkocht', outSub: 'Stel een melding in: je hoort het zodra het terug is.',
     at: (n) => `op voorraad bij ${n} winkel${n > 1 ? 's' : ''}`, from: (p) => `vanaf ${p}`, see: 'Waar?', none: 'Niets uit deze categorie is nu op voorraad.',
@@ -54,16 +54,16 @@ export default {
   },
   intro: {
     h1: 'Vind Pokémon-kaarten op voorraad',
-    what: (shops) => `We controleren ${shops} om de paar minuten en tonen waar verzegelde Pokémon-kaarten nu op voorraad zijn. Kijken is gratis. Krijg een melding zodra je product terug is.`,
+    what: (shops) => `We controleren ${shops} dag en nacht en tonen waar verzegelde Pokémon-kaarten nu op voorraad zijn. Kijken is gratis. Krijg een melding zodra je product terug is.`,
     now: (a, b, ago) => `Nu: <strong>${a} van ${b} winkels</strong> hebben Pokémon-kaarten op voorraad · gecontroleerd ${ago}`,
     seeStock: 'Bekijk de voorraad', freeAlert: 'Gratis melding instellen',
     howH: 'Zo werkt het',
-    steps: ['Kies je product: Elite Trainer Box, booster box, tin…', 'We controleren elke winkel om de paar minuten, dag en nacht.', 'Zodra het terug is, krijg je een melding met een link om te kopen.'],
+    steps: ['Kies je product: Elite Trainer Box, booster box, tin…', 'We controleren de winkels dag en nacht (elk uur zolang het uitverkocht is).', 'Zodra het terug is, krijg je een melding met een link om te kopen.'],
     productsH: 'Producten die we volgen', productsSub: 'Groen = nu ergens op voorraad. Tik op een product voor de winkels.',
     latestH: 'Net aangevuld', allTimes: 'Wanneer winkels aanvullen', placesH: 'Per winkel',
     faqH: 'Vragen',
     faq: (shops, solo) => [
-      { q: 'Wat is Card Restock Tracker?', a: `Een gratis website die ${shops} om de paar minuten controleert en toont waar verzegelde Pokémon-kaarten op voorraad zijn.` },
+      { q: 'Wat is Card Restock Tracker?', a: `Een gratis website die ${shops} dag en nacht controleert en toont waar verzegelde Pokémon-kaarten op voorraad zijn.` },
       { q: 'Is het gratis?', a: `Ja. Kijken is gratis en zonder account, en het gratis abonnement mailt je één keer per dag over één product. Directe meldingen kosten ${solo} voor 30 dagen, opzegbaar in 2 klikken.` },
       { q: 'Verkopen jullie kaarten?', a: 'Nee. We vertellen je alleen waar ze zijn; je koopt bij de winkel, tegen hun prijs.' },
     ],

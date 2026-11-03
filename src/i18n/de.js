@@ -22,7 +22,7 @@ export default {
   hl: {
     showIn: (n) => `Weitere ${n} lieferbare Produkte zeigen`,
     h1: (country) => `Pokémon-Karten jetzt auf Lager in ${country}`,
-    lede: (n, shops) => `${n} versiegelte Produkte sind gerade lieferbar bei ${shops} Shops, die wir alle paar Minuten prüfen. Tippe auf ein Produkt, um zu sehen, welche Shops es haben.`,
+    lede: (n, shops) => `${n} versiegelte Produkte sind gerade lieferbar bei ${shops} Shops, die wir rund um die Uhr prüfen (ausverkaufte Produkte stündlich). Tippe auf ein Produkt, um zu sehen, welche Shops es haben.`,
     ledeNone: (shops) => `Gerade ist bei den ${shops} geprüften Shops nichts lieferbar. Richte einen Alarm ein: wir melden uns, sobald etwas da ist.`,
     all: 'Alle', inH: 'Jetzt lieferbar', outH: 'Gerade ausverkauft', outSub: 'Richte für jedes davon einen Alarm ein: du erfährst es, sobald es zurück ist.',
     at: (n) => `lieferbar bei ${n} Shop${n > 1 ? 's' : ''}`, from: (p) => `ab ${p}`, see: 'Wo?', none: 'Aus dieser Kategorie ist gerade nichts lieferbar.',
@@ -54,16 +54,16 @@ export default {
   },
   intro: {
     h1: 'Pokémon-Karten auf Lager finden',
-    what: (shops) => `Wir prüfen ${shops} alle paar Minuten und zeigen, wo versiegelte Pokémon-Karten gerade lieferbar sind. Nachsehen ist kostenlos. Lass dich benachrichtigen, sobald dein Produkt wieder da ist.`,
+    what: (shops) => `Wir prüfen ${shops} rund um die Uhr und zeigen, wo versiegelte Pokémon-Karten gerade lieferbar sind. Nachsehen ist kostenlos. Lass dich benachrichtigen, sobald dein Produkt wieder da ist.`,
     now: (a, b, ago) => `Gerade: <strong>${a} von ${b} Shops</strong> haben Pokémon-Karten auf Lager · geprüft ${ago}`,
     seeStock: 'Verfügbarkeit ansehen', freeAlert: 'Kostenlosen Alarm einrichten',
     howH: 'So funktioniert es',
-    steps: ['Wähle dein Produkt: Top-Trainer-Box, Display, Tin…', 'Wir prüfen jeden Shop alle paar Minuten, Tag und Nacht.', 'Sobald es wieder da ist, bekommst du einen Alarm mit Link zum Kaufen.'],
+    steps: ['Wähle dein Produkt: Top-Trainer-Box, Display, Tin…', 'Wir prüfen die Shops rund um die Uhr (stündlich, solange es ausverkauft ist).', 'Sobald es wieder da ist, bekommst du einen Alarm mit Link zum Kaufen.'],
     productsH: 'Diese Produkte verfolgen wir', productsSub: 'Grün = gerade irgendwo lieferbar. Tippe auf ein Produkt für die Shops.',
     latestH: 'Gerade wieder da', allTimes: 'Wann die Shops nachfüllen', placesH: 'Nach Shop',
     faqH: 'Fragen',
     faq: (shops, solo) => [
-      { q: 'Was ist Card Restock Tracker?', a: `Eine kostenlose Website, die ${shops} alle paar Minuten prüft und zeigt, wo versiegelte Pokémon-Karten lieferbar sind.` },
+      { q: 'Was ist Card Restock Tracker?', a: `Eine kostenlose Website, die ${shops} rund um die Uhr prüft und zeigt, wo versiegelte Pokémon-Karten lieferbar sind.` },
       { q: 'Ist das kostenlos?', a: `Ja. Nachsehen ist kostenlos und ohne Konto, der Gratis-Tarif schickt dir einmal am Tag eine E-Mail zu einem Produkt. Sofort-Alarme kosten ${solo} für 30 Tage, mit 2 Klicks kündbar.` },
       { q: 'Verkauft ihr Karten?', a: 'Nein. Wir sagen dir nur, wo sie sind; du kaufst beim Shop zu dessen Preis.' },
     ],
