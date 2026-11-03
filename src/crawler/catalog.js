@@ -7,7 +7,7 @@ import { SOURCES } from '../sources/index.js';
 
 // Keep sealed TCG products, drop accessories and apparel that mention "TCG".
 const KEEP = /(trading card|tcg|booster|elite trainer|etb|collection|tin|blister|build & battle|battle deck|card game|sammelkarten|top-trainer|display|coffret|cartes?|kaarten|carte|cartas|sobres|buste|set allenatore|caja de entrenador|拡張パック|ハイクラスパック|box)/i;
-const DROP = /\b(binder|sleeves?|deck box|playmat|portfolio|plush|t-shirt|shirt|hoodie|pin|dice|card case|toploader|storage|album|keychain|sticker|puzzle|squishmallow|figure(?! collection))\b/i;
+const DROP = /\b(binder|sleeves?|deck box|playmat|portfolio|plush(ie)?|plüsch|peluche|peluches|kuscheltier|t-shirt|shirt|hoodie|pin|dice|card case|toploader|storage|album|keychain|sticker|puzzle|squishmallow|figure(?! collection)|psa|bgs|cgc|graded|slab|gradiert|code card|online code|digital code|poster|art print|empty|leer|vide|wrapper|lot of|jumbo card|oversized card)\b/i;
 
 export function keepItem(source, item) {
   if (!item?.sourceSku || !item?.title) return false;

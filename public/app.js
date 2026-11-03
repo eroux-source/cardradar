@@ -59,6 +59,24 @@
     await post('/api/me/push', { subscription: sub.toJSON() });
   }
 
+  /* ---------- wrong country: offer the visitor's own (ChatGPT often links the US page) ---------- */
+  (async () => {
+    const page = document.body.dataset.cc; if (!page || page === 'jp' || f0()) return;
+    try { if (localStorage.getItem('geo-off')) return; } catch {}
+    const MAP = { US: 'us', GB: 'uk', CA: 'ca', AU: 'au', NZ: 'au', DE: 'de', AT: 'de', CH: 'de', FR: 'fr', BE: 'fr', LU: 'fr', NL: 'nl', IT: 'it', ES: 'es' };
+    const NAME = { us: 'the United States', uk: 'the UK', ca: 'Canada', au: 'Australia', de: 'Deutschland', fr: 'France', nl: 'Nederland', it: 'Italia', es: 'España' };
+    const SAY = { us: (n) => `Shopping in ${n}? See stock there`, uk: (n) => `Shopping in ${n}? See stock there`, ca: (n) => `Shopping in ${n}? See stock there`, au: (n) => `Shopping in ${n}? See stock there`,
+      de: (n) => `Du kaufst in ${n}? Bestand dort ansehen`, fr: (n) => `Vous achetez en ${n} ? Voir le stock en ${n}`, nl: (n) => `Je koopt in ${n}? Bekijk de voorraad daar`, it: (n) => `Compri in ${n}? Vedi la disponibilità`, es: (n) => `¿Compras en ${n}? Ver el stock allí` };
+    let cc = null;
+    try { cc = MAP[(await (await fetch('/api/geo')).json()).country]; } catch {}
+    if (!cc || cc === page) return;
+    const bar = document.createElement('div'); bar.className = 'geo-bar';
+    bar.innerHTML = `<a href="${cc === 'us' ? '/' : '/' + cc}" data-ev="geo_switch">${SAY[cc](NAME[cc])}</a><button type="button" aria-label="Close">×</button>`;
+    bar.querySelector('button').addEventListener('click', () => { bar.remove(); try { localStorage.setItem('geo-off', '1'); } catch {} });
+    document.querySelector('main')?.prepend(bar);
+  })();
+  function f0() { return !!document.getElementById('funnel') || !!document.getElementById('account'); }
+
   /* ---------- funnel ---------- */
   const f = $('#funnel');
   if (f) {
@@ -73,7 +91,9 @@
     const kindOf = () => $('input[name=kind]:checked', f)?.value || $('input[name=kind][type=hidden]', f)?.value || 'online';
     const metroField = () => { const m = $('#f-metro'); if (!m) return; const k = kindOf(); m.required = k === 'stores'; m.disabled = k !== 'stores'; };
     $$('input[name=kind]', f).forEach((r) => r.addEventListener('change', metroField)); metroField();
-    show(f.dataset.signed === '1' ? 2 : 1);
+    const next = () => (f.dataset.sku ? 3 : 2); // product already chosen on the product page: straight to the plan
+    if (f.dataset.sku) { state.sku = f.dataset.sku; state.kind = 'online'; }
+    show(f.dataset.signed === '1' ? next() : 1);
     let email = '';
 
     $('[data-form=email]', f).addEventListener('submit', async (e) => {
@@ -82,7 +102,7 @@
       try {
         const r = await post('/api/funnel/start', { email, sku: state.sku, metro: state.metro, via: source, country: f.dataset.country });
         if (r.state === 'code') { e.target.hidden = true; $('[data-form=code]', f).hidden = false; $('#f-code').focus(); }
-        else show(2);
+        else show(next());
       } catch (x) { err(1, x.message); } finally { busy(e.target, false); }
     });
     $('[data-form=code]', f).addEventListener('submit', async (e) => {
@@ -96,19 +116,18 @@
       if (state.sku.startsWith('set:')) { $('input[name=plan][value=multi]', f).checked = true; }
       show(3);
     });
-    $('[data-form=channels]', f).addEventListener('submit', async (e) => {
-      e.preventDefault(); err(3);
-      state.push = e.target.push.checked; state.telegram = e.target.telegram.checked; state.line = !!e.target.line?.checked;
-      if (state.push) { try { await enablePush(f.dataset.vapid); } catch (x) { state.push = false; e.target.push.checked = false; return err(3, x.message); } }
-      if (f.dataset.pass) return submitAlert(f.dataset.pass, e.target);
-      show(4);
-    });
     async function submitAlert(plan, form) {
-      busy(form, true); err(4);
+      busy(form, true); err(3);
       try { const r = await post('/api/funnel/alert', { ...state, plan, visit, country: f.dataset.country }); location.href = r.next; }
-      catch (x) { err(f.dataset.pass ? 3 : 4, x.message); busy(form, false); }
+      catch (x) { err(3, x.message); busy(form, false); }
     }
-    $('[data-form=plan]', f).addEventListener('submit', (e) => { e.preventDefault(); submitAlert($('input[name=plan]:checked', f).value, e.target); });
+    $('[data-form=plan]', f).addEventListener('submit', async (e) => {
+      e.preventDefault(); err(3);
+      const t = e.target;
+      state.push = !!t.push?.checked; state.telegram = !!t.telegram?.checked; state.line = !!t.line?.checked;
+      if (state.push) { try { await enablePush(f.dataset.vapid); } catch (x) { state.push = false; t.push.checked = false; return err(3, x.message); } }
+      submitAlert(f.dataset.pass || $('input[name=plan]:checked', f).value, t);
+    });
   }
 
   /* ---------- sign-in ---------- */

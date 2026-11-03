@@ -40,7 +40,7 @@ gtag('js',new Date());gtag('config','${e(env.GA_ID)}',{country:'${cc}'});</scrip
 <link rel="preload" href="/fonts/bc-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/site.css">
 ${jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, '\\u003c')}</script>`).join('')}
-</head><body>
+</head><body data-cc="${cc}">
 <header class="site-head"><div class="wrap">
   <a class="brand" href="${home(cc)}"><span class="brand-mark">${LOGO}</span><span class="brand-text"><span class="brand-word">${e(env.BRAND_NAME)}</span><span class="brand-tag">${e(T.tag)}</span></span></a>
   <nav class="site-nav" aria-label="Main">${cc === 'jp' ? `

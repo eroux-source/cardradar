@@ -1,5 +1,5 @@
 // The stepped alert funnel (§2: free daily email or paid instant alerts) and the account page.
-// /alerts : 1 email → 2 product + place → 3 how to reach you → 4 plan → checkout.
+// /alerts : 1 email → 2 product (skipped when the product page already chose it) → 3 plan + optional channels → checkout.
 // The email is captured at step 1 (lead), so a visitor who stops still gets one
 // follow-up. Steps run client-side (public/app.js) against /api/funnel/*.
 import { escapeHtml as e, timeAgo, formatUtc } from '../../lib/util.js';
@@ -46,9 +46,9 @@ export async function alertsPage(env, url, user) {
     return page(env, T, { title: `${F.title} — ${env.BRAND_NAME}`, description: F.title, path: '/alerts', noindex: true, nav: 'alerts',
       body: `<div class="funnel"><h1>${e(F.h1)}</h1><p class="lede">${T.home.soon(T.cc.name)}</p><p><a href="/">United States</a> · <a href="/jp">日本</a></p></div>` });
   }
-  const body = `<div class="funnel" id="funnel" data-country="${cc}" data-signed="${user ? 1 : 0}" data-pass="${pass ? e(pass.plan) : ''}" data-vapid="${e(env.VAPID_PUBLIC_KEY ?? '')}">
+  const body = `<div class="funnel" id="funnel" data-country="${cc}" data-sku="${skus.some((k) => k.slug === sku) || sku.startsWith('jpset:') ? e(sku) : ''}" data-signed="${user ? 1 : 0}" data-pass="${pass ? e(pass.plan) : ''}" data-vapid="${e(env.VAPID_PUBLIC_KEY ?? '')}">
   <h1>${e(F.h1)}</h1>
-  <ol class="steps" aria-label="Progress">${F.steps.map((x, i) => `<li data-s="${i + 1}">${e(x)}</li>`).join('')}</ol>
+  <ol class="steps" aria-label="Progress">${[F.steps[0], F.steps[1], F.steps[3]].map((x, i) => `<li data-s="${i + 1}">${e(x)}</li>`).join('')}</ol>
 
   <section class="step" data-step="1"${user ? ' hidden' : ''}>
     <h2>${e(F.s1h)}</h2>
@@ -68,24 +68,16 @@ export async function alertsPage(env, url, user) {
   </section>
 
   <section class="step" data-step="3" hidden>
-    <h2>${e(F.s3h)}</h2>
-    <p class="sub">${e(F.s3sub)}</p>
-    <form data-form="channels">
-      <label class="radio"><input type="checkbox" name="push" value="1"> ${e(F.push)} <span class="fine">${e(F.pushFine)}</span></label>
-      ${cc === 'jp' ? `<label class="radio"><input type="checkbox" name="line" value="1" checked> ${e(F.line)} <span class="fine">${e(F.lineFine)}</span></label>` : ''}
-      <label class="radio"><input type="checkbox" name="telegram" value="1"> ${e(F.telegram)} <span class="fine">${e(F.tgFine)}</span></label>
-      <label class="radio"><input type="checkbox" checked disabled> ${e(F.emailAlways)}</label>
-      <button class="btn" type="submit">${e(F.cont)}</button></form>
-    <p class="err" role="alert"></p>
-  </section>
-
-  <section class="step" data-step="4" hidden>
     <h2>${e(F.s4h)}</h2>
     <form data-form="plan">
       <label class="plan"><input type="radio" name="plan" value="solo" checked><span><strong>Solo · ${e(T.f.money(T.cc.prices.solo))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.solo)}</span></span></label>
       <label class="plan"><input type="radio" name="plan" value="multi"><span><strong>Multi · ${e(T.f.money(T.cc.prices.multi))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.multi)}</span></span></label>
       ${!lottery && F.free ? `<label class="plan"><input type="radio" name="plan" value="free"><span><strong>${e(F.freeName)} · ${e(T.f.money(0))}</strong><br><span class="fine">${e(F.free)}</span></span></label>` : ''}
       <p class="fine">${e(F.renew)}</p>
+      <fieldset class="channels"><legend>${e(F.s3h)} <span class="fine">${e(F.emailAlways)}</span></legend>
+        <label class="radio"><input type="checkbox" name="push" value="1"> ${e(F.push)} <span class="fine">${e(F.pushFine)}</span></label>
+        ${cc === 'jp' ? `<label class="radio"><input type="checkbox" name="line" value="1" checked> ${e(F.line)} <span class="fine">${e(F.lineFine)}</span></label>` : ''}
+        <label class="radio"><input type="checkbox" name="telegram" value="1"> ${e(F.telegram)} <span class="fine">${e(F.tgFine)}</span></label></fieldset>
       <button class="btn" type="submit">${e(F.checkout)}</button></form>
     <p class="err" role="alert"></p>
   </section>

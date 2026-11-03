@@ -43,6 +43,7 @@ async function route(req, env, ctx) {
   if (url.pathname !== p && m === 'GET') return Response.redirect(`${env.BASE_URL}${p}${url.search}`, 301);
 
   // --- machine endpoints ---
+  if (p === '/api/geo') return new Response(JSON.stringify({ country: req.cf?.country ?? null }), { headers: { 'content-type': 'application/json', 'cache-control': 'private, no-store' } });
   if (p === '/api/health') {
     const last = await one(env, 'SELECT MAX(seen_at) t FROM stock');
     // public, harmless: which retailers answer (status only, no error text)
