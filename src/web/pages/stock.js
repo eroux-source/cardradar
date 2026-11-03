@@ -6,6 +6,7 @@
 // Used by the country home (hardest product to find) and every product page.
 import { freeMode, freeWords } from '../free.js';
 import { dataPath, thirtyPath, words } from './local_data.js';
+import { GUIDES, guidePath } from './where_buy.js';
 import { escapeHtml as e } from '../../lib/util.js';
 import { sourceName, sourcesOf } from '../../sources/index.js';
 import * as d from '../data.js';
@@ -85,7 +86,8 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
     <div class="hero2-grid"><div>
       <h1>${e(isHome ? (hasStores ? S.homeH1(T.cc.name) : S.homeH1Online(T.cc.name)) : S.skuH1(k.name, metro?.name))}</h1>
       <p class="lede">${e(S.lede(shops))}</p>
-      <p class="answer-line">${e(answer)}</p></div>
+      <p class="answer-line">${e(answer)}</p>
+      ${!isHome && cc !== 'jp' && GUIDES['30th-etb'].match(k.name) ? `<p class="quick-links"><a href="${guidePath(cc, '30th-etb')}">${e(words(cc).guide30)}</a></p>` : ''}</div>
       ${k.image ? `<figure class="hero2-photo"><img src="${e(k.image)}" alt="${e(k.name)}" referrerpolicy="no-referrer"></figure>` : ''}</div></section>
   <section class="controls" aria-label="${e(S.products)}">
     <form class="find" action="${base(cc)}/search" method="get" role="search">

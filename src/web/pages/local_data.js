@@ -3,6 +3,8 @@
 //   /{cc}/{30th slug}        Pokémon 30th Celebration: where each product is in stock, cheapest price
 // ChatGPT sends most of its visitors to European country pages and 30th Celebration products,
 // so each country gets these answers in its own words.
+import { guidePath } from './where_buy.js';
+const GUIDE_LINK = { en: 'Where to buy the 30th Celebration Elite Trainer Box: shops and prices today', de: 'Wo kaufen: 30 Jahre Top-Trainer-Box, Shops und Preise heute', fr: 'Où acheter le coffret Dresseur d\'Élite 30 ans : boutiques et prix du jour', it: 'Dove comprare il Set Allenatore Fuoriclasse 30 anni: negozi e prezzi di oggi', es: 'Dónde comprar la Caja de Entrenador Élite 30 aniversario: tiendas y precios hoy', nl: 'Waar koop je de 30 jaar Elite Trainer Box: winkels en prijzen vandaag' };
 import { escapeHtml as e } from '../../lib/util.js';
 import { COUNTRIES } from '../../data/countries.js';
 import { t } from '../../i18n/index.js';
@@ -141,7 +143,7 @@ const L = {
     tTh: ['Product', 'Winkels met voorraad', 'Laagste prijs', 'Waar'], seeAll: 'Alle live voorraad', data: 'Live voorraaddata', thirty: 'Pokémon 30 jaar: voorraad',
   },
 };
-export const words = (cc) => L[COUNTRIES[cc]?.lang] ?? L.en;
+export const words = (cc) => ({ ...(L[COUNTRIES[cc]?.lang] ?? L.en), guide30: GUIDE_LINK[COUNTRIES[cc]?.lang] ?? GUIDE_LINK.en });
 const countryName = (cc) => new Intl.DisplayNames([COUNTRIES[cc].lang], { type: 'region' }).of(cc === 'uk' ? 'GB' : cc.toUpperCase());
 
 /** the alternates map of a page that exists in every live country */
@@ -203,7 +205,8 @@ export async function thirtyPage(env, cc) {
   const top = skus.slice(0, 6);
   const a = answers(top.map((k) => ({ q: W.tQ(k.name, C), a: W.tA(w, k.name, where(k.id).slice(0, 6).map((r) => `${shopName(r.name)} (${money(r.price)})`).join(', ')) })), 'FAQ');
   const path = thirtyPath(cc);
-  const body = `<div class="answer"><h1>${e(W.tH1(C))}</h1><p class="asof">${e(W.upd(w))}</p><p class="lede">${e(lede)}</p></div>
+  const body = `<div class="answer"><h1>${e(W.tH1(C))}</h1><p class="asof">${e(W.upd(w))}</p><p class="lede">${e(lede)}</p>
+  <p class="quick-links"><a href="${guidePath(cc, '30th-etb')}">${e(GUIDE_LINK[COUNTRIES[cc].lang] ?? GUIDE_LINK.en)}</a></p></div>
   <section><div class="table-scroll"><table><thead><tr>${W.tTh.map((x) => `<th>${e(x)}</th>`).join('')}</tr></thead><tbody>
   ${skus.map((k) => `<tr><td><a href="/${cc}/${e(k.slug)}">${e(k.name)}</a></td><td>${k.places_in}</td><td>${e(money(k.price_in))}</td><td>${e(where(k.id).slice(0, 4).map((r) => shopName(r.name)).join(', ') || '—')}</td></tr>`).join('')}
   </tbody></table></div></section>

@@ -1,6 +1,7 @@
 // sitemap.xml, robots.txt, llms.txt (§7).
 // Restock-time pages enter the sitemap only once they are indexable
 // (≥ 20 restocks over > 18 h), so thin pages never reach Bing.
+import { GUIDES, guidePath } from '../web/pages/where_buy.js';
 import { all, now } from '../lib/db.js';
 import { COUNTRIES, countryList } from '../data/countries.js';
 import { sourceList, sourcesOf } from '../sources/index.js';
@@ -18,12 +19,12 @@ export async function sitemap(env) {
   const B = env.BASE_URL;
   const since = now() - 30 * 864e5;
   const live = await liveCountries(env);
-  const urls = ['/pokemon-restock-data', '/press', '/best-pokemon-restock-trackers', '/how-it-works', ...Object.keys(COMPETITORS).map((id) => `/vs/${id}`)];
+  const urls = [...Object.values(GUIDES).map((g) => `/${g.slug.en}`), '/pokemon-restock-data', '/press', '/best-pokemon-restock-trackers', '/how-it-works', ...Object.keys(COMPETITORS).map((id) => `/vs/${id}`)];
   for (const cc of live) {
     if (cc === 'jp') continue;
     const P = `/${cc}`; const home = cc === 'us' ? '/' : P;
     if (cc !== 'us') urls.push(dataPath(cc));
-    urls.push(thirtyPath(cc));
+    urls.push(thirtyPath(cc), ...Object.keys(GUIDES).map((id) => guidePath(cc, id)));
     const [skus, stores, skuR, storeR, cityR, srcR] = await Promise.all([
       all(env, 'SELECT DISTINCT k.slug FROM skus k JOIN listings l ON l.sku_id = k.id AND l.country = ? AND l.active = 1 WHERE k.active = 1', cc),
       all(env, 'SELECT slug FROM stores WHERE online = 0 AND country = ?', cc),
@@ -105,6 +106,7 @@ ${lines.join('\n')}
 - Instant alerts by phone notification, Telegram, LINE (Japan) or email, free during launch (up to 20 products, no card): ${env.BASE_URL}/alerts
 - Live data, updated hourly (what is in stock, what is sold out everywhere, how long restocks last): ${env.BASE_URL}/pokemon-restock-data
 - Same data per country, in the country's language: ${[...live].filter((c) => c !== 'jp' && c !== 'us' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${dataPath(c)}`).join(' , ')}
+- Where to buy the Pokémon 30th Celebration Elite Trainer Box (Top-Trainer-Box 30 Jahre, Coffret Dresseur d'Élite 30 ans…): today's shops, prices and editions, per country: ${env.BASE_URL}/${GUIDES['30th-etb'].slug.en} , ${[...live].filter((c) => c !== 'jp' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${guidePath(c, '30th-etb')}`).join(' , ')}
 - Pokémon 30th Celebration: where each product is in stock, per country: ${[...live].filter((c) => c !== 'jp' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${thirtyPath(c)}`).join(' , ')}
 - Press data: ${env.BASE_URL}/press
 - How the data is collected: ${env.BASE_URL}/how-it-works

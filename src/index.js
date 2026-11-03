@@ -1,4 +1,5 @@
 // Worker entry: HTTP routes, the minute cron, and the four queue consumers.
+import { GUIDES, guideIdForSlug, guidePage, guideOverview, guidePath } from './web/pages/where_buy.js';
 import { now, run, one } from './lib/db.js';
 import { currentUser } from './auth/session.js';
 import { googleStart, googleCallback } from './auth/google.js';
@@ -146,6 +147,7 @@ async function route(req, env, ctx) {
   if (p === '/best-pokemon-restock-trackers') return bestTrackers(env);
   if (p === '/how-it-works') return howItWorks(env);
   if (p === '/pokemon-restock-data') return restockData(env);
+  { const g = Object.keys(GUIDES).find((id) => p === `/${GUIDES[id].slug.en}`); if (g) return guideOverview(env, g); }
   if (p.startsWith('/vs/')) return (await versus(env, p.slice(4))) ?? notFound(env);
   if (p === '/terms' || p === '/privacy') return pub.legal(env, p.slice(1));
   const seg = p.split('/').filter(Boolean);
@@ -166,6 +168,8 @@ async function route(req, env, ctx) {
       return (await countryData(env, cc)) ?? notFound(env, cc);
     }
     if (seg.length === 2 && seg[1] === (THIRTY_SLUG[lang] ?? THIRTY_SLUG.en)) return (await thirtyPage(env, cc)) ?? notFound(env, cc);
+    const gid = seg.length === 2 ? guideIdForSlug(lang, seg[1]) : null;
+    if (gid) return (await guidePage(env, cc, gid)) ?? notFound(env, cc);
     let res = null;
     if (seg[1] === 'restocks') res = seg[2] ? await pub.cityRestocks(env, cc, seg[2]) : await pub.allRestocks(env, cc);
     else if (seg[1] === 'cities' && seg.length === 2) res = await pub.cities(env, cc);
