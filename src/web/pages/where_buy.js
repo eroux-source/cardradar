@@ -23,10 +23,11 @@ export const GUIDES = {
   // next expansion (English street date 2026-11-06): pages exist before release so they are indexed when people start asking
   'delta-reign': {
     multi: true, release: '2026-11-06',
-    match: (n) => /delta[\s-]*reign|delta[\s-]*herrschaft|\bME\s?0?6\b/i.test(n),
-    slug: { en: 'where-to-buy-delta-reign', de: 'wo-kaufen-delta-reign-delta-herrschaft', fr: 'ou-acheter-delta-reign', it: 'dove-comprare-delta-reign', es: 'donde-comprar-delta-reign', nl: 'waar-kopen-delta-reign' },
-    name: { en: 'Pokémon TCG Mega Evolution—Delta Reign', de: 'Pokémon Mega-Entwicklung: Delta-Herrschaft (ME06, Delta Reign)', fr: 'Pokémon Méga-Évolution Delta Reign (ME06)', it: 'Pokémon Megaevoluzione Delta Reign (ME06)', es: 'Pokémon Megaevolución Delta Reign (ME06)', nl: 'Pokémon Mega Evolution Delta Reign (ME06)' },
-    short: { en: 'Delta Reign', de: 'Delta-Herrschaft (Delta Reign)', fr: 'Delta Reign', it: 'Delta Reign', es: 'Delta Reign', nl: 'Delta Reign' },
+    match: (n) => /delta[\s-]*reign|delta[\s-]*herrschaft|r[eè]gne\s*delta|dominio\s*delta|\bME\s?0?6\b/i.test(n),
+    slug: { en: 'where-to-buy-delta-reign', de: 'wo-kaufen-delta-reign-delta-herrschaft', fr: 'ou-acheter-regne-delta', it: 'dove-comprare-dominio-delta', es: 'donde-comprar-dominio-delta', nl: 'waar-kopen-delta-reign' },
+    old: { fr: 'ou-acheter-delta-reign', it: 'dove-comprare-delta-reign', es: 'donde-comprar-delta-reign' },
+    name: { en: 'Pokémon TCG Mega Evolution—Delta Reign', de: 'Pokémon Mega-Entwicklung: Delta-Herrschaft (ME06, Delta Reign)', fr: 'Pokémon Méga-Évolution Règne Delta (ME06, Delta Reign)', it: 'Pokémon Megaevoluzione Dominio Delta (ME06, Delta Reign)', es: 'Pokémon Megaevolución Dominio Delta (ME06, Delta Reign)', nl: 'Pokémon Mega Evolution Delta Reign (ME06)' },
+    short: { en: 'Delta Reign', de: 'Delta-Herrschaft (Delta Reign)', fr: 'Règne Delta', it: 'Dominio Delta', es: 'Dominio Delta', nl: 'Delta Reign' },
   },
 };
 const REL = { en: (d) => `English release: ${d}. Booster boxes, Elite Trainer Boxes and bundles appear here as soon as shops list them (pre-orders included).`,
@@ -35,8 +36,22 @@ const REL = { en: (d) => `English release: ${d}. Booster boxes, Elite Trainer Bo
   it: (d) => `Uscita in inglese: ${d}. Box, Set Allenatore Fuoriclasse e bundle compaiono qui appena i negozi li elencano (preordini inclusi).`,
   es: (d) => `Lanzamiento en inglés: ${d}. Cajas de sobres, Cajas de Entrenador Élite y bundles aparecen aquí en cuanto las tiendas los listan (preventas incluidas).`,
   nl: (d) => `Engelse release: ${d}. Booster boxes, Elite Trainer Boxes en bundels verschijnen hier zodra winkels ze tonen (pre-orders inbegrepen).` };
+// Key facts shown on the guide (sources: TCGplayer "Delta Reign Quick Facts", Pokébip, WikiDex). English dates; local editions may differ.
+const FACTS = {
+  'delta-reign': {
+    en: ['Key facts', ['Set: Mega Evolution—Delta Reign (ME06).', 'English release: November 6, 2026 (prereleases October 24 to November 5).', 'Headline card: Mega Rayquaza ex (Special Illustration Rare and Mega Hyper Rare).', 'Products: Booster Box, Elite Trainer Box (US MSRP $49.99), Pokémon Center Elite Trainer Box, Booster Bundle ($26.94), Build & Battle Box ($21.99), blisters.', 'Names: Delta-Herrschaft (German), Règne Delta (French), Dominio Delta (Italian, Spanish).']],
+    de: ['Das Wichtigste', ['Set: Mega-Entwicklung Delta-Herrschaft (ME06), englisch „Delta Reign“.', 'Englischer Release: 6. November 2026 (Prereleases 24. Oktober bis 5. November).', 'Topkarte: Mega-Rayquaza-ex (Special Illustration Rare und Mega Hyper Rare).', 'Produkte: Display, Top-Trainer-Box, Pokémon Center Top-Trainer-Box, Booster-Bundle, Build & Battle Box, Blister.']],
+    fr: ['L\'essentiel', ['Extension : Méga-Évolution Règne Delta (ME06), « Delta Reign » en anglais.', 'Sortie en anglais : 6 novembre 2026 (avant-premières du 24 octobre au 5 novembre).', 'Carte phare : Méga-Rayquaza-ex (Illustration Spéciale Rare et Méga Hyper Rare).', 'Produits : display, coffret Dresseur d\'Élite, coffret Dresseur d\'Élite Pokémon Center, booster bundle, coffret Build & Battle, blisters.']],
+    it: ['In breve', ['Espansione: Megaevoluzione Dominio Delta (ME06), in inglese “Delta Reign”.', 'Uscita in inglese: 6 novembre 2026 (prerelease dal 24 ottobre al 5 novembre).', 'Carta di punta: Mega Rayquaza-ex (Illustrazione Speciale Rara e Mega Iper Rara).', 'Prodotti: box di buste, Set Allenatore Fuoriclasse, Set Allenatore Fuoriclasse Pokémon Center, booster bundle, Build & Battle Box, blister.']],
+    es: ['Lo esencial', ['Expansión: Megaevolución Dominio Delta (ME06), en inglés “Delta Reign”.', 'Lanzamiento en inglés: 6 de noviembre de 2026 (presentaciones del 24 de octubre al 5 de noviembre).', 'Carta estrella: Mega-Rayquaza ex (Ilustración Especial Rara y Mega Hiper Rara).', 'Productos: caja de sobres, Caja de Entrenador Élite, Caja de Entrenador Élite Pokémon Center, booster bundle, Build & Battle Box, blísteres.']],
+    nl: ['Kort', ['Set: Mega Evolution—Delta Reign (ME06).', 'Engelse release: 6 november 2026 (prereleases 24 oktober t/m 5 november).', 'Topkaart: Mega Rayquaza ex (Special Illustration Rare en Mega Hyper Rare).', 'Producten: booster box, Elite Trainer Box, Pokémon Center Elite Trainer Box, booster bundle, Build & Battle Box, blisters.']],
+  },
+};
+const factsHtml = (id, lang) => { const f = FACTS[id]?.[lang] ?? FACTS[id]?.en; return f ? `<section><h2>${e(f[0])}</h2><ul>${f[1].map((x) => `<li>${e(x)}</li>`).join('')}</ul></section>` : ''; };
 export const guidePath = (cc, id) => `/${cc}/${GUIDES[id].slug[COUNTRIES[cc]?.lang] ?? GUIDES[id].slug.en}`;
 export const guideIdForSlug = (lang, slug) => Object.keys(GUIDES).find((id) => (GUIDES[id].slug[lang] ?? GUIDES[id].slug.en) === slug) ?? null;
+/** A slug we used before (renamed to the local set name): redirect. */
+export const guideOldSlug = (lang, slug) => Object.keys(GUIDES).find((id) => GUIDES[id].old?.[lang] === slug) ?? null;
 
 /** edition from the product name: which language the cards are printed in */
 const EDITION = [['de', /jahre|top[-\s]*trainer|\(de\)|deutsch/i], ['fr', /30\s*ans|coffret|\(fr\)|français|francais/i], ['it', /30\s*anni|allenatore|\(it\)|italian/i], ['es', /aniversario|entrenador|\(es\)|españ|espan/i], ['nl', /30\s*jaar|\(nl\)/i], ['ja', /japan|japon|\(jp\)|日本/i]];
@@ -117,7 +132,6 @@ export async function guidePage(env, cc, id) {
   const ts = now(); const w = T.f.when(ts); const C = countryIn(cc);
   const P = G.name[lang] ?? G.name.en; const PS = G.short[lang] ?? G.short.en;
   const { skus, rows } = await offers(env, cc, id);
-  if (!skus.length && !G.release) return null;
   const rel = G.release ? (REL[lang] ?? REL.en)(new Intl.DateTimeFormat(T.cc.locale, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(G.release))) : '';
   const money = (v) => (v ? T.f.money(v) : '—');
   const inRows = rows.filter((r) => r.in_stock);
@@ -137,11 +151,13 @@ export async function guidePage(env, cc, id) {
   const live = await d.liveCountries(env);
   const others = [...live].filter((c) => c !== cc && COUNTRIES[c] && c !== 'jp');
   const path = guidePath(cc, id);
+  const facts = factsHtml(id, lang);
   const body = `<div class="answer"><h1>${e(W.h1(P, C))}</h1><p class="asof">${e(W.upd(w))}</p><p class="lede">${e(lede)}</p>${rel ? `<p class="answer-line">${e(rel)}</p>` : ''}
     <p><a class="btn go" href="${e(alertHref)}" data-ev="sheet_open">🔔 ${e(freeMode(env) ? W.alert : W.alertPaid)}</a></p></div>
-  <section><div class="table-scroll"><table><thead><tr>${G.multi ? `<th>${e(W.prod)}</th>` : ''}${W.th.map((x) => `<th>${e(x)}</th>`).join('')}<th></th></tr></thead><tbody>
+  ${rows.length ? '' : '<!--'}<section><div class="table-scroll"><table><thead><tr>${G.multi ? `<th>${e(W.prod)}</th>` : ''}${W.th.map((x) => `<th>${e(x)}</th>`).join('')}<th></th></tr></thead><tbody>
   ${rows.slice(0, 60).map((r) => `<tr>${G.multi ? `<td><a href="/${cc}/${e(r.slug)}">${e(r.product)}</a></td>` : ''}<td><a href="/${cc}/${e(r.slug)}">${e(shopName(r.shop))}</a></td><td>${e(W.ed[r.edition])}</td><td>${e(money(r.price))}</td><td>${r.in_stock ? `<span class="tag in">✓ ${e(W.in)}</span>` : `<span class="tag out">${e(W.out)}</span>`}</td><td>${r.url ? `<a class="btn small ${r.in_stock ? 'go' : 'dark'}" href="${e(r.url)}" rel="nofollow noopener sponsored" target="_blank" data-ev="buy" data-sku="${e(r.slug)}">${e(W.buy)} ↗</a>` : ''}</td></tr>`).join('')}
-  </tbody></table></div></section>
+  </tbody></table></div></section>${rows.length ? '' : '-->'}
+  ${facts}
   ${a.html}
   ${others.length ? `<section><h2>${e(W.other)}</h2><p class="quick-links">${others.map((c) => `<a href="${guidePath(c, id)}">${e(countryIn(c))}</a>`).join('')}<a href="/${G.slug.en}">${e(W.all)}</a></p></section>` : ''}`;
   const ld = { '@context': 'https://schema.org', '@type': 'Product', name: P, ...(skus.find((k) => k.image) ? { image: skus.find((k) => k.image).image } : {}),
@@ -168,7 +184,8 @@ export async function guideOverview(env, id) {
   const body = `<div class="answer"><h1>${e(`Where to buy the ${P}`)}</h1><p class="asof">${e(W.upd(w))}</p><p class="lede">${e(lede)}</p></div>
   <section><div class="table-scroll"><table><thead><tr><th>Country</th><th>Shops with stock</th><th>Cheapest in stock</th></tr></thead><tbody>
   ${per.map((p) => `<tr><td><a href="${guidePath(p.cc, id)}">${e(new Intl.DisplayNames(['en'], { type: 'region' }).of(p.cc === 'uk' ? 'GB' : p.cc.toUpperCase()))}</a></td><td>${p.inShops} / ${p.shops}</td><td>${e(p.cheap)}</td></tr>`).join('')}
-  </tbody></table></div></section>`;
+  </tbody></table></div></section>${G.release ? `<p class="answer-line">${e(REL.en(new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(G.release))))}</p>` : ''}${factsHtml(id, 'en')}
+  <section><h2>By country</h2><p class="quick-links">${live.map((c) => `<a href="${guidePath(c, id)}">${e(new Intl.DisplayNames(['en'], { type: 'region' }).of(c === 'uk' ? 'GB' : c.toUpperCase()))}</a>`).join('')}</p></section>`;
   return page(env, T, { title: `Where to buy the ${P} (${T.f.date(ts)}) | ${env.BRAND_NAME}`, description: lede, path: `/${G.slug.en}`, body,
     alternates: Object.fromEntries(per.map((p) => [p.cc, guidePath(p.cc, id)])) });
 }

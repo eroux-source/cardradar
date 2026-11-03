@@ -16,7 +16,7 @@ const DISCOVERY_EVERY = 6 * 3600e3;
 //   just restocked → every 10 min until sold out (restock watch below), to time the sell-out
 export const SHOP_EVERY = { in: 24 * 3600e3, out: 3600e3, test: 10 * 60e3, watch: 10 * 60e3, hotOut: 10 * 60e3, hotIn: 3600e3 };
 // Hot products (the new expansion and the 30th Celebration ETB): sold out → every 10 min, in stock → every hour
-const HOT_SQL = `l.title LIKE '%delta%reign%' OR l.title LIKE '%delta%herrschaft%' OR l.title LIKE '%ME06%'
+const HOT_SQL = `l.title LIKE '%delta%reign%' OR l.title LIKE '%delta%herrschaft%' OR l.title LIKE '%gne delta%' OR l.title LIKE '%dominio delta%' OR l.title LIKE '%ME06%'
   OR ((l.title LIKE '%30th%' OR l.title LIKE '%30 jahre%' OR l.title LIKE '%30 ans%' OR l.title LIKE '%30 anni%' OR l.title LIKE '%30 aniversario%') AND (l.title LIKE '%elite trainer%' OR l.title LIKE '%top%trainer%' OR l.title LIKE '%ETB%' OR l.title LIKE '%dresseur%'))`;
 export const isTestLane = (listingId) => listingId % 10 === 0;
 

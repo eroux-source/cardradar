@@ -107,7 +107,7 @@ ${lines.join('\n')}
 - Live data, updated hourly (what is in stock, what is sold out everywhere, how long restocks last): ${env.BASE_URL}/pokemon-restock-data
 - Same data per country, in the country's language: ${[...live].filter((c) => c !== 'jp' && c !== 'us' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${dataPath(c)}`).join(' , ')}
 - Where to buy the Pokémon 30th Celebration Elite Trainer Box (Top-Trainer-Box 30 Jahre, Coffret Dresseur d'Élite 30 ans…): today's shops, prices and editions, per country: ${env.BASE_URL}/${GUIDES['30th-etb'].slug.en} , ${[...live].filter((c) => c !== 'jp' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${guidePath(c, '30th-etb')}`).join(' , ')}
-- Mega Evolution—Delta Reign (English release November 6, 2026): where to buy booster boxes, ETBs and bundles, per country: ${env.BASE_URL}/${GUIDES['delta-reign'].slug.en} , ${[...live].filter((c) => c !== 'jp' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${guidePath(c, 'delta-reign')}`).join(' , ')}
+- Mega Evolution—Delta Reign (ME06; German Delta-Herrschaft, French Règne Delta, Italian/Spanish Dominio Delta; English release November 6, 2026; headline card Mega Rayquaza ex): where to buy booster boxes, ETBs and bundles, per country: ${env.BASE_URL}/${GUIDES['delta-reign'].slug.en} , ${[...live].filter((c) => c !== 'jp' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${guidePath(c, 'delta-reign')}`).join(' , ')}
 - Pokémon 30th Celebration: where each product is in stock, per country: ${[...live].filter((c) => c !== 'jp' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${thirtyPath(c)}`).join(' , ')}
 - Press data: ${env.BASE_URL}/press
 - How the data is collected: ${env.BASE_URL}/how-it-works

@@ -7,12 +7,12 @@
 import { sourceJson } from '../lib/net.js';
 
 const Q = {
-  en: ['pokemon delta reign', 'pokemon elite trainer box', 'pokemon booster box', 'pokemon booster bundle', 'pokemon tin', 'pokemon collection box', 'pokemon booster pack'],
-  de: ['pokemon delta-herrschaft', 'pokemon top trainer box', 'pokemon display', 'pokemon booster bundle', 'pokemon tin box', 'pokemon kollektion', 'pokemon elite trainer box'],
-  fr: ['pokemon delta reign', 'pokemon coffret dresseur elite', 'pokemon display', 'pokemon booster', 'pokemon pokebox', 'pokemon coffret', 'pokemon elite trainer box'],
-  nl: ['pokemon delta reign', 'pokemon elite trainer box', 'pokemon booster box', 'pokemon booster bundle', 'pokemon tin', 'pokemon collection', 'pokemon display'],
-  it: ['pokemon delta reign', 'pokemon set allenatore fuoriclasse', 'pokemon box buste', 'pokemon booster bundle', 'pokemon tin', 'pokemon collezione', 'pokemon elite trainer box'],
-  es: ['pokemon delta reign', 'pokemon caja entrenador elite', 'pokemon caja de sobres', 'pokemon booster bundle', 'pokemon lata', 'pokemon coleccion', 'pokemon elite trainer box'],
+  en: ['pokemon delta reign', 'pokemon 30th celebration', 'pokemon elite trainer box', 'pokemon booster box', 'pokemon booster bundle', 'pokemon tin', 'pokemon collection box', 'pokemon booster pack'],
+  de: ['pokemon delta-herrschaft', 'pokemon 30 jahre', 'pokemon top trainer box', 'pokemon display', 'pokemon booster bundle', 'pokemon tin box', 'pokemon kollektion', 'pokemon elite trainer box'],
+  fr: ['pokemon regne delta', 'pokemon 30 ans', 'pokemon coffret dresseur elite', 'pokemon display', 'pokemon booster', 'pokemon pokebox', 'pokemon coffret', 'pokemon elite trainer box'],
+  nl: ['pokemon delta reign', 'pokemon 30th celebration', 'pokemon elite trainer box', 'pokemon booster box', 'pokemon booster bundle', 'pokemon tin', 'pokemon collection', 'pokemon display'],
+  it: ['pokemon dominio delta', 'pokemon 30 anni', 'pokemon set allenatore fuoriclasse', 'pokemon box buste', 'pokemon booster bundle', 'pokemon tin', 'pokemon collezione', 'pokemon elite trainer box'],
+  es: ['pokemon dominio delta', 'pokemon 30 aniversario', 'pokemon caja entrenador elite', 'pokemon caja de sobres', 'pokemon booster bundle', 'pokemon lata', 'pokemon coleccion', 'pokemon elite trainer box'],
   ja: ['ポケモンカード BOX', 'ポケモンカード 拡張パック', 'ポケモンカード ハイクラスパック', 'pokemon card box japanese'],
 };
 

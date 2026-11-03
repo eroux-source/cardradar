@@ -1,5 +1,5 @@
 // Worker entry: HTTP routes, the minute cron, and the four queue consumers.
-import { GUIDES, guideIdForSlug, guidePage, guideOverview, guidePath } from './web/pages/where_buy.js';
+import { GUIDES, guideIdForSlug, guideOldSlug, guidePage, guideOverview, guidePath } from './web/pages/where_buy.js';
 import { now, run, one } from './lib/db.js';
 import { currentUser } from './auth/session.js';
 import { googleStart, googleCallback } from './auth/google.js';
@@ -173,6 +173,8 @@ async function route(req, env, ctx) {
     if (seg.length === 2 && seg[1] === (THIRTY_SLUG[lang] ?? THIRTY_SLUG.en)) return (await thirtyPage(env, cc)) ?? notFound(env, cc);
     const gid = seg.length === 2 ? guideIdForSlug(lang, seg[1]) : null;
     if (gid) return (await guidePage(env, cc, gid)) ?? notFound(env, cc);
+    const oid = seg.length === 2 ? guideOldSlug(lang, seg[1]) : null;
+    if (oid) return Response.redirect(`${env.BASE_URL}${guidePath(cc, oid)}`, 301);
     let res = null;
     if (seg[1] === 'restocks') res = seg[2] ? await pub.cityRestocks(env, cc, seg[2]) : await pub.allRestocks(env, cc);
     else if (seg[1] === 'cities' && seg.length === 2) res = await pub.cities(env, cc);
