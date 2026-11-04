@@ -54,7 +54,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
     .map((l) => ({ source: l.source, online: 1, url: l.url, in_stock: 0, seen_at: null }));
   const places = [...rows, ...pending];
   const inNow = rows.filter((r) => r.in_stock);
-  const hasStores = sourcesOf(cc).some((s) => s.kind === 'stores');
+  const hasStores = await d.hasStoreData(env, cc); // only when we really read physical stores here
   const shops = shopsText(T, cc);
   const lastCheck = rows.reduce((m, r) => Math.max(m, r.seen_at ?? 0), 0);
   const alertHref = `/alerts?${new URLSearchParams({ c: cc, sku: k.slug, ...(metro ? { metro: metro.slug } : {}) })}`;

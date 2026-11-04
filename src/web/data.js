@@ -153,3 +153,6 @@ async function popularityQ(env, cc) {
 
 /** The 8 latest restocks of a country (shown on every product page), shared for a minute. */
 export const latestRestocks = (env, cc) => memo(`latest:${cc}`, 60e3, () => restocks(env, cc, '1=1', [], 30, 8));
+
+/** Do we read any physical store in this country? (city and store pages only make sense then) */
+export const hasStoreData = (env, cc) => memo(`stores:${cc}`, 600e3, async () => !!(await one(env, 'SELECT 1 AS x FROM stock k JOIN stores s ON s.id = k.store_id WHERE s.online = 0 AND s.country = ? LIMIT 1', cc)));

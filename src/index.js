@@ -1,4 +1,5 @@
 // Worker entry: HTTP routes, the minute cron, and the four queue consumers.
+import { hasStoreData } from './web/data.js';
 import { GUIDES, guideIdForSlug, guideOldSlug, guidePage, guideOverview, guidePath } from './web/pages/where_buy.js';
 import { now, run, one } from './lib/db.js';
 import { currentUser } from './auth/session.js';
@@ -180,6 +181,11 @@ async function route(req, env, ctx) {
     if (gid) return (await guidePage(env, cc, gid)) ?? notFound(env, cc);
     const oid = seg.length === 2 ? guideOldSlug(lang, seg[1]) : null;
     if (oid) return Response.redirect(`${env.BASE_URL}${guidePath(cc, oid)}`, 301);
+    // no physical store read in this country: city / store pages would be empty, send people to the live pages
+    if ((seg[1] === 'cities' || seg[1] === 'store' || (seg[1] === 'restocks' && seg[2]) || (seg.length === 3 && seg[2] !== 'restocks' && !['retailer', 'store', 'restocks'].includes(seg[1]))) && !(await hasStoreData(env, cc))) {
+      const to = seg[1] === 'restocks' ? `/${cc}/restocks` : seg.length === 3 && !['cities', 'store'].includes(seg[1]) ? `/${cc}/${seg[1]}` : `/${cc}`;
+      return Response.redirect(`${env.BASE_URL}${to}`, 301);
+    }
     let res = null;
     if (seg[1] === 'restocks') res = seg[2] ? await pub.cityRestocks(env, cc, seg[2]) : await pub.allRestocks(env, cc);
     else if (seg[1] === 'cities' && seg.length === 2) res = await pub.cities(env, cc);
