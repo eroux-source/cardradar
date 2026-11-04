@@ -178,3 +178,31 @@ export async function ownerUsers(env) {
   </tbody></table>`;
   return shell('Comptes', body, '');
 }
+
+/** Where we send traffic: every outbound click, by shop, product and country. */
+export async function ownerClicks(env, days = 30) {
+  const since = now() - days * 864e5;
+  const q = (sql) => all(env, sql, since).catch(() => []);
+  const shops = await q(`SELECT json_extract(props, '$.host') AS host, COUNT(*) AS n, COUNT(DISTINCT visit) AS v,
+      SUM(json_extract(props, '$.kind') = 'buy') AS buy, SUM(json_extract(props, '$.kind') = 'buy_out') AS cmp, MAX(at) AS last
+    FROM events WHERE name = 'out' AND bot = 0 AND at > ? GROUP BY host ORDER BY n DESC LIMIT 200`);
+  const prods = await q(`SELECT json_extract(props, '$.sku') AS sku, COUNT(*) AS n, COUNT(DISTINCT json_extract(props, '$.host')) AS hosts,
+      GROUP_CONCAT(DISTINCT json_extract(props, '$.host')) AS list FROM events WHERE name = 'out' AND bot = 0 AND at > ? GROUP BY sku ORDER BY n DESC LIMIT 60`);
+  const ccs = await q(`SELECT COALESCE(NULLIF(json_extract(props, '$.cc'), ''), country) AS cc, COUNT(*) AS n, COUNT(DISTINCT visit) AS v FROM events WHERE name = 'out' AND bot = 0 AND at > ? GROUP BY cc ORDER BY n DESC`);
+  const pages = await q(`SELECT json_extract(props, '$.page') AS page, COUNT(*) AS n FROM events WHERE name = 'out' AND bot = 0 AND at > ? GROUP BY page ORDER BY n DESC LIMIT 30`);
+  const days7 = await q(`SELECT date(at / 1000, 'unixepoch') AS d, COUNT(*) AS n, COUNT(DISTINCT visit) AS v FROM events WHERE name = 'out' AND bot = 0 AND at > ? GROUP BY d ORDER BY d DESC`);
+  const old = await q(`SELECT json_extract(props, '$.shop') AS shop, COUNT(*) AS n FROM events WHERE name IN ('buy', 'buy_out') AND bot = 0 AND at > ? GROUP BY shop ORDER BY n DESC LIMIT 60`);
+  const total = shops.reduce((t, r) => t + r.n, 0);
+  const d = (ts) => (ts ? new Date(ts).toISOString().slice(0, 16).replace('T', ' ') : '');
+  const pct = (n) => (total ? `${Math.round((n / total) * 100)} %` : '');
+  const tbl = (head, rows) => `<table><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('') || `<tr><td colspan="${head.length}">Rien pour l'instant</td></tr>`}</tbody></table>`;
+  const body = `<h1>Trafic envoyé aux boutiques (${days} j)</h1>
+  <p>${total} clics sortants · <a href="?days=1">24 h</a> · <a href="?days=7">7 j</a> · <a href="?days=30">30 j</a> · <a href="?days=365">tout</a>. Chaque clic vers un autre site est compté (clic normal, clic molette, nouvel onglet).</p>
+  <h2>Par boutique</h2>${tbl(['Site', 'Clics', 'Part', 'Visiteurs', 'Boutons « acheter »', 'Liens comparer (Amazon, eBay…)', 'Dernier clic'], shops.map((r) => `<tr><td>${e(r.host)}</td><td>${r.n}</td><td>${pct(r.n)}</td><td>${r.v}</td><td>${r.buy ?? 0}</td><td>${r.cmp ?? 0}</td><td>${e(d(r.last))}</td></tr>`))}
+  <h2>Par produit</h2>${tbl(['Produit', 'Clics', 'Sites', 'Vers'], prods.map((r) => `<tr><td>${e(r.sku || '(page générale)')}</td><td>${r.n}</td><td>${r.hosts}</td><td>${e(String(r.list ?? '').split(',').slice(0, 6).join(', '))}</td></tr>`))}
+  <h2>Par pays</h2>${tbl(['Pays', 'Clics', 'Visiteurs'], ccs.map((r) => `<tr><td>${e(r.cc ?? '?')}</td><td>${r.n}</td><td>${r.v}</td></tr>`))}
+  <h2>Pages qui envoient le plus</h2>${tbl(['Page', 'Clics'], pages.map((r) => `<tr><td>${e(r.page ?? '')}</td><td>${r.n}</td></tr>`))}
+  <h2>Par jour</h2>${tbl(['Jour', 'Clics', 'Visiteurs'], days7.map((r) => `<tr><td>${e(r.d)}</td><td>${r.n}</td><td>${r.v}</td></tr>`))}
+  <h2>Avant le suivi complet (boutons « acheter » seulement)</h2>${tbl(['Boutique', 'Clics'], old.map((r) => `<tr><td>${e(r.shop ?? '?')}</td><td>${r.n}</td></tr>`))}`;
+  return shell('Clics boutiques', body, '');
+}

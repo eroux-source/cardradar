@@ -15,7 +15,7 @@ import { alertsPage, signinPage, accountPage } from './web/pages/funnel.js';
 import { sitemap, robots, llms } from './seo/sitemap.js';
 import { restockData } from './web/pages/data_page.js';
 import { countryData, thirtyPage, DATA_SLUG, THIRTY_SLUG } from './web/pages/local_data.js';
-import { ownerAllowed, monitor, marketing, ownerSettings, bakeoff , ownerSignedIn, ownerUsers } from './owner/index.js';
+import { ownerAllowed, monitor, marketing, ownerSettings, bakeoff , ownerSignedIn, ownerUsers, ownerClicks } from './owner/index.js';
 import { jpHome, jpSet, jpShop } from './web/pages/lottery.js';
 import { bestTrackers, versus, howItWorks } from './web/pages/compare.js';
 import { lineWebhook } from './alerts/channels/line.js';
@@ -76,6 +76,9 @@ async function route(req, env, ctx) {
       sources_7d: (await env.DB.prepare("SELECT COALESCE(NULLIF(source, ''), 'direct') AS s, COUNT(DISTINCT visit) AS v FROM events WHERE name = 'view' AND bot = 0 AND at > ? GROUP BY s ORDER BY v DESC LIMIT 12").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.s} ${r.v}`),
       devices_7d: (await env.DB.prepare("SELECT device, COUNT(DISTINCT visit) AS v FROM events WHERE name = 'view' AND bot = 0 AND at > ? GROUP BY device").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.device} ${r.v}`),
       countries_7d: (await env.DB.prepare("SELECT COALESCE(country, '?') AS c, COUNT(DISTINCT visit) AS v FROM events WHERE name = 'view' AND bot = 0 AND at > ? GROUP BY c ORDER BY v DESC LIMIT 25").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.c} ${r.v}`),
+      out_shops_7d: (await env.DB.prepare("SELECT json_extract(props, '$.host') AS host, COUNT(*) AS n, COUNT(DISTINCT visit) AS v FROM events WHERE name = 'out' AND bot = 0 AND at > ? GROUP BY host ORDER BY n DESC LIMIT 40").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.host} ${r.n} (${r.v} visitors)`),
+      out_products_7d: (await env.DB.prepare("SELECT json_extract(props, '$.sku') AS sku, json_extract(props, '$.host') AS host, COUNT(*) AS n FROM events WHERE name = 'out' AND bot = 0 AND at > ? GROUP BY sku, host ORDER BY n DESC LIMIT 25").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.sku} → ${r.host} ${r.n}`),
+      out_countries_7d: (await env.DB.prepare("SELECT COALESCE(json_extract(props, '$.cc'), country) AS cc, COUNT(*) AS n FROM events WHERE name = 'out' AND bot = 0 AND at > ? GROUP BY cc ORDER BY n DESC").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.cc} ${r.n}`),
       clicks_7d: (await env.DB.prepare("SELECT name, json_extract(props, '$.shop') AS shop, COUNT(*) AS n FROM events WHERE name IN ('buy', 'buy_out') AND bot = 0 AND at > ? GROUP BY name, shop ORDER BY n DESC LIMIT 20").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.name} ${r.shop} ${r.n}`),
       relaunch: (await env.DB.prepare("SELECT value FROM settings WHERE key = 'relaunch.2026-11-03'").first())?.value ?? null,
       email: { postmark: !!env.POSTMARK_TOKEN, resend: !!env.RESEND_API_KEY, google_signin: !!env.GOOGLE_CLIENT_ID, outbox: (await env.DB.prepare("SELECT kind, COUNT(*) AS n, SUM(sent_at IS NOT NULL) AS sent, SUM(attempts >= 5) AS failed, MAX(last_error) AS err FROM email_outbox WHERE id > (SELECT COALESCE(MAX(id), 0) - 200 FROM email_outbox) GROUP BY kind").all()).results },
@@ -113,6 +116,7 @@ async function route(req, env, ctx) {
   if (p.startsWith('/owner')) {
     if (!ownerAllowed(env, req, url) && !(await ownerSignedIn(env, req))) return new Response('Accès réservé. Connecte-toi sur le site avec ton e-mail propriétaire.', { status: 403 });
     if (p === '/owner/users') return ownerUsers(env);
+    if (p === '/owner/clicks') return ownerClicks(env, Number(url.searchParams.get('days')) || 30);
     if (p === '/owner/monitor') return monitor(env, url);
     if (p === '/owner/marketing') return marketing(env, url);
     if (p === '/owner/bakeoff') return bakeoff(env, url);

@@ -15,6 +15,17 @@
   if (!source && standalone) source = 'homescreen';
   const ev = (n, x) => { try { if (n !== 'view' && window.gtag) window.gtag('event', n, x && typeof x === 'object' ? x : {}); } catch {} try { navigator.sendBeacon('/api/e', new Blob([JSON.stringify({ n, v: visit, p: location.pathname, s: source, x })], { type: 'application/json' })); } catch {} };
   ev('view');
+  // every click that leaves the site (left, middle or ctrl-click): which shop, which product, from which page
+  const outbound = (e) => {
+    const a = e.target.closest('a[href]'); if (!a) return;
+    let u; try { u = new URL(a.href, location.href); } catch { return; }
+    if (!/^https?:$/.test(u.protocol) || u.hostname === location.hostname) return;
+    const host = u.hostname.replace(/^www\./, '');
+    const seg = location.pathname.split('/').filter(Boolean);
+    ev('out', { host, shop: a.dataset.shop || host, sku: a.dataset.sku || (seg.length === 2 ? seg[1] : ''), kind: a.dataset.ev || 'link', page: location.pathname, cc: document.body.dataset.cc || '' });
+  };
+  document.addEventListener('click', outbound, true);
+  document.addEventListener('auxclick', (e) => { if (e.button === 1) outbound(e); }, true);
   document.addEventListener('click', (e) => { const a = e.target.closest('[data-ev]'); if (!a) return; const { ev: n, ...x } = a.dataset; ev(n, Object.keys(x).length ? { ...x, page: location.pathname } : undefined); });
 
   const post = async (url, body) => {
