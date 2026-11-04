@@ -4,8 +4,17 @@
 
 export const now = () => Date.now();
 
-export const one = (env, sql, ...args) => env.DB.prepare(sql).bind(...args).first();
-export const all = async (env, sql, ...args) => (await env.DB.prepare(sql).bind(...args).all()).results ?? [];
+// D1 sometimes answers "overloaded" / "CPU time limit … reset" under bursts: wait and try once more (reads only).
+const BUSY = /overloaded|CPU time limit|was reset|Network connection lost|storage operation exceeded/i;
+async function retry(fn) {
+  try { return await fn(); } catch (e) {
+    if (!BUSY.test(String(e?.message ?? e))) throw e;
+    await new Promise((r) => setTimeout(r, 250 + Math.random() * 500));
+    return fn();
+  }
+}
+export const one = (env, sql, ...args) => retry(() => env.DB.prepare(sql).bind(...args).first());
+export const all = async (env, sql, ...args) => (await retry(() => env.DB.prepare(sql).bind(...args).all())).results ?? [];
 export const run = (env, sql, ...args) => env.DB.prepare(sql).bind(...args).run();
 export const stmt = (env, sql, ...args) => env.DB.prepare(sql).bind(...args);
 export const batch = (env, statements) => (statements.length ? env.DB.batch(statements) : []);

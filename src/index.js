@@ -197,6 +197,10 @@ async function route(req, env, ctx) {
   return notFound(env);
 }
 
+async function logErr(env, ctx, path, e, note = '') {
+  try { await env.DB.prepare("INSERT INTO settings (key, value, updated_at) VALUES ('last_500', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at").bind(`${note ? `[${note}] ` : ''}${path} ${String(e?.stack ?? e).slice(0, 600)}`, Date.now()).run(); } catch {}
+}
+
 export default {
   async fetch(req, env, ctx) {
     setEnv(env);
@@ -210,19 +214,28 @@ export default {
         const key = new Request(`${u.origin}${u.pathname}`);
         const hit = await caches.default.match(key);
         if (hit) return hit;
-        const res = await route(req, env, ctx);
+        // a day-old copy is kept too: if the database is busy, visitors get that instead of an error
+        const staleKey = new Request(`${u.origin}/__stale${u.pathname}`);
+        let res;
+        try { res = await route(req, env, ctx); } catch (err) {
+          const old = await caches.default.match(staleKey);
+          if (old) { logErr(env, ctx, u.pathname, err, 'served stale'); return old; }
+          throw err;
+        }
         if (res.status === 200 && /text\/html|xml|text\/plain/.test(res.headers.get('content-type') ?? '')) {
           const copy = new Response(res.clone().body, res);
           copy.headers.set('cache-control', 'public, max-age=60, s-maxage=600');
-          ctx.waitUntil(caches.default.put(key, copy));
+          const stale = new Response(res.clone().body, res);
+          stale.headers.set('cache-control', 'public, s-maxage=86400');
+          ctx.waitUntil(Promise.all([caches.default.put(key, copy), caches.default.put(staleKey, stale)]));
         }
         return res;
       }
       return await route(req, env, ctx);
     } catch (e) {
       console.error(e);
-      try { await env.DB.prepare("INSERT INTO settings (key, value, updated_at) VALUES ('last_500', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at").bind(`${new URL(req.url).pathname} ${String(e?.stack ?? e).slice(0, 600)}`, Date.now()).run(); } catch {}
-      return new Response('Something went wrong on our side. Try again in a minute.', { status: 500 });
+      await logErr(env, ctx, new URL(req.url).pathname, e);
+      return new Response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta http-equiv="refresh" content="5"><title>One moment</title><p style="font:16px system-ui;padding:2rem">Busy for a moment, this page reloads by itself in 5 seconds.</p>', { status: 503, headers: { 'content-type': 'text/html; charset=utf-8', 'retry-after': '5' } });
     }
   },
 

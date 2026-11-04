@@ -150,3 +150,6 @@ async function popularityQ(env, cc) {
   }
   return score;
 }
+
+/** The 8 latest restocks of a country (shown on every product page), shared for a minute. */
+export const latestRestocks = (env, cc) => memo(`latest:${cc}`, 60e3, () => restocks(env, cc, '1=1', [], 30, 8));

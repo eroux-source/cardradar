@@ -40,7 +40,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
     d.restocks(env, cc, metro ? 'r.sku_id = ? AND (s.online = 1 OR s.metro = ?)' : 'r.sku_id = ?', metro ? [k.id, metro.id] : [k.id]),
     d.listingsOf(env, k.id, cc),
     d.allSkus(env, cc),
-    d.restocks(env, cc, '1=1', [], 30, 8),
+    d.latestRestocks(env, cc),
     d.popularity(env, cc),
   ]);
   // other products: only ones we have read, most wanted first
