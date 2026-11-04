@@ -124,7 +124,7 @@ async function offers(env, cc, id) {
   if (!skus.length) return { skus, rows: [] };
   const rows = await all(env, `SELECT l.sku_id, k.name AS product, k.slug, s.name AS shop, x.in_stock, COALESCE(x.price, l.price) AS price, l.url, x.seen_at
     FROM stock x JOIN listings l ON l.id = x.listing_id AND l.active = 1 JOIN stores s ON s.id = x.store_id JOIN skus k ON k.id = l.sku_id
-    WHERE s.country = ? AND l.sku_id IN (${skus.map(() => '?').join(',')}) ORDER BY x.in_stock DESC, price`, cc, ...skus.map((k) => k.id));
+    WHERE s.country = ? AND l.sku_id IN (${skus.map((k) => Number(k.id)).join(',')}) ORDER BY x.in_stock DESC, price`, cc);
   return { skus, rows: rows.map((r) => ({ ...r, edition: editionOf(r.product) })) };
 }
 
@@ -141,7 +141,7 @@ export async function guidePage(env, cc, id) {
   const cheap = inRows.filter((r) => r.price).sort((a, b) => a.price - b.price)[0];
   const lede = inRows.length ? W.yes(w, PS, new Set(inRows.map((r) => r.shop)).size, list, cheap ? `${shopName(cheap.shop)}, ${money(cheap.price)}` : '—') : shopsN ? W.no(w, PS, shopsN) : W.none(PS);
   const prices = inRows.map((r) => r.price).filter(Boolean).sort((a, b) => a - b);
-  const durs = skus.length ? (await all(env, `SELECT r.ended_at - r.started_at AS d FROM restocks r JOIN stores s ON s.id = r.store_id WHERE s.country = ? AND r.ended_at IS NOT NULL AND r.sku_id IN (${skus.map(() => '?').join(',')}) ORDER BY d`, cc, ...skus.map((k) => k.id))).map((r) => r.d) : [];
+  const durs = skus.length ? (await all(env, `SELECT r.ended_at - r.started_at AS d FROM restocks r JOIN stores s ON s.id = r.store_id WHERE s.country = ? AND r.ended_at IS NOT NULL AND r.sku_id IN (${skus.map((k) => Number(k.id)).join(',')}) ORDER BY d`, cc)).map((r) => r.d) : [];
   const med = durs.length ? T.f.dur(durs[Math.floor(durs.length / 2)]) : null;
   const a = answers([
     { q: W.q1(PS, C), a: lede },
@@ -173,9 +173,14 @@ export async function guidePage(env, cc, id) {
 export async function guideOverview(env, id) {
   const G = GUIDES[id]; const T = t('us'); const W = L.en; const ts = now(); const w = T.f.when(ts);
   const live = [...(await d.liveCountries(env))].filter((c) => COUNTRIES[c] && c !== 'jp');
+  // one query for every country (the per-country version took ~2 s)
+  const ids = (await all(env, 'SELECT id, name, type FROM skus WHERE active = 1')).filter((k) => sealed(k) && G.match(k.name)).map((k) => k.id);
+  const allRows = ids.length ? await all(env, `SELECT s.country, s.name AS shop, x.in_stock, COALESCE(x.price, l.price) AS price
+    FROM stock x JOIN listings l ON l.id = x.listing_id AND l.active = 1 JOIN stores s ON s.id = x.store_id
+    WHERE l.sku_id IN (${ids.map(Number).join(',')})`) : [];
   const per = [];
   for (const cc of live) {
-    const { rows } = await offers(env, cc, id);
+    const rows = allRows.filter((r) => r.country === cc);
     if (!rows.length) continue;
     const Tc = t(cc); const inRows = rows.filter((r) => r.in_stock);
     const cheap = inRows.filter((r) => r.price).sort((a, b) => a.price - b.price)[0];

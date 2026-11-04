@@ -195,7 +195,7 @@ export async function thirtyPage(env, cc) {
   if (!skus.length) return null;
   const ids = skus.map((k) => k.id);
   const rows = await all(env, `SELECT l.sku_id, s.name, MIN(l.price) AS price FROM stock x JOIN listings l ON l.id = x.listing_id JOIN stores s ON s.id = x.store_id
-    WHERE x.in_stock = 1 AND s.country = ? AND l.sku_id IN (${ids.map(() => '?').join(',')}) GROUP BY l.sku_id, s.name ORDER BY price`, cc, ...ids);
+    WHERE x.in_stock = 1 AND s.country = ? AND l.sku_id IN (${ids.map(Number).join(',') || 0}) GROUP BY l.sku_id, s.name ORDER BY price`, cc);
   const where = (id) => rows.filter((r) => r.sku_id === id);
   const money = (v) => (v ? T.f.money(v) : '—');
   skus.sort((a, b) => b.places_in - a.places_in || a.name.localeCompare(b.name));
