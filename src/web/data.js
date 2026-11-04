@@ -66,8 +66,18 @@ export const storeStock = (env, storeId) => all(env, `
   FROM stock st JOIN listings l ON l.id = st.listing_id JOIN skus k2 ON k2.id = l.sku_id
   WHERE st.store_id = ? ORDER BY st.in_stock DESC, last_restock DESC NULLS LAST, k2.name`, storeId);
 
+// Small per-isolate memo: the same heavy query is reused by every page for a short while (D1 CPU limit).
+const MEMO = new Map();
+const memo = (key, ttl, fn) => {
+  const hit = MEMO.get(key); const t = Date.now();
+  if (hit && t - hit.t < ttl) return hit.p;
+  const p = fn().catch((err) => { MEMO.delete(key); throw err; });
+  MEMO.set(key, { t, p }); if (MEMO.size > 200) MEMO.delete(MEMO.keys().next().value);
+  return p;
+};
+
 /** Every product sold in a country, hardest to find first, with its photo. */
-export const allSkus = (env, cc) => all(env, `
+export const allSkus = (env, cc) => memo(`skus:${cc}`, 60e3, () => all(env, `
   WITH agg AS (
     SELECT l.sku_id, SUM(s.online = 0) AS stores, SUM(s.online = 0 AND x.in_stock = 1) AS stores_in,
       GROUP_CONCAT(DISTINCT CASE WHEN s.online = 1 AND x.in_stock = 1 THEN s.source END) AS online_in,
@@ -80,7 +90,7 @@ export const allSkus = (env, cc) => all(env, `
     li.min_price, COALESCE(a.places, 0) AS places, COALESCE(a.places_in, 0) AS places_in, a.price_in
   FROM li JOIN skus k ON k.id = li.sku_id AND k.active = 1 LEFT JOIN sets st ON st.id = k.set_id
     LEFT JOIN agg a ON a.sku_id = k.id LEFT JOIN rs ON rs.sku_id = k.id
-  ORDER BY (COALESCE(a.stores_in, 0) * 1.0 / MAX(COALESCE(a.stores, 0), 1)) + (a.online_in IS NOT NULL) ASC, rs.last_restock DESC NULLS LAST, k.name`, cc);
+  ORDER BY (COALESCE(a.stores_in, 0) * 1.0 / MAX(COALESCE(a.stores, 0), 1)) + (a.online_in IS NOT NULL) ASC, rs.last_restock DESC NULLS LAST, k.name`, cc));
 
 export const storesInMetro = (env, metro) => all(env, `
   SELECT s.*, (SELECT COUNT(*) FROM stock k WHERE k.store_id = s.id AND k.in_stock = 1) AS in_count,
@@ -119,16 +129,17 @@ export const lotteries = (env, where = '1=1', args = [], limit = 200) => all(env
   ORDER BY (opens_at IS NOT NULL AND opens_at > ?) ASC, closes_at IS NULL, closes_at ASC LIMIT ${limit}`, now() - 3 * DAY, now(), ...args);
 
 /** Countries that have at least one product listed (the others are "coming soon"). */
-export const liveCountries = async (env) => new Set((await all(env, 'SELECT DISTINCT country FROM listings WHERE active = 1')).map((r) => r.country)
-  .concat((await all(env, "SELECT 'jp' AS country FROM lotteries LIMIT 1")).map((r) => r.country)));
+export const liveCountries = (env) => memo('live', 300e3, async () => new Set((await all(env, 'SELECT DISTINCT country FROM listings WHERE active = 1')).map((r) => r.country)
+  .concat((await all(env, "SELECT 'jp' AS country FROM lotteries LIMIT 1")).map((r) => r.country))));
 
 /** Popularity of each product in a country over 14 days: page views + 5 × clicks (buy, compare, alert). slug → score. */
-export async function popularity(env, cc) {
+export const popularity = (env, cc) => memo(`pop:${cc}`, 600e3, () => popularityQ(env, cc));
+async function popularityQ(env, cc) {
   const since = now() - 14 * DAY;
   const pre = `/${cc}/`;
   const rows = await all(env, `SELECT name, path, json_extract(props, '$.sku') AS sku, json_extract(props, '$.page') AS page, COUNT(*) AS n
     FROM events WHERE bot = 0 AND at > ? AND (
-      (name = 'view' AND path LIKE ?) OR (name IN ('buy', 'buy_out', 'sheet_open') AND (json_extract(props, '$.page') LIKE ? OR json_extract(props, '$.page') = ?)))
+      (name = 'view' AND path LIKE ?) OR (name IN ('out', 'sheet_open', 'buy', 'buy_out') AND (name NOT IN ('buy', 'buy_out') OR at < 1793751000000) AND (json_extract(props, '$.page') LIKE ? OR json_extract(props, '$.page') = ?)))
     GROUP BY name, path, sku, page`, since, `${pre}%`, `${pre}%`, cc === 'us' ? '/' : `/${cc}`).catch(() => []);
   const score = new Map();
   const slugOf = (p) => (p && p.startsWith(pre) ? p.slice(pre.length).split('/')[0] : null);
