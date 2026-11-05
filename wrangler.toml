@@ -17,7 +17,7 @@ SUPPORT_EMAIL = "hello@cardrestocktracker.com"
 RESEND_FROM = "Card Restock Tracker <hello@cardrestocktracker.com>"   # one verified Resend domain sends codes and alerts
 REPLY_TO = "eroux@kosmocgi.com"   # replies land in Eugène's inbox until hello@ forwarding is on
 OWNER_EMAILS = "eroux@kosmocgi.com"   # site accounts that can open /owner/* once signed in
-FREE_ALERTS = "1"   # launch: alerts free (instant, every channel); remove to go back to paid plans
+FREE_ALERTS = "0"   # paid plans (Whop): instant email alerts are paid, free plan = one daily email. "1" = launch mode (all alerts free)
 GA_ID = "G-V4X0V6LLD5"   # Google Analytics 4 (property "Card Restock Tracker")
 WHOP_PLAN_SOLO = "plan_ydMKXsHg6S0T6"    # Whop "Solo" $5.99 / 30 days (public id, appears in checkout links)
 WHOP_PLAN_MULTI = "plan_2U5hmfwpVlY3X"   # Whop "Multi" $14.99 / 30 days

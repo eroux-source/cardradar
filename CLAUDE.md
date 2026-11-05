@@ -41,7 +41,9 @@ Owner: Eugène, eroux@kosmocgi.com. He writes in French. Reply in short, non-tec
   - public GET pages are edge-cached for 10 min, with a day-old stale copy as fallback;
   - DB reads are retried once when D1 is busy;
   - heavy queries (`allSkus`, `liveCountries`, `popularity`, `latestRestocks`) are memoized for a short time per isolate.
-- Launch mode `FREE_ALERTS="1"`: alerts are free, sent instantly by email (Resend), up to 20 products.
+- Paid mode since 2026-11-05 (`FREE_ALERTS="0"`): instant email alerts are paid through Whop (Solo / Multi, 30 days); the free plan is one daily email for 1 product. Launch-era free alerts now fall back to the daily email.
+  - Telegram and push come back once there is a first real purchase (Eugène's call).
+  - `FREE_ALERTS="1"` switches back to launch mode (all alerts free and instant, up to 20 products).
   - Telegram and phone notifications were removed.
   - After subscribing, people are asked which other channels they want; the answers are counted in `wanted_channels`.
 - Affiliate-ready links live in `src/web/affiliate.js`.
