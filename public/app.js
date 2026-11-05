@@ -17,6 +17,8 @@
   try { if (source) sessionStorage.setItem('src', source); else source = sessionStorage.getItem('src') || ''; } catch {}
   const ev = (n, x) => { try { if (n !== 'view' && window.gtag) window.gtag('event', n, x && typeof x === 'object' ? x : {}); } catch {} try { navigator.sendBeacon('/api/e', new Blob([JSON.stringify({ n, v: visit, p: location.pathname, s: source, x })], { type: 'application/json' })); } catch {} };
   ev('view');
+  // GA4 only (our own counter already records these on the server): conversions for GA's key events, then run done()
+  const ga = (n, done) => { let went = false; const go = () => { if (!went) { went = true; done?.(); } }; try { if (window.gtag) window.gtag('event', n, { transport_type: 'beacon', event_callback: go, event_timeout: 800 }); } catch {} setTimeout(go, window.gtag ? 900 : 0); };
   // every click that leaves the site (left, middle or ctrl-click): which shop, which product, from which page
   const outbound = (e) => {
     const a = e.target.closest('a[href]'); if (!a) return;
@@ -115,7 +117,7 @@
       try {
         const r = await post('/api/funnel/start', { email, sku: state.sku, metro: state.metro, via: source, visit, country: f.dataset.country });
         if (r.state === 'code') { e.target.hidden = true; $('[data-form=code]', f).hidden = false; $('#f-code').focus(); }
-        else show(next());
+        else { if (r.state === 'new') ga('signup'); show(next()); }
       } catch (x) { err(1, x.message); } finally { busy(e.target, false); }
     });
     $('[data-form=code]', f).addEventListener('submit', async (e) => {
@@ -131,7 +133,7 @@
     });
     async function submitAlert(plan, form) {
       busy(form, true); err(3);
-      try { const r = await post('/api/funnel/alert', { ...state, plan, visit, country: f.dataset.country }); location.href = r.next; }
+      try { const r = await post('/api/funnel/alert', { ...state, plan, visit, country: f.dataset.country }); ga(/[?&]free=1/.test(r.next) ? 'free_alert' : 'checkout_start', () => { location.href = r.next; }); }
       catch (x) { err(3, x.message); busy(form, false); }
     }
     $('[data-form=plan]', f).addEventListener('submit', async (e) => {
