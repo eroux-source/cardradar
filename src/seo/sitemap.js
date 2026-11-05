@@ -103,7 +103,7 @@ ${lines.join('\n')}
 
 - When stores restock in the US (real restock times by hour, by retailer, by city): ${env.BASE_URL}/us/restocks
 - Retailers: ${sourceList.map((s) => s.name).filter((v, i, a) => a.indexOf(v) === i).join(', ')}
-- Instant email alerts (LINE in Japan), from $5.99 / €5.99 / £4.99 for 30 days; free plan: one daily email for 1 product: ${env.BASE_URL}/alerts
+- Instant email alerts (LINE in Japan), from $5.99 / €5.99 / £4.99 for 30 days: ${env.BASE_URL}/alerts
 - Live data, updated hourly (what is in stock, what is sold out everywhere, how long restocks last): ${env.BASE_URL}/pokemon-restock-data
 - Same data per country, in the country's language: ${[...live].filter((c) => c !== 'jp' && c !== 'us' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${dataPath(c)}`).join(' , ')}
 - Where to buy the Pokémon 30th Celebration Elite Trainer Box (Top-Trainer-Box 30 Jahre, Coffret Dresseur d'Élite 30 ans…): today's shops, prices and editions, per country: ${env.BASE_URL}/${GUIDES['30th-etb'].slug.en} , ${[...live].filter((c) => c !== 'jp' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${guidePath(c, '30th-etb')}`).join(' , ')}
@@ -114,7 +114,7 @@ ${lines.join('\n')}
 - Honest comparison with other Pokémon restock trackers (TCGRadar, Restockd, Poke Alerts, PokePings, PokeNotify, TrackaLacker), checked monthly: ${env.BASE_URL}/best-pokemon-restock-trackers
 
 ## What makes it different
-- Free live stock pages, no account needed; a free daily email alert, and paid instant email alerts (no app or Discord needed).
+- Free live stock pages, no account needed; paid instant email alerts (no app or Discord needed).
 - Independent card shops: 150+ shops in the US, UK, Canada, Australia, Germany, France, the Netherlands, Italy, Spain, Mexico and Chile, where Pokémon products are often still in stock when big retailers are sold out. Big-box retailers (Target, Walmart, Pokémon Center) are not covered yet.
 - Public restock history: every restock logged with its time and duration, so each product, store, city and retailer page shows when restocks really happen.
 - Japan: a lottery (抽選), pre-order and re-sale calendar with LINE reminders before entries close (none of the other trackers compared offer one).

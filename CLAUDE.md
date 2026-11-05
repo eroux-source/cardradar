@@ -45,6 +45,7 @@ Owner: Eugène, eroux@kosmocgi.com. He writes in French. Reply in short, non-tec
   - Telegram and push come back once there is a first real purchase (Eugène's call).
   - `FREE_ALERTS="1"` switches back to launch mode (all alerts free and instant, up to 20 products).
   - Alert funnel order (since 2026-11-05): 1 product → 2 plan → 3 email → Whop checkout. No sign-in code before paying; an existing account without a pass gets the alert unopened (inert until paid). A code is still asked for the free plan on an existing account, or an account that already pays. `funnel_7d` step_1/2/3 = product/plan/email.
+  - No new free alerts (Eugène, 2026-11-05): the funnel and `/api/funnel/alert` only take Solo or Multi. The free alerts made before keep their daily email; never touch them or email those people without his OK.
   - Offers (since 2026-11-05): Solo = 1 product in the shops the person picks (plan step, `/api/funnel/shops`; saved in `alerts.store_ids`, empty = every shop); Multi = several products or a whole set.
   - Whop plans per currency: `WHOP_PLAN_<SOLO|MULTI>_<EUR|GBP|CAD|AUD>` in `wrangler.toml`; MX, CL and JP pay the USD plan.
   - Telegram and phone notifications were removed.
