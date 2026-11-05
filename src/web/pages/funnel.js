@@ -70,9 +70,9 @@ export async function alertsPage(env, url, user) {
   }
   const body = `<div class="funnel" id="funnel" data-country="${cc}" data-sku="${skus.some((k) => k.slug === sku) || sku.startsWith('jpset:') ? e(sku) : ''}" data-signed="${user ? 1 : 0}" data-pass="${pass ? e(pass.plan) : ''}" data-vapid="${e(env.VAPID_PUBLIC_KEY ?? '')}">
   <h1>${e(F.h1)}</h1>
-  <ol class="steps" aria-label="Progress">${[F.steps[0], F.steps[1], F.steps[3]].map((x, i) => `<li data-s="${i + 1}">${e(x)}</li>`).join('')}</ol>
+  <ol class="steps" aria-label="Progress">${[F.steps[1], F.steps[3], F.steps[0]].map((x, i) => `<li data-s="${i + 1}">${e(x)}</li>`).join('')}</ol>
 
-  <section class="step" data-step="1"${user ? ' hidden' : ''}>
+  <section class="step" data-step="3" hidden>
     <h2>${e(F.s1h)}</h2>
     <p class="sub">${e(F.s1sub)}</p>
     ${env.GOOGLE_CLIENT_ID ? `<a class="btn ghost" href="/auth/google?next=${encodeURIComponent('/alerts?' + url.searchParams)}">${e(F.google)}</a>` : ''}
@@ -83,13 +83,13 @@ export async function alertsPage(env, url, user) {
     <p class="err" role="alert"></p>
   </section>
 
-  <section class="step" data-step="2"${user ? '' : ' hidden'}>
+  <section class="step" data-step="1">
     <h2>${e(F.s2h)}</h2>
     ${productStep}
     <p class="err" role="alert"></p>
   </section>
 
-  <section class="step" data-step="3" hidden>
+  <section class="step" data-step="2" hidden>
     <h2>${e(freeMode(env) ? F.s3h : F.s4h)}</h2>
     <form data-form="plan">
       ${freeMode(env) ? `<input type="hidden" name="plan" value="launch"><p class="lede"><strong>${e(freeWords(T).plan)}</strong> · ${e(freeWords(T).planDesc)}</p>` : `<label class="plan"><input type="radio" name="plan" value="solo" checked><span><strong>Solo · ${e(T.f.planMoney(T.cc.prices.solo))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.solo)}</span></span></label>
@@ -98,7 +98,7 @@ export async function alertsPage(env, url, user) {
       <p class="fine">${e(F.renew)}</p>`}
       ${cc === 'jp' ? `<fieldset class="channels"><label class="radio"><input type="checkbox" name="line" value="1" checked> ${e(F.line)} <span class="fine">${e(F.lineFine)}</span></label></fieldset>` : ''}
       <p class="sub">${e(EMAIL_OK[T.cc.lang] ?? EMAIL_OK.en)}</p>
-      <button class="btn" type="submit">${e(freeMode(env) ? freeWords(T).btn : F.checkout)}</button></form>
+      <button class="btn" type="submit">${e(freeMode(env) ? freeWords(T).btn : user ? F.checkout : F.cont)}</button></form>
     <p class="err" role="alert"></p>
   </section>
   </div>`;

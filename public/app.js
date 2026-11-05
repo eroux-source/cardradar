@@ -106,42 +106,43 @@
     const kindOf = () => $('input[name=kind]:checked', f)?.value || $('input[name=kind][type=hidden]', f)?.value || 'online';
     const metroField = () => { const m = $('#f-metro'); if (!m) return; const k = kindOf(); m.required = k === 'stores'; m.disabled = k !== 'stores'; };
     $$('input[name=kind]', f).forEach((r) => r.addEventListener('change', metroField)); metroField();
-    const next = () => (f.dataset.sku ? 3 : 2); // product already chosen on the product page: straight to the plan
-    if (f.dataset.sku) { state.sku = f.dataset.sku; state.kind = 'online'; const li = $('.steps li[data-s="2"]', f); if (li) li.hidden = true; }
-    show(f.dataset.signed === '1' ? next() : 1);
-    let email = '';
+    // Order (2026-11-05): 1 product → 2 plan → 3 email (signed-out only), then checkout. The email is confirmed after payment.
+    if (f.dataset.sku) { state.sku = f.dataset.sku; state.kind = 'online'; const li = $('.steps li[data-s="1"]', f); if (li) li.hidden = true; }
+    const signed = f.dataset.signed === '1';
+    if (signed) { const li = $('.steps li[data-s="3"]', f); if (li) li.hidden = true; }
+    show(f.dataset.sku ? 2 : 1);
+    let email = ''; let chosenPlan = '';
 
-    $('[data-form=email]', f).addEventListener('submit', async (e) => {
-      e.preventDefault(); err(1); busy(e.target, true);
-      email = e.target.email.value.trim();
+    async function submitAlert(plan, form, n, extra = {}) {
+      busy(form, true); err(n);
       try {
-        const r = await post('/api/funnel/start', { email, sku: state.sku, metro: state.metro, via: source, visit, country: f.dataset.country });
-        if (r.state === 'code') { e.target.hidden = true; $('[data-form=code]', f).hidden = false; $('#f-code').focus(); }
-        else { if (r.state === 'new') ga('signup'); show(next()); }
-      } catch (x) { err(1, x.message); } finally { busy(e.target, false); }
+        const r = await post('/api/funnel/alert', { ...state, plan, visit, via: source, country: f.dataset.country, ...extra });
+        if (r.state === 'code') { busy(form, false); form.hidden = true; $('[data-form=code]', f).hidden = false; $('#f-code').focus(); return; }
+        ga(/[?&]free=1/.test(r.next) ? 'free_alert' : 'checkout_start', () => { location.href = r.next; });
+      } catch (x) { err(n, x.message); busy(form, false); }
+    }
+    $('[data-form=email]', f).addEventListener('submit', (e) => {
+      e.preventDefault(); email = e.target.email.value.trim();
+      submitAlert(chosenPlan, e.target, 3, { email });
     });
     $('[data-form=code]', f).addEventListener('submit', async (e) => {
-      e.preventDefault(); err(1); busy(e.target, true);
-      try { await post('/api/auth/verify', { email, code: e.target.code.value }); location.reload(); } catch (x) { err(1, x.message); busy(e.target, false); }
+      e.preventDefault(); err(3); busy(e.target, true);
+      try { await post('/api/auth/verify', { email, code: e.target.code.value }); submitAlert(chosenPlan, e.target, 3); } catch (x) { err(3, x.message); busy(e.target, false); }
     });
     $('[data-form=product]', f).addEventListener('submit', (e) => {
-      e.preventDefault(); err(2);
+      e.preventDefault(); err(1);
       state.sku = e.target.sku.value; state.kind = kindOf(); state.metro = e.target.metro?.value || '';
-      if (state.kind === 'stores' && !state.metro) return err(2, 'Pick your city.');
+      if (state.kind === 'stores' && !state.metro) return err(1, 'Pick your city.');
       if (state.sku.startsWith('set:')) { $('input[name=plan][value=multi]', f).checked = true; }
-      show(3);
+      show(2);
     });
-    async function submitAlert(plan, form) {
-      busy(form, true); err(3);
-      try { const r = await post('/api/funnel/alert', { ...state, plan, visit, country: f.dataset.country }); ga(/[?&]free=1/.test(r.next) ? 'free_alert' : 'checkout_start', () => { location.href = r.next; }); }
-      catch (x) { err(3, x.message); busy(form, false); }
-    }
     $('[data-form=plan]', f).addEventListener('submit', async (e) => {
-      e.preventDefault(); err(3);
+      e.preventDefault(); err(2);
       const t = e.target;
       state.push = !!t.push?.checked; state.telegram = !!t.telegram?.checked; state.line = !!t.line?.checked;
-      if (state.push) { try { await enablePush(f.dataset.vapid); } catch (x) { state.push = false; t.push.checked = false; return err(3, x.message); } }
-      submitAlert(f.dataset.pass || ($('input[name=plan]:checked', f) || $('input[name=plan]', f)).value, t);
+      if (state.push) { try { await enablePush(f.dataset.vapid); } catch (x) { state.push = false; t.push.checked = false; return err(2, x.message); } }
+      chosenPlan = f.dataset.pass || ($('input[name=plan]:checked', f) || $('input[name=plan]', f)).value;
+      if (signed) submitAlert(chosenPlan, t, 2); else show(3);
     });
   }
 

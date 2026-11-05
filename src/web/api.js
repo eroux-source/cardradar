@@ -67,63 +67,32 @@ export async function api(env, req, url, ctx) {
   if (p === '/api/signout' && m === 'POST') return json({ ok: true }, 200, { 'set-cookie': await endSession(env, req) });
 
   if (p === '/api/funnel/alert' && m === 'POST') {
-    if (!user) return bad('Your session expired. Enter your email again.', 401);
     const b = await body(req);
-    const cc = COUNTRIES[b.country] ? b.country : 'us';
-    const plan = PLANS[b.plan] ? b.plan : 'solo';
-    let skuId = null; let setId = null; let setSlug = null;
-    let kind = b.kind === 'online' ? 'online' : b.kind === 'lottery' ? 'lottery' : 'stores';
-    if (kind === 'lottery') {
-      const slug = String(b.sku ?? '').replace(/^jpset:/, '');
-      setSlug = slug && slug !== '*' && jpSetBySlug(slug) ? slug : null;
-    } else {
-      if (String(b.sku).startsWith('set:')) setId = Number(String(b.sku).slice(4)) || null;
-      else skuId = (await skuBySlug(env, b.sku))?.id ?? null;
-      if (!skuId && !setId) return bad('Pick a product.');
+    let actor = user; let setCookie = null; let guest = false;
+    if (!actor) {
+      // Plan first, email last (2026-11-05): no sign-in code before checkout. The email is confirmed after payment.
+      const email = String(b.email ?? '').trim().toLowerCase();
+      if (!EMAIL_RE.test(email)) return bad('Enter a valid email address.');
+      const cc0 = COUNTRIES[b.country] ? b.country : 'us';
+      const via = String(b.via ?? '').slice(0, 40);
+      await lead(env, email, { step: 'email', source: via || null });
+      const existing = await userByEmail(env, email);
+      if (!existing) {
+        actor = await userByEmail(env, email, { create: true, source: via ? `funnel · ${via}` : 'funnel' });
+        setCookie = await startSession(env, actor.id);
+        await run(env, 'INSERT INTO events (at, visit, name, source, country, props) VALUES (?, ?, ?, ?, ?, ?)', now(), String(b.visit ?? '').slice(0, 40) || null, 'signup', via || null, req.cf?.country ?? null, JSON.stringify({ cc: cc0 }));
+      } else if (b.plan === 'free' || freeMode(env) || await activePass(env, existing.id)) {
+        // free alerts, or an account that already pays: an existing account is only changed after a code
+        const r = await requestCode(env, email, clientIp(req));
+        return r.ok ? json({ ok: true, state: 'code' }) : bad(r.error, 429);
+      } else {
+        // existing account, no pass: the alert is added unopened and only works once paid (no session, nothing else touched)
+        actor = existing; guest = true;
+      }
     }
-    const metro = kind === 'stores' ? metroInCountry(cc, b.metro) : null;
-    if (kind === 'stores' && !metro) return bad('Pick your city.');
-    const pass = await activePass(env, user.id);
-    if (freeMode(env) && !pass) {
-      // launch: free instant alerts on every channel, up to FREE_MAX_ALERTS products (stored as free alerts: they fall back to the daily email when launch mode ends)
-      const n = (await one(env, "SELECT COUNT(*) n FROM alerts WHERE user_id = ? AND status = 'active'", user.id)).n;
-      if (n >= FREE_MAX_ALERTS) return bad(`You already have ${FREE_MAX_ALERTS} alerts. Delete one in your account first.`);
-      const ch = ['email', ...(b.push ? ['push'] : []), ...(b.telegram ? ['telegram'] : []), ...(b.line ? ['line'] : [])];
-      const t0 = now();
-      await run(env, 'INSERT INTO alerts (user_id, kind, sku_id, set_id, set_slug, metro, store_ids, channels, status, created_at, updated_at, country, free) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
-        user.id, kind, skuId, setId, setSlug, metro?.id ?? null, '[]', JSON.stringify(ch), 'active', t0, t0, cc);
-      await run(env, 'UPDATE users SET country = COALESCE(country, ?) WHERE id = ?', cc, user.id);
-      await lead(env, user.email, { step: 'free', skuId, metro: metro?.id ?? null });
-      await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', t0, b.visit ?? null, 'free_alert', JSON.stringify({ kind, cc, launch: 1 }));
-      if (ch.includes('telegram')) return json({ ok: true, next: `/account?free=1&c=${cc}` });
-      return json({ ok: true, next: `/account?free=1&c=${cc}` });
-    }
-    const free = !pass && b.plan === 'free';
-    if (free && (setId || kind === 'lottery')) return bad('The free plan covers one product. Pick a single product or a paid plan.');
-    const effPlan = pass?.plan ?? plan;
-    if (!free && (setId || (kind === 'lottery' && !setSlug)) && effPlan !== 'multi') return bad('"Anything from a set" needs the Multi plan.');
-    const count = (await one(env, "SELECT COUNT(*) n FROM alerts WHERE user_id = ? AND status != 'deleted'", user.id)).n;
-    if (pass && count >= PLANS[pass.plan].maxAlerts) return bad(`Your ${PLANS[pass.plan].name} plan covers ${PLANS[pass.plan].maxAlerts} alert${PLANS[pass.plan].maxAlerts > 1 ? 's' : ''}. Delete one or switch to Multi.`);
-    const channels = free ? ['email'] : ['email', ...(b.push ? ['push'] : []), ...(b.telegram ? ['telegram'] : []), ...(b.line ? ['line'] : [])];
-    const t = now();
-    if (free) {
-      // one free alert per person: it replaces the previous free alert and any unpaid draft
-      await run(env, "UPDATE alerts SET status = 'deleted', delete_reason = 'replaced_draft', updated_at = ? WHERE user_id = ? AND status = 'active'", t, user.id);
-      await run(env, 'INSERT INTO alerts (user_id, kind, sku_id, set_id, set_slug, metro, store_ids, channels, status, created_at, updated_at, country, free) VALUES (?, ?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, 1)',
-        user.id, kind, skuId, metro?.id ?? null, '[]', JSON.stringify(channels), 'active', t, t, cc);
-      await run(env, 'UPDATE users SET country = COALESCE(country, ?) WHERE id = ?', cc, user.id);
-      await lead(env, user.email, { step: 'free', skuId, metro: metro?.id ?? null });
-      await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', t, b.visit ?? null, 'free_alert', JSON.stringify({ kind, cc }));
-      return json({ ok: true, next: `/account?free=1&c=${cc}` });
-    }
-    // Solo without a pass: keep a single pending alert (replace the previous draft)
-    if (!pass) await run(env, "UPDATE alerts SET status = 'deleted', delete_reason = 'replaced_draft', updated_at = ? WHERE user_id = ? AND status = 'active'", t, user.id);
-    await run(env, 'INSERT INTO alerts (user_id, kind, sku_id, set_id, set_slug, metro, store_ids, channels, status, created_at, updated_at, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      user.id, kind, skuId, setId, setSlug, metro?.id ?? null, '[]', JSON.stringify(channels), 'active', t, t, cc);
-    await run(env, 'UPDATE users SET country = COALESCE(country, ?) WHERE id = ?', cc, user.id);
-    await lead(env, user.email, { step: pass ? 'paid' : 'checkout', skuId, metro: metro?.id ?? null });
-    await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', t, b.visit ?? null, 'checkout_start', JSON.stringify({ plan, kind, cc, u: user.id }));
-    return json({ ok: true, next: pass ? '/account' : checkoutUrl(env, { plan, email: user.email, currency: COUNTRIES[cc].currency }) });
+    const res = await createAlert(env, b, actor, guest);
+    if (setCookie) res.headers.set('set-cookie', setCookie);
+    return res;
   }
 
   // --- account ---
@@ -204,4 +173,63 @@ export async function api(env, req, url, ctx) {
   }
 
   return bad('Not found.', 404);
+}
+
+/** Creates the alert for `user`; `guest` = an existing account reached by email only (paid plans, before checkout). */
+async function createAlert(env, b, user, guest) {
+  const cc = COUNTRIES[b.country] ? b.country : 'us';
+  const plan = PLANS[b.plan] ? b.plan : 'solo';
+  let skuId = null; let setId = null; let setSlug = null;
+  let kind = b.kind === 'online' ? 'online' : b.kind === 'lottery' ? 'lottery' : 'stores';
+  if (kind === 'lottery') {
+    const slug = String(b.sku ?? '').replace(/^jpset:/, '');
+    setSlug = slug && slug !== '*' && jpSetBySlug(slug) ? slug : null;
+  } else {
+    if (String(b.sku).startsWith('set:')) setId = Number(String(b.sku).slice(4)) || null;
+    else skuId = (await skuBySlug(env, b.sku))?.id ?? null;
+    if (!skuId && !setId) return bad('Pick a product.');
+  }
+  const metro = kind === 'stores' ? metroInCountry(cc, b.metro) : null;
+  if (kind === 'stores' && !metro) return bad('Pick your city.');
+  const pass = await activePass(env, user.id);
+  if (freeMode(env) && !pass) {
+    // launch: free instant alerts on every channel, up to FREE_MAX_ALERTS products (stored as free alerts: they fall back to the daily email when launch mode ends)
+    const n = (await one(env, "SELECT COUNT(*) n FROM alerts WHERE user_id = ? AND status = 'active'", user.id)).n;
+    if (n >= FREE_MAX_ALERTS) return bad(`You already have ${FREE_MAX_ALERTS} alerts. Delete one in your account first.`);
+    const ch = ['email', ...(b.push ? ['push'] : []), ...(b.telegram ? ['telegram'] : []), ...(b.line ? ['line'] : [])];
+    const t0 = now();
+    await run(env, 'INSERT INTO alerts (user_id, kind, sku_id, set_id, set_slug, metro, store_ids, channels, status, created_at, updated_at, country, free) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
+      user.id, kind, skuId, setId, setSlug, metro?.id ?? null, '[]', JSON.stringify(ch), 'active', t0, t0, cc);
+    await run(env, 'UPDATE users SET country = COALESCE(country, ?) WHERE id = ?', cc, user.id);
+    await lead(env, user.email, { step: 'free', skuId, metro: metro?.id ?? null });
+    await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', t0, b.visit ?? null, 'free_alert', JSON.stringify({ kind, cc, launch: 1 }));
+    if (ch.includes('telegram')) return json({ ok: true, next: `/account?free=1&c=${cc}` });
+    return json({ ok: true, next: `/account?free=1&c=${cc}` });
+  }
+  const free = !pass && b.plan === 'free';
+  if (free && (setId || kind === 'lottery')) return bad('The free plan covers one product. Pick a single product or a paid plan.');
+  const effPlan = pass?.plan ?? plan;
+  if (!free && (setId || (kind === 'lottery' && !setSlug)) && effPlan !== 'multi') return bad('"Anything from a set" needs the Multi plan.');
+  const count = (await one(env, "SELECT COUNT(*) n FROM alerts WHERE user_id = ? AND status != 'deleted'", user.id)).n;
+  if (pass && count >= PLANS[pass.plan].maxAlerts) return bad(`Your ${PLANS[pass.plan].name} plan covers ${PLANS[pass.plan].maxAlerts} alert${PLANS[pass.plan].maxAlerts > 1 ? 's' : ''}. Delete one or switch to Multi.`);
+  const channels = free ? ['email'] : ['email', ...(b.push ? ['push'] : []), ...(b.telegram ? ['telegram'] : []), ...(b.line ? ['line'] : [])];
+  const t = now();
+  if (free) {
+    // one free alert per person: it replaces the previous free alert and any unpaid draft
+    await run(env, "UPDATE alerts SET status = 'deleted', delete_reason = 'replaced_draft', updated_at = ? WHERE user_id = ? AND status = 'active'", t, user.id);
+    await run(env, 'INSERT INTO alerts (user_id, kind, sku_id, set_id, set_slug, metro, store_ids, channels, status, created_at, updated_at, country, free) VALUES (?, ?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, 1)',
+      user.id, kind, skuId, metro?.id ?? null, '[]', JSON.stringify(channels), 'active', t, t, cc);
+    await run(env, 'UPDATE users SET country = COALESCE(country, ?) WHERE id = ?', cc, user.id);
+    await lead(env, user.email, { step: 'free', skuId, metro: metro?.id ?? null });
+    await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', t, b.visit ?? null, 'free_alert', JSON.stringify({ kind, cc }));
+    return json({ ok: true, next: `/account?free=1&c=${cc}` });
+  }
+  // Solo without a pass: keep a single pending alert (replace the previous draft); never for a guest (account not opened)
+  if (!pass && !guest) await run(env, "UPDATE alerts SET status = 'deleted', delete_reason = 'replaced_draft', updated_at = ? WHERE user_id = ? AND status = 'active'", t, user.id);
+  await run(env, 'INSERT INTO alerts (user_id, kind, sku_id, set_id, set_slug, metro, store_ids, channels, status, created_at, updated_at, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    user.id, kind, skuId, setId, setSlug, metro?.id ?? null, '[]', JSON.stringify(channels), 'active', t, t, cc);
+  await run(env, 'UPDATE users SET country = COALESCE(country, ?) WHERE id = ?', cc, user.id);
+  await lead(env, user.email, { step: pass ? 'paid' : 'checkout', skuId, metro: metro?.id ?? null });
+  await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', t, b.visit ?? null, 'checkout_start', JSON.stringify({ plan, kind, cc, u: user.id }));
+  return json({ ok: true, next: pass ? '/account' : checkoutUrl(env, { plan, email: user.email, currency: COUNTRIES[cc].currency }) });
 }

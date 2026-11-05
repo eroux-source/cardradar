@@ -147,7 +147,7 @@ async function route(req, env, ctx) {
   if (m !== 'GET' && m !== 'HEAD') return new Response('Method not allowed', { status: 405 });
 
   // --- funnel & account (need the session) ---
-  if (p === '/alerts') return alertsPage(env, url, await currentUser(env, req));
+  if (p === '/alerts') { const r = await alertsPage(env, url, await currentUser(env, req)); const out = new Response(r.body, r); out.headers.set('cache-control', 'private, no-store'); return out; }
   if (p === '/signin') return signinPage(env, url);
   if (p === '/account') return accountPage(env, url, await currentUser(env, req));
 

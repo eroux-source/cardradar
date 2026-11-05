@@ -44,6 +44,8 @@ Owner: Eugène, eroux@kosmocgi.com. He writes in French. Reply in short, non-tec
 - Paid mode since 2026-11-05 (`FREE_ALERTS="0"`): instant email alerts are paid through Whop (Solo / Multi, 30 days); the free plan is one daily email for 1 product. Launch-era free alerts now fall back to the daily email.
   - Telegram and push come back once there is a first real purchase (Eugène's call).
   - `FREE_ALERTS="1"` switches back to launch mode (all alerts free and instant, up to 20 products).
+  - Alert funnel order (since 2026-11-05): 1 product → 2 plan → 3 email → Whop checkout. No sign-in code before paying; an existing account without a pass gets the alert unopened (inert until paid). A code is still asked for the free plan on an existing account, or an account that already pays. `funnel_7d` step_1/2/3 = product/plan/email.
+  - Whop plans per currency: `WHOP_PLAN_<SOLO|MULTI>_<EUR|GBP|CAD|AUD>` in `wrangler.toml`; MX, CL and JP pay the USD plan.
   - Telegram and phone notifications were removed.
   - After subscribing, people are asked which other channels they want; the answers are counted in `wanted_channels`.
 - Affiliate-ready links live in `src/web/affiliate.js`.
