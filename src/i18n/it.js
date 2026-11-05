@@ -128,7 +128,7 @@ export default {
   },
   pricing: {
     title: (b) => `Prezzi — ${b}`, h1: 'Prezzi', lede: 'Le pagine di disponibilità sono gratuite. Gli avvisi sono a pagamento, per 30 giorni, disdici in 2 clic.',
-    solo: '1 prodotto in 1 negozio, 1 città o online', multi: 'Più prodotti e luoghi, o tutti i prodotti sigillati di un set',
+    solo: '1 prodotto, nei negozi che scegli', multi: 'Più prodotti o tutti i prodotti sigillati di un set',
     tax: 'Al pagamento può aggiungersi l\'IVA in base al paese. Ti avvisiamo, tu compri dal negozio: non compriamo mai al posto tuo.',
   },
   cta: {

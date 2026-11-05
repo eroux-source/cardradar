@@ -3,8 +3,8 @@
 import { one, run, now } from '../lib/db.js';
 
 export const PLANS = {
-  solo: { id: 'solo', name: 'Solo', blurb: '1 product, 1 store or area', maxAlerts: 1 },
-  multi: { id: 'multi', name: 'Multi', blurb: 'Several products and places, any product of a set', maxAlerts: 25 },
+  solo: { id: 'solo', name: 'Solo', blurb: '1 product, in the shops you choose', maxAlerts: 1 },
+  multi: { id: 'multi', name: 'Multi', blurb: 'Several products, or any product of a set', maxAlerts: 25 },
 };
 
 export const activePass = (env, userId) =>

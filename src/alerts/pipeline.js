@@ -23,9 +23,9 @@ async function alertsFor(env, r) {
     LEFT JOIN passes p ON p.user_id = a.user_id AND p.status IN ('active','refunded_kept') AND p.ends_at > ?
     WHERE a.status = 'active' AND (p.id IS NOT NULL OR a.free = 1)
       AND (a.sku_id = ? OR (a.sku_id IS NULL AND a.set_id = ?))
-      AND ((a.kind = 'online' AND ? = 1 AND a.country = ?)
+      AND ((a.kind = 'online' AND ? = 1 AND a.country = ? AND (a.store_ids IS NULL OR a.store_ids = '[]' OR EXISTS (SELECT 1 FROM json_each(a.store_ids) WHERE value = ?)))
         OR (a.kind = 'stores' AND ? = 0 AND (a.metro = ? OR EXISTS (SELECT 1 FROM json_each(a.store_ids) WHERE value = ?))))
-    GROUP BY a.id`, now(), r.sku_id, r.set_id, r.online, r.country, r.online, r.metro, r.store_id);
+    GROUP BY a.id`, now(), r.sku_id, r.set_id, r.online, r.country, r.store_id, r.online, r.metro, r.store_id);
 }
 
 export async function matchRestocks(env, restockIds, { late = false } = {}) {

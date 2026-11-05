@@ -128,7 +128,7 @@ export default {
   },
   pricing: {
     title: (b) => `Tarifs — ${b}`, h1: 'Tarifs', lede: 'Les pages de stock sont gratuites. Les alertes sont payantes, pour 30 jours, résiliables en 2 clics.',
-    solo: '1 produit dans 1 magasin, 1 ville ou en ligne', multi: 'Plusieurs produits et lieux, ou tous les produits scellés d\'une extension',
+    solo: '1 produit, dans les boutiques de votre choix', multi: 'Plusieurs produits, ou tous les produits scellés d\'une extension',
     tax: 'Paiement sécurisé : carte, Apple Pay ou Google Pay. Garantie 7 jours : écrivez-nous dans les 7 jours suivant le premier paiement et on vous rembourse, sans discussion. La TVA peut s\'ajouter au paiement selon votre pays. Nous alertons, vous achetez chez l\'enseigne : nous n\'achetons jamais à votre place.',
   },
   cta: {

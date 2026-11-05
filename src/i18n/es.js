@@ -128,7 +128,7 @@ export default {
   },
   pricing: {
     title: (b) => `Precios — ${b}`, h1: 'Precios', lede: 'Las páginas de stock son gratis. Las alertas son de pago, por 30 días, cancelables en 2 clics.',
-    solo: '1 producto en 1 tienda, 1 ciudad u online', multi: 'Varios productos y lugares, o todos los productos sellados de una expansión',
+    solo: '1 producto, en las tiendas que elijas', multi: 'Varios productos o todos los productos sellados de una expansión',
     tax: 'Según tu país puede añadirse el IVA al pagar. Te avisamos, tú compras en la tienda: nunca compramos por ti.',
   },
   cta: {

@@ -11,6 +11,7 @@ import { sendTelegram } from '../alerts/channels/telegram.js';
 import { sendPush } from '../alerts/channels/push.js';
 import { alertText } from '../alerts/deliver.js';
 import { availability, skuBySlug } from './data.js';
+import { sourceName } from '../sources/index.js';
 
 export const json = (data, status = 200, headers = {}) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', ...headers } });
 const bad = (error, status = 400) => json({ ok: false, error }, status);
@@ -53,6 +54,16 @@ export async function api(env, req, url, ctx) {
     const u = await userByEmail(env, email, { create: true, source: via ? `funnel · ${via}` : 'funnel' });
     await run(env, 'INSERT INTO events (at, visit, name, source, country, props) VALUES (?, ?, ?, ?, ?, ?)', now(), String(b.visit ?? '').slice(0, 40) || null, 'signup', via || null, req.cf?.country ?? null, JSON.stringify({ cc }));
     return json({ ok: true, state: 'new' }, 200, { 'set-cookie': await startSession(env, u.id) });
+  }
+
+  if (p === '/api/funnel/shops') {
+    // shops (online, this country) that list the product: the alert can be limited to some of them
+    const cc = COUNTRIES[url.searchParams.get('c')] ? url.searchParams.get('c') : 'us';
+    const sku = await skuBySlug(env, url.searchParams.get('sku'));
+    if (!sku) return json({ shops: [] });
+    const shops = await all(env, `SELECT s.id, s.source, MAX(k.in_stock) AS inStock FROM listings l JOIN stock k ON k.listing_id = l.id JOIN stores s ON s.id = k.store_id
+      WHERE l.sku_id = ? AND l.active = 1 AND s.online = 1 AND s.country = ? GROUP BY s.id`, sku.id, cc);
+    return json({ shops: shops.map((x) => ({ id: x.id, name: sourceName(x.source), in: x.inStock ? 1 : 0 })).sort((a, b) => b.in - a.in || a.name.localeCompare(b.name)) });
   }
 
   if (p === '/api/auth/code' && m === 'POST') {
@@ -191,6 +202,15 @@ async function createAlert(env, b, user, guest) {
   }
   const metro = kind === 'stores' ? metroInCountry(cc, b.metro) : null;
   if (kind === 'stores' && !metro) return bad('Pick your city.');
+  // chosen shops (empty = every shop that sells it)
+  let storeIds = [];
+  if (skuId && kind === 'online' && Array.isArray(b.stores) && b.stores.length) {
+    const ok = new Set((await all(env, `SELECT DISTINCT s.id FROM listings l JOIN stock k ON k.listing_id = l.id JOIN stores s ON s.id = k.store_id
+      WHERE l.sku_id = ? AND s.online = 1 AND s.country = ?`, skuId, cc)).map((r) => r.id));
+    storeIds = [...new Set(b.stores.map(String))].filter((x) => ok.has(x)).slice(0, 300);
+    if (!storeIds.length) return bad('Pick at least one shop.');
+  }
+  const stores = JSON.stringify(storeIds);
   const pass = await activePass(env, user.id);
   if (freeMode(env) && !pass) {
     // launch: free instant alerts on every channel, up to FREE_MAX_ALERTS products (stored as free alerts: they fall back to the daily email when launch mode ends)
@@ -199,7 +219,7 @@ async function createAlert(env, b, user, guest) {
     const ch = ['email', ...(b.push ? ['push'] : []), ...(b.telegram ? ['telegram'] : []), ...(b.line ? ['line'] : [])];
     const t0 = now();
     await run(env, 'INSERT INTO alerts (user_id, kind, sku_id, set_id, set_slug, metro, store_ids, channels, status, created_at, updated_at, country, free) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
-      user.id, kind, skuId, setId, setSlug, metro?.id ?? null, '[]', JSON.stringify(ch), 'active', t0, t0, cc);
+      user.id, kind, skuId, setId, setSlug, metro?.id ?? null, stores, JSON.stringify(ch), 'active', t0, t0, cc);
     await run(env, 'UPDATE users SET country = COALESCE(country, ?) WHERE id = ?', cc, user.id);
     await lead(env, user.email, { step: 'free', skuId, metro: metro?.id ?? null });
     await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', t0, b.visit ?? null, 'free_alert', JSON.stringify({ kind, cc, launch: 1 }));
@@ -218,7 +238,7 @@ async function createAlert(env, b, user, guest) {
     // one free alert per person: it replaces the previous free alert and any unpaid draft
     await run(env, "UPDATE alerts SET status = 'deleted', delete_reason = 'replaced_draft', updated_at = ? WHERE user_id = ? AND status = 'active'", t, user.id);
     await run(env, 'INSERT INTO alerts (user_id, kind, sku_id, set_id, set_slug, metro, store_ids, channels, status, created_at, updated_at, country, free) VALUES (?, ?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, 1)',
-      user.id, kind, skuId, metro?.id ?? null, '[]', JSON.stringify(channels), 'active', t, t, cc);
+      user.id, kind, skuId, metro?.id ?? null, stores, JSON.stringify(channels), 'active', t, t, cc);
     await run(env, 'UPDATE users SET country = COALESCE(country, ?) WHERE id = ?', cc, user.id);
     await lead(env, user.email, { step: 'free', skuId, metro: metro?.id ?? null });
     await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', t, b.visit ?? null, 'free_alert', JSON.stringify({ kind, cc }));
@@ -227,7 +247,7 @@ async function createAlert(env, b, user, guest) {
   // Solo without a pass: keep a single pending alert (replace the previous draft); never for a guest (account not opened)
   if (!pass && !guest) await run(env, "UPDATE alerts SET status = 'deleted', delete_reason = 'replaced_draft', updated_at = ? WHERE user_id = ? AND status = 'active'", t, user.id);
   await run(env, 'INSERT INTO alerts (user_id, kind, sku_id, set_id, set_slug, metro, store_ids, channels, status, created_at, updated_at, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    user.id, kind, skuId, setId, setSlug, metro?.id ?? null, '[]', JSON.stringify(channels), 'active', t, t, cc);
+    user.id, kind, skuId, setId, setSlug, metro?.id ?? null, stores, JSON.stringify(channels), 'active', t, t, cc);
   await run(env, 'UPDATE users SET country = COALESCE(country, ?) WHERE id = ?', cc, user.id);
   await lead(env, user.email, { step: pass ? 'paid' : 'checkout', skuId, metro: metro?.id ?? null });
   await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', t, b.visit ?? null, 'checkout_start', JSON.stringify({ plan, kind, cc, u: user.id }));

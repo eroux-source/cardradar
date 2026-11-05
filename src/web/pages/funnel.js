@@ -12,6 +12,16 @@ import { page } from '../html.js';
 
 // Email only for now: restocks at independent shops usually last hours, so an email is fast enough.
 // The checkbox counts who would like phone notifications (event "wants_phone"), to decide whether to build them.
+// Shop picker on the plan step (one product, online): {n} = number of shops
+const SHOPS_UI = {
+  en: { h: 'Shops to watch', all: 'All {n} shops that sell it', pick: 'Choose', none: 'Pick at least one shop.', in: 'in stock' },
+  fr: { h: 'Boutiques surveillées', all: 'Les {n} boutiques qui le vendent', pick: 'Choisir', none: 'Choisissez au moins une boutique.', in: 'en stock' },
+  de: { h: 'Beobachtete Shops', all: 'Alle {n} Shops, die es führen', pick: 'Auswählen', none: 'Wähle mindestens einen Shop.', in: 'auf Lager' },
+  nl: { h: 'Gevolgde winkels', all: 'Alle {n} winkels die het verkopen', pick: 'Kiezen', none: 'Kies minstens één winkel.', in: 'op voorraad' },
+  it: { h: 'Negozi seguiti', all: 'Tutti i {n} negozi che lo vendono', pick: 'Scegli', none: 'Scegli almeno un negozio.', in: 'disponibile' },
+  es: { h: 'Tiendas vigiladas', all: 'Las {n} tiendas que lo venden', pick: 'Elegir', none: 'Elige al menos una tienda.', in: 'en stock' },
+};
+
 const EMAIL_OK = {
   en: 'Alerts come by email. That is fast enough: at the shops we track, a restock usually stays in stock for several hours before it sells out.',
   fr: 'Les alertes arrivent par e-mail. C\'est assez rapide : dans les boutiques suivies, un réassort reste généralement en stock plusieurs heures avant la rupture.',
@@ -92,6 +102,7 @@ export async function alertsPage(env, url, user) {
   <section class="step" data-step="2" hidden>
     <h2>${e(freeMode(env) ? F.s3h : F.s4h)}</h2>
     <form data-form="plan">
+      ${(() => { const S = SHOPS_UI[T.cc.lang] ?? SHOPS_UI.en; return `<div class="shops-pick" hidden data-all="${e(S.all)}" data-none="${e(S.none)}" data-in="${e(S.in)}"><p class="sub"><strong>${e(S.h)}</strong> · <span class="shops-sum"></span> · <button type="button" class="link shops-toggle">${e(S.pick)}</button></p><div class="shop-list" hidden></div></div>`; })()}
       ${freeMode(env) ? `<input type="hidden" name="plan" value="launch"><p class="lede"><strong>${e(freeWords(T).plan)}</strong> · ${e(freeWords(T).planDesc)}</p>` : `<label class="plan"><input type="radio" name="plan" value="solo" checked><span><strong>Solo · ${e(T.f.planMoney(T.cc.prices.solo))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.solo)}</span></span></label>
       <label class="plan"><input type="radio" name="plan" value="multi"><span><strong>Multi · ${e(T.f.planMoney(T.cc.prices.multi))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.multi)}</span></span></label>
       ${!lottery && F.free ? `<label class="plan"><input type="radio" name="plan" value="free"><span><strong>${e(F.freeName)} · ${e(T.f.money(0))}</strong><br><span class="fine">${e(F.free)}</span></span></label>` : ''}
@@ -134,7 +145,7 @@ export async function accountPage(env, url, user) {
 
   <section><h2>What we watch for you</h2>${alerts.length ? `<ul class="rows">${alerts.map((a) => `<li class="row" data-alert="${a.id}">
     <span class="name">${e(a.kind === 'lottery' ? (a.set_slug ? (JP_SETS.find((x) => x.slug === a.set_slug)?.name ?? a.set_slug) : '抽選・再販（すべて）') : (a.sku_name ?? `Anything from ${a.set_name}`))}</span>
-    <span class="meta">${COUNTRIES[a.country]?.name ?? ''} · ${a.kind === 'online' ? 'Online' : a.kind === 'lottery' ? '抽選' : `Stores in ${e(metroName(a.metro))}`} · ${e(JSON.parse(a.channels).join(', '))}${a.status === 'paused' ? ' · paused' : ''}</span>
+    <span class="meta">${COUNTRIES[a.country]?.name ?? ''} · ${a.kind === 'online' ? `Online${JSON.parse(a.store_ids || '[]').length ? ` (${JSON.parse(a.store_ids).length} shops)` : ''}` : a.kind === 'lottery' ? '抽選' : `Stores in ${e(metroName(a.metro))}`} · ${e(JSON.parse(a.channels).join(', '))}${a.status === 'paused' ? ' · paused' : ''}</span>
     <span class="side"><button class="link" data-act="${a.status === 'paused' ? 'resume' : 'pause'}">${a.status === 'paused' ? 'Resume' : 'Pause'}</button>
       <button class="link" data-act="delete">Delete</button></span></li>`).join('')}</ul>` : '<p class="empty">No alert yet. <a href="/alerts">Set one up</a>.</p>'}
     ${pass ? '<p><a href="/alerts">Add an alert</a></p>' : ''}

@@ -128,7 +128,7 @@ export default {
   },
   pricing: {
     title: (b) => `Preise — ${b}`, h1: 'Preise', lede: 'Die Bestandsseiten sind kostenlos. Alarme kosten etwas, für 30 Tage, mit 2 Klicks kündbar.',
-    solo: '1 Produkt in 1 Filiale, 1 Stadt oder online', multi: 'Mehrere Produkte und Orte, oder alle versiegelten Produkte eines Sets',
+    solo: '1 Produkt, in den Shops deiner Wahl', multi: 'Mehrere Produkte oder alle versiegelten Produkte eines Sets',
     tax: 'Je nach Land kommt beim Bezahlen MwSt. dazu. Wir benachrichtigen, du kaufst beim Händler: Wir kaufen nie für dich.',
   },
   cta: {

@@ -110,8 +110,25 @@
     if (f.dataset.sku) { state.sku = f.dataset.sku; state.kind = 'online'; const li = $('.steps li[data-s="1"]', f); if (li) li.hidden = true; }
     const signed = f.dataset.signed === '1';
     if (signed) { const li = $('.steps li[data-s="3"]', f); if (li) li.hidden = true; }
-    show(f.dataset.sku ? 2 : 1);
     let email = ''; let chosenPlan = '';
+    // Shops that sell the product: all ticked by default, the person can keep only some (empty list sent = all shops)
+    const sp = $('.shops-pick', f);
+    const escH = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const boxes = () => [...(sp ? sp.querySelectorAll('input[name=store]') : [])];
+    const sumShops = () => { const all = boxes(); const on = all.filter((x) => x.checked); $('.shops-sum', sp).textContent = on.length === all.length ? sp.dataset.all.replace('{n}', all.length) : `${on.length} / ${all.length}`; };
+    async function loadShops() {
+      if (!sp) return; sp.hidden = true; $('.shop-list', sp).innerHTML = '';
+      if (!state.sku || /^(set|jpset):/.test(state.sku) || state.kind !== 'online') return;
+      try {
+        const r = await fetch(`/api/funnel/shops?sku=${encodeURIComponent(state.sku)}&c=${encodeURIComponent(f.dataset.country)}`).then((x) => x.json());
+        if (!r.shops || r.shops.length < 2) return;
+        $('.shop-list', sp).innerHTML = r.shops.map((s) => `<label class="radio"><input type="checkbox" name="store" value="${escH(s.id)}" checked> ${escH(s.name)}${s.in ? ` <span class="fine">· ${escH(sp.dataset.in)}</span>` : ''}</label>`).join('');
+        boxes().forEach((x) => x.addEventListener('change', sumShops)); sumShops(); sp.hidden = false;
+      } catch {}
+    }
+    $('.shops-toggle', f)?.addEventListener('click', () => { const l = $('.shop-list', sp); l.hidden = !l.hidden; });
+    const toPlan = () => { show(2); loadShops(); };
+    if (f.dataset.sku) toPlan(); else show(1);
 
     async function submitAlert(plan, form, n, extra = {}) {
       busy(form, true); err(n);
@@ -134,13 +151,18 @@
       state.sku = e.target.sku.value; state.kind = kindOf(); state.metro = e.target.metro?.value || '';
       if (state.kind === 'stores' && !state.metro) return err(1, 'Pick your city.');
       if (state.sku.startsWith('set:')) { $('input[name=plan][value=multi]', f).checked = true; }
-      show(2);
+      toPlan();
     });
     $('[data-form=plan]', f).addEventListener('submit', async (e) => {
       e.preventDefault(); err(2);
       const t = e.target;
       state.push = !!t.push?.checked; state.telegram = !!t.telegram?.checked; state.line = !!t.line?.checked;
       if (state.push) { try { await enablePush(f.dataset.vapid); } catch (x) { state.push = false; t.push.checked = false; return err(2, x.message); } }
+      if (sp && !sp.hidden) {
+        const all = boxes(); const on = all.filter((x) => x.checked).map((x) => x.value);
+        if (!on.length) return err(2, sp.dataset.none);
+        state.stores = on.length === all.length ? [] : on;
+      } else state.stores = [];
       chosenPlan = f.dataset.pass || ($('input[name=plan]:checked', f) || $('input[name=plan]', f)).value;
       if (signed) submitAlert(chosenPlan, t, 2); else show(3);
     });

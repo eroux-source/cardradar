@@ -128,7 +128,7 @@ export default {
   },
   pricing: {
     title: (b) => `Prijzen — ${b}`, h1: 'Prijzen', lede: 'De voorraadpagina\'s zijn gratis. Meldingen zijn betaald, voor 30 dagen, opzegbaar in 2 klikken.',
-    solo: '1 product in 1 winkel, 1 stad of online', multi: 'Meerdere producten en plekken, of alle verzegelde producten van een set',
+    solo: '1 product, in de winkels die je kiest', multi: 'Meerdere producten of alle verzegelde producten van een set',
     tax: 'Afhankelijk van je land komt er btw bij. Wij melden, jij koopt bij de winkel: wij kopen nooit voor je.',
   },
   cta: {
