@@ -15,7 +15,7 @@ export async function factsBlock(env, T) {
     [T.facts.k.what, T.facts.what(env.BRAND_NAME, stores, online, T.cc.metros.length, T.cc.name)],
     [T.facts.k.alerts, T.facts.alerts],
     [T.facts.k.speed, speed ? T.facts.speedYes(T.f.dur(speed.p50), T.f.dur(speed.p90), speed.n) : T.facts.speedNo],
-    [T.facts.k.price, freeMode(env) ? freeWords(T).facts : T.facts.price(T.f.money(T.cc.prices.solo), T.f.money(T.cc.prices.multi))],
+    [T.facts.k.price, freeMode(env) ? freeWords(T).facts : T.facts.price(T.f.planMoney(T.cc.prices.solo), T.f.planMoney(T.cc.prices.multi))],
     [T.facts.k.noApp, T.facts.noApp],
     [T.facts.k.indep, T.facts.indep],
   ];

@@ -107,7 +107,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
         <div><dt>${e(S.stats.most)}</dt><dd>${e(top ? top[0] : '—')}</dd></div>
         <div><dt>${e(S.stats.last)}</dt><dd>${e(rs[0] ? T.f.ago(rs[0].started_at) : '—')}</dd></div></dl>
         <p class="fine">${e(S.statsNote)}</p><p><a href="${base(cc)}/${e(k.slug)}/restocks">${e(S.whenLink(k.name))} →</a></p></div>
-      <div class="side-card alert-card" id="alerts"><h2>${e(S.alertH)}</h2><p>${e(freeMode(env) ? freeWords(T).side : S.alertP(T.f.money(T.cc.prices.solo), sum.typical ? T.f.dur(sum.typical) : null))}</p>
+      <div class="side-card alert-card" id="alerts"><h2>${e(S.alertH)}</h2><p>${e(freeMode(env) ? freeWords(T).side : S.alertP(T.f.planMoney(T.cc.prices.solo), sum.typical ? T.f.dur(sum.typical) : null))}</p>
         <a class="btn go" href="${e(alertHref)}" data-ev="sheet_open">🔔 ${e(S.alertBtn)}</a></div>
     </aside>
     <section class="main" aria-labelledby="now-h">

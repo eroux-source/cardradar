@@ -6,7 +6,7 @@ import nl from './nl.js';
 import it from './it.js';
 import es from './es.js';
 import ja from './ja.js';
-import { COUNTRIES, money } from '../data/countries.js';
+import { COUNTRIES, money, planMoney } from '../data/countries.js';
 
 const DICTS = { en, fr, de, nl, it, es, ja };
 const cache = {};
@@ -46,6 +46,7 @@ export function t(cc) {
     date: (ts) => dateFmt.format(ts),
     list: (a) => listFmt.format(a),
     money: (amount) => money(c.code, amount),
+    planMoney: (amount) => planMoney(c.code, amount),
   };
   cache[c.code] = { ...s, f, cc: c };
   return cache[c.code];

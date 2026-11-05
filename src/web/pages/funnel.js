@@ -92,8 +92,8 @@ export async function alertsPage(env, url, user) {
   <section class="step" data-step="3" hidden>
     <h2>${e(freeMode(env) ? F.s3h : F.s4h)}</h2>
     <form data-form="plan">
-      ${freeMode(env) ? `<input type="hidden" name="plan" value="launch"><p class="lede"><strong>${e(freeWords(T).plan)}</strong> · ${e(freeWords(T).planDesc)}</p>` : `<label class="plan"><input type="radio" name="plan" value="solo" checked><span><strong>Solo · ${e(T.f.money(T.cc.prices.solo))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.solo)}</span></span></label>
-      <label class="plan"><input type="radio" name="plan" value="multi"><span><strong>Multi · ${e(T.f.money(T.cc.prices.multi))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.multi)}</span></span></label>
+      ${freeMode(env) ? `<input type="hidden" name="plan" value="launch"><p class="lede"><strong>${e(freeWords(T).plan)}</strong> · ${e(freeWords(T).planDesc)}</p>` : `<label class="plan"><input type="radio" name="plan" value="solo" checked><span><strong>Solo · ${e(T.f.planMoney(T.cc.prices.solo))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.solo)}</span></span></label>
+      <label class="plan"><input type="radio" name="plan" value="multi"><span><strong>Multi · ${e(T.f.planMoney(T.cc.prices.multi))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.multi)}</span></span></label>
       ${!lottery && F.free ? `<label class="plan"><input type="radio" name="plan" value="free"><span><strong>${e(F.freeName)} · ${e(T.f.money(0))}</strong><br><span class="fine">${e(F.free)}</span></span></label>` : ''}
       <p class="fine">${e(F.renew)}</p>`}
       ${cc === 'jp' ? `<fieldset class="channels"><label class="radio"><input type="checkbox" name="line" value="1" checked> ${e(F.line)} <span class="fine">${e(F.lineFine)}</span></label></fieldset>` : ''}

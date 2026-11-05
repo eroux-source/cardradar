@@ -21,6 +21,15 @@ FREE_ALERTS = "0"   # paid plans (Whop): instant email alerts are paid, free pla
 GA_ID = "G-V4X0V6LLD5"   # Google Analytics 4 (property "Card Restock Tracker")
 WHOP_PLAN_SOLO = "plan_ydMKXsHg6S0T6"    # Whop "Solo" $5.99 / 30 days (public id, appears in checkout links)
 WHOP_PLAN_MULTI = "plan_2U5hmfwpVlY3X"   # Whop "Multi" $14.99 / 30 days
+# Local-currency plans (created 2026-11-05, same prices as data/countries.js). MX, CL and JP have none: they see and pay USD.
+WHOP_PLAN_SOLO_EUR = "plan_Z4R7t7gVmM5Vs"   # €5.99
+WHOP_PLAN_SOLO_GBP = "plan_wB1TjC4lHpFUX"   # £4.99
+WHOP_PLAN_SOLO_CAD = "plan_8dQuPP8xcRY8q"   # CA$11.99
+WHOP_PLAN_SOLO_AUD = "plan_CETJdqvPxq2gQ"   # A$11.99
+WHOP_PLAN_MULTI_EUR = "plan_isJVJOPuoRO1n"  # €13.99
+WHOP_PLAN_MULTI_GBP = "plan_SDWULv5TZeATq"  # £11.99
+WHOP_PLAN_MULTI_CAD = "plan_PGfRR8LPg7bgr"  # CA$29.99
+WHOP_PLAN_MULTI_AUD = "plan_zYrSxosU0xlp7"  # A$29.99
 ALERTS_FROM = "Card Restock Tracker <alerts@notify.cardrestocktracker.com>"
 CODES_FROM = "Card Restock Tracker <hello@cardrestocktracker.com>"
 TELEGRAM_BOT_NAME = ""               # bot username, without @

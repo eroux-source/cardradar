@@ -20,7 +20,7 @@ export const COUNTRIES = {
     metros: m('ca', [['toronto', 'Toronto', 'ON', 'M5H 2N2'], ['montreal', 'Montreal', 'QC', 'H3B 4W8'], ['vancouver', 'Vancouver', 'BC', 'V6B 1A1'], ['calgary', 'Calgary', 'AB', 'T2P 1J9'], ['edmonton', 'Edmonton', 'AB', 'T5J 0N3'], ['ottawa', 'Ottawa', 'ON', 'K1P 1J1'], ['winnipeg', 'Winnipeg', 'MB', 'R3C 0V8'], ['quebec-city', 'Quebec City', 'QC', 'G1R 4S9'], ['hamilton', 'Hamilton', 'ON', 'L8P 4R5'], ['kitchener', 'Kitchener', 'ON', 'N2G 4G7'], ['london-on', 'London', 'ON', 'N6A 3N7'], ['halifax', 'Halifax', 'NS', 'B3J 3A5']]) },
   au: { code: 'au', name: 'Australia', lang: 'en', locale: 'en-AU', currency: 'AUD', prices: { solo: '11.99', multi: '29.99' }, tz: 'Australia/Sydney',
     metros: m('au', [['sydney', 'Sydney', 'NSW', '2000'], ['melbourne', 'Melbourne', 'VIC', '3000'], ['brisbane', 'Brisbane', 'QLD', '4000'], ['perth', 'Perth', 'WA', '6000'], ['adelaide', 'Adelaide', 'SA', '5000'], ['gold-coast', 'Gold Coast', 'QLD', '4217'], ['newcastle-nsw', 'Newcastle', 'NSW', '2300'], ['canberra', 'Canberra', 'ACT', '2601'], ['sunshine-coast', 'Sunshine Coast', 'QLD', '4558'], ['wollongong', 'Wollongong', 'NSW', '2500'], ['hobart', 'Hobart', 'TAS', '7000'], ['geelong', 'Geelong', 'VIC', '3220']]) },
-  jp: { code: 'jp', name: '日本', lang: 'ja', locale: 'ja-JP', currency: 'JPY', prices: { solo: '680', multi: '1480' }, tz: 'Asia/Tokyo', mode: 'lottery',
+  jp: { code: 'jp', name: '日本', lang: 'ja', locale: 'ja-JP', currency: 'JPY', prices: { solo: '5.99', multi: '14.99', currency: 'USD' }, tz: 'Asia/Tokyo', mode: 'lottery',
     metros: m('jp', [['tokyo', '東京', '東京都', '100-0005'], ['osaka', '大阪', '大阪府', '530-0001'], ['nagoya', '名古屋', '愛知県', '450-0002'], ['yokohama', '横浜', '神奈川県', '220-0011'], ['fukuoka', '福岡', '福岡県', '812-0012'], ['sapporo', '札幌', '北海道', '060-0806'], ['kobe', '神戸', '兵庫県', '650-0021'], ['kyoto', '京都', '京都府', '600-8216'], ['sendai', '仙台', '宮城県', '980-0021'], ['hiroshima', '広島', '広島県', '732-0822']]) },
   de: { code: 'de', name: 'Deutschland', lang: 'de', locale: 'de-DE', currency: 'EUR', prices: { solo: '5.99', multi: '13.99' }, tz: 'Europe/Berlin',
     metros: m('de', [['berlin', 'Berlin', 'BE', '10117'], ['hamburg', 'Hamburg', 'HH', '20095'], ['muenchen', 'München', 'BY', '80331'], ['koeln', 'Köln', 'NW', '50667'], ['frankfurt', 'Frankfurt', 'HE', '60311'], ['stuttgart', 'Stuttgart', 'BW', '70173'], ['duesseldorf', 'Düsseldorf', 'NW', '40213'], ['dortmund', 'Dortmund', 'NW', '44137'], ['essen', 'Essen', 'NW', '45127'], ['leipzig', 'Leipzig', 'SN', '04109'], ['bremen', 'Bremen', 'HB', '28195'], ['hannover', 'Hannover', 'NI', '30159'], ['nuernberg', 'Nürnberg', 'BY', '90402'], ['dresden', 'Dresden', 'SN', '01067']]) },
@@ -32,9 +32,9 @@ export const COUNTRIES = {
     metros: m('it', [['roma', 'Roma', 'LAZ', '00184'], ['milano', 'Milano', 'LOM', '20121'], ['napoli', 'Napoli', 'CAM', '80133'], ['torino', 'Torino', 'PIE', '10121'], ['palermo', 'Palermo', 'SIC', '90133'], ['genova', 'Genova', 'LIG', '16121'], ['bologna', 'Bologna', 'EMR', '40121'], ['firenze', 'Firenze', 'TOS', '50123'], ['bari', 'Bari', 'PUG', '70121'], ['catania', 'Catania', 'SIC', '95124']]) },
   es: { code: 'es', name: 'España', lang: 'es', locale: 'es-ES', currency: 'EUR', prices: { solo: '5.99', multi: '13.99' }, tz: 'Europe/Madrid',
     metros: m('es', [['madrid', 'Madrid', 'MD', '28013'], ['barcelona', 'Barcelona', 'CT', '08002'], ['valencia', 'Valencia', 'VC', '46002'], ['sevilla', 'Sevilla', 'AN', '41004'], ['zaragoza', 'Zaragoza', 'AR', '50001'], ['malaga', 'Málaga', 'AN', '29015'], ['murcia', 'Murcia', 'MC', '30004'], ['palma', 'Palma', 'IB', '07001'], ['bilbao', 'Bilbao', 'PV', '48001'], ['alicante', 'Alicante', 'VC', '03002']]) },
-  mx: { code: 'mx', name: 'México', lang: 'es', locale: 'es-MX', currency: 'MXN', prices: { solo: '109', multi: '269' }, tz: 'America/Mexico_City',
+  mx: { code: 'mx', name: 'México', lang: 'es', locale: 'es-MX', currency: 'MXN', prices: { solo: '5.99', multi: '14.99', currency: 'USD' }, tz: 'America/Mexico_City',
     metros: m('mx', [['cdmx', 'Ciudad de México', 'CDMX', '06000'], ['guadalajara', 'Guadalajara', 'JAL', '44100'], ['monterrey', 'Monterrey', 'NL', '64000']]) },
-  cl: { code: 'cl', name: 'Chile', lang: 'es', locale: 'es-CL', currency: 'CLP', prices: { solo: '5490', multi: '13490' }, tz: 'America/Santiago',
+  cl: { code: 'cl', name: 'Chile', lang: 'es', locale: 'es-CL', currency: 'CLP', prices: { solo: '5.99', multi: '14.99', currency: 'USD' }, tz: 'America/Santiago',
     metros: m('cl', [['santiago', 'Santiago', 'RM', '8320000'], ['valparaiso', 'Valparaíso', 'VS', '2340000'], ['concepcion', 'Concepción', 'BI', '4030000']]) },
 };
 
@@ -44,6 +44,13 @@ export const metroById = Object.fromEntries(countryList.flatMap((c) => c.metros.
 /** A metro inside a country, by the slug shown in URLs. */
 export const metroInCountry = (cc, slug) => COUNTRIES[cc]?.metros.find((x) => x.slug === slug) ?? null;
 export const countryOfMetro = (id) => metroById[id]?.country ?? null;
+
+/** Alert plan price: in the plan's own currency (USD where Whop has no local plan). */
+export function planMoney(cc, amount) {
+  const c = COUNTRIES[cc] ?? COUNTRIES.us;
+  const cur = c.prices.currency ?? c.currency;
+  return new Intl.NumberFormat(c.locale, { style: 'currency', currency: cur, maximumFractionDigits: cur === 'JPY' ? 0 : 2 }).format(Number(amount));
+}
 
 export function money(cc, amount) {
   const c = COUNTRIES[cc] ?? COUNTRIES.us;
