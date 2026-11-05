@@ -94,7 +94,9 @@ export async function billingWebhook(env, request) {
   if (/went_valid|activated|payment\.succeeded|renewed/.test(type)) {
     await grantPass(env, { userId: user.id, plan: planFromId(env, planId) ?? 'solo', provider: 'whop', ref: `${type}:${ref}` });
     await run(env, "UPDATE leads SET step = 'paid', updated_at = ? WHERE email = ?", now(), user.email);
-    await run(env, 'INSERT INTO events (at, name, props) VALUES (?, ?, ?)', now(), 'paid', JSON.stringify({ plan: planFromId(env, planId), amount }));
+    // tie the payment to the visit that started the checkout (same user, latest checkout_start)
+    const from = await one(env, "SELECT visit FROM events WHERE at > ? AND name = 'checkout_start' AND json_extract(props, '$.u') = ? ORDER BY at DESC LIMIT 1", now() - 30 * 864e5, user.id).catch(() => null);
+    await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', now(), from?.visit ?? null, 'paid', JSON.stringify({ plan: planFromId(env, planId), amount }));
   } else if (/went_invalid|deactivated|cancel/.test(type)) {
     await stopRenewal(env, user.id); // access runs until the end of the paid period
   }

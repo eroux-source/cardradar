@@ -2,6 +2,7 @@
 import { hasStoreData } from './web/data.js';
 import { GUIDES, guideIdForSlug, guideOldSlug, guidePage, guideOverview, guidePath } from './web/pages/where_buy.js';
 import { now, run, one } from './lib/db.js';
+import { conversion, convLine } from './lib/conversion.js';
 import { currentUser } from './auth/session.js';
 import { googleStart, googleCallback } from './auth/google.js';
 import { billingWebhook, fakeCheckout } from './billing/provider.js';
@@ -55,6 +56,7 @@ async function route(req, env, ctx) {
     const c = await one(env, 'SELECT (SELECT COUNT(*) FROM listings WHERE active = 1) listings, (SELECT COUNT(*) FROM stock) readings, (SELECT COUNT(*) FROM stock WHERE in_stock = 1) in_stock');
     const bw = await one(env, "SELECT value, updated_at FROM settings WHERE key = 'billing.last_webhook'");
     const day = now() - 864e5;
+    const conv7 = await conversion(env, now() - 7 * 864e5);
     const aud = await one(env, "SELECT COUNT(DISTINCT visit) visits, COUNT(*) views FROM events WHERE at > ? AND name = 'view' AND bot = 0", day);
     const audAll = await one(env, "SELECT COUNT(DISTINCT visit) visits, COUNT(*) views, MIN(at) since FROM events WHERE name = 'view' AND bot = 0");
     const srcs = (await env.DB.prepare("SELECT COALESCE(NULLIF(source,''),'direct') s, COUNT(DISTINCT visit) n FROM events WHERE at > ? AND name = 'view' AND bot = 0 GROUP BY 1 ORDER BY n DESC LIMIT 6").bind(day).all()).results;
@@ -74,7 +76,8 @@ async function route(req, env, ctx) {
       wanted_channels: Object.entries((await env.DB.prepare("SELECT props FROM events WHERE name = 'wants_channel' AND bot = 0").all()).results.reduce((m, r) => { for (const c of String(JSON.parse(r.props || '{}').ch ?? '').split(',').filter(Boolean)) m[c] = (m[c] ?? 0) + 1; return m; }, {})),
       funnel_7d: (await env.DB.prepare("SELECT name, COUNT(*) AS n, COUNT(DISTINCT visit) AS v FROM events WHERE name != 'view' AND bot = 0 AND at > ? GROUP BY name ORDER BY n DESC LIMIT 20").bind(now() - 7 * 864e5).all()).results,
       top_pages_7d: (await env.DB.prepare("SELECT path, COUNT(DISTINCT visit) AS v FROM events WHERE name = 'view' AND bot = 0 AND at > ? GROUP BY path ORDER BY v DESC LIMIT 15").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.path} ${r.v}`),
-      sources_7d: (await env.DB.prepare("SELECT COALESCE(NULLIF(source, ''), 'direct') AS s, COUNT(DISTINCT visit) AS v FROM events WHERE name = 'view' AND bot = 0 AND at > ? GROUP BY s ORDER BY v DESC LIMIT 12").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.s} ${r.v}`),
+      sources_7d: conv7.by_source.map((g) => `${g.source} ${g.visits}`),
+      conversion_7d: { by_source: conv7.by_source.map(convLine), by_landing: conv7.by_landing.slice(0, 12).map(convLine) },
       devices_7d: (await env.DB.prepare("SELECT device, COUNT(DISTINCT visit) AS v FROM events WHERE name = 'view' AND bot = 0 AND at > ? GROUP BY device").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.device} ${r.v}`),
       countries_7d: (await env.DB.prepare("SELECT COALESCE(country, '?') AS c, COUNT(DISTINCT visit) AS v FROM events WHERE name = 'view' AND bot = 0 AND at > ? GROUP BY c ORDER BY v DESC LIMIT 25").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.c} ${r.v}`),
       out_shops_7d: (await env.DB.prepare("SELECT json_extract(props, '$.host') AS host, COUNT(*) AS n, COUNT(DISTINCT visit) AS v FROM events WHERE name = 'out' AND bot = 0 AND at > ? GROUP BY host ORDER BY n DESC LIMIT 40").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.host} ${r.n} (${r.v} visitors)`),

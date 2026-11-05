@@ -49,7 +49,9 @@ export async function api(env, req, url, ctx) {
       const r = await requestCode(env, email, clientIp(req));
       return r.ok ? json({ ok: true, state: 'code' }) : bad(r.error, 429);
     }
-    const u = await userByEmail(env, email, { create: true, source: 'funnel' });
+    const via = String(b.via ?? '').slice(0, 40);
+    const u = await userByEmail(env, email, { create: true, source: via ? `funnel · ${via}` : 'funnel' });
+    await run(env, 'INSERT INTO events (at, visit, name, source, country, props) VALUES (?, ?, ?, ?, ?, ?)', now(), String(b.visit ?? '').slice(0, 40) || null, 'signup', via || null, req.cf?.country ?? null, JSON.stringify({ cc }));
     return json({ ok: true, state: 'new' }, 200, { 'set-cookie': await startSession(env, u.id) });
   }
 
@@ -120,7 +122,7 @@ export async function api(env, req, url, ctx) {
       user.id, kind, skuId, setId, setSlug, metro?.id ?? null, '[]', JSON.stringify(channels), 'active', t, t, cc);
     await run(env, 'UPDATE users SET country = COALESCE(country, ?) WHERE id = ?', cc, user.id);
     await lead(env, user.email, { step: pass ? 'paid' : 'checkout', skuId, metro: metro?.id ?? null });
-    await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', t, b.visit ?? null, 'checkout_start', JSON.stringify({ plan, kind, cc }));
+    await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', t, b.visit ?? null, 'checkout_start', JSON.stringify({ plan, kind, cc, u: user.id }));
     return json({ ok: true, next: pass ? '/account' : checkoutUrl(env, { plan, email: user.email, currency: COUNTRIES[cc].currency }) });
   }
 

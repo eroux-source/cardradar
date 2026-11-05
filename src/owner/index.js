@@ -6,6 +6,7 @@ import { all, one, run, now, settings, setSetting } from '../lib/db.js';
 import { escapeHtml as e, timeAgo, formatDuration } from '../lib/util.js';
 import { sourceList, enabledSources } from '../sources/index.js';
 import { measuredSpeed } from '../web/data.js';
+import { conversion } from '../lib/conversion.js';
 
 export function ownerAllowed(env, req, url) {
   if (req.headers.get('cf-access-jwt-assertion')) return true; // Cloudflare Access already checked the person
@@ -180,6 +181,10 @@ export async function ownerUsers(env) {
 }
 
 /** Where we send traffic: every outbound click, by shop, product and country. */
+const convRow = (g) => {
+  const c = (n) => `${n}${g.visits && n ? ` <small>(${Math.round((100 * n) / g.visits)} %)</small>` : ''}`;
+  return `<tr><td>${e(g.source ?? g.page)}</td><td>${g.visits}</td><td>${c(g.out)}</td><td>${c(g.signup)}</td><td>${c(g.alert)}</td><td>${c(g.checkout)}</td><td>${c(g.paid)}</td></tr>`;
+};
 export async function ownerClicks(env, days = 30) {
   const since = now() - days * 864e5;
   const q = (sql) => all(env, sql, since).catch(() => []);
@@ -192,12 +197,17 @@ export async function ownerClicks(env, days = 30) {
   const pages = await q(`SELECT json_extract(props, '$.page') AS page, COUNT(*) AS n FROM events WHERE name = 'out' AND bot = 0 AND at > ? GROUP BY page ORDER BY n DESC LIMIT 30`);
   const days7 = await q(`SELECT date(at / 1000, 'unixepoch') AS d, COUNT(*) AS n, COUNT(DISTINCT visit) AS v FROM events WHERE name = 'out' AND bot = 0 AND at > ? GROUP BY d ORDER BY d DESC`);
   const old = await q(`SELECT json_extract(props, '$.shop') AS shop, COUNT(*) AS n FROM events WHERE name IN ('buy', 'buy_out') AND bot = 0 AND at > ? GROUP BY shop ORDER BY n DESC LIMIT 60`);
+  const conv = await conversion(env, since);
   const total = shops.reduce((t, r) => t + r.n, 0);
   const d = (ts) => (ts ? new Date(ts).toISOString().slice(0, 16).replace('T', ' ') : '');
   const pct = (n) => (total ? `${Math.round((n / total) * 100)} %` : '');
   const tbl = (head, rows) => `<table><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('') || `<tr><td colspan="${head.length}">Rien pour l'instant</td></tr>`}</tbody></table>`;
   const body = `<h1>Trafic envoyé aux boutiques (${days} j)</h1>
   <p>${total} clics sortants · <a href="?days=1">24 h</a> · <a href="?days=7">7 j</a> · <a href="?days=30">30 j</a> · <a href="?days=365">tout</a>. Chaque clic vers un autre site est compté (clic normal, clic molette, nouvel onglet).</p>
+  <h2>Ce que font les visiteurs, selon d'où ils viennent</h2>
+  <p class="sub">Une ligne par source d'arrivée (ChatGPT, Google, direct…). Une visite = un onglet. « Alerte » compte les alertes gratuites et les paiements commencés.</p>
+  ${tbl(['Source', 'Visites', 'Clic boutique', 'Compte créé', 'Alerte', 'Paiement commencé', 'Payé'], conv.by_source.map(convRow))}
+  <h2>Selon la page d'arrivée</h2>${tbl(['Page', 'Visites', 'Clic boutique', 'Compte créé', 'Alerte', 'Paiement commencé', 'Payé'], conv.by_landing.map(convRow))}
   <h2>Par boutique</h2>${tbl(['Site', 'Clics', 'Part', 'Visiteurs', 'Boutons « acheter »', 'Liens comparer (Amazon, eBay…)', 'Dernier clic'], shops.map((r) => `<tr><td>${e(r.host)}</td><td>${r.n}</td><td>${pct(r.n)}</td><td>${r.v}</td><td>${r.buy ?? 0}</td><td>${r.cmp ?? 0}</td><td>${e(d(r.last))}</td></tr>`))}
   <h2>Par produit</h2>${tbl(['Produit', 'Clics', 'Sites', 'Vers'], prods.map((r) => `<tr><td>${e(r.sku || '(page générale)')}</td><td>${r.n}</td><td>${r.hosts}</td><td>${e(String(r.list ?? '').split(',').slice(0, 6).join(', '))}</td></tr>`))}
   <h2>Par pays</h2>${tbl(['Pays', 'Clics', 'Visiteurs'], ccs.map((r) => `<tr><td>${e(r.cc ?? '?')}</td><td>${r.n}</td><td>${r.v}</td></tr>`))}

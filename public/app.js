@@ -13,6 +13,8 @@
   let source = q.get('utm_source') || q.get('via') || '';
   if (!source && document.referrer) { try { const h = new URL(document.referrer).hostname.replace(/^www\./, ''); if (h !== location.hostname) source = h; } catch {} }
   if (!source && standalone) source = 'homescreen';
+  // keep the landing source for the whole visit: later pages have our own site as referrer
+  try { if (source) sessionStorage.setItem('src', source); else source = sessionStorage.getItem('src') || ''; } catch {}
   const ev = (n, x) => { try { if (n !== 'view' && window.gtag) window.gtag('event', n, x && typeof x === 'object' ? x : {}); } catch {} try { navigator.sendBeacon('/api/e', new Blob([JSON.stringify({ n, v: visit, p: location.pathname, s: source, x })], { type: 'application/json' })); } catch {} };
   ev('view');
   // every click that leaves the site (left, middle or ctrl-click): which shop, which product, from which page
@@ -111,7 +113,7 @@
       e.preventDefault(); err(1); busy(e.target, true);
       email = e.target.email.value.trim();
       try {
-        const r = await post('/api/funnel/start', { email, sku: state.sku, metro: state.metro, via: source, country: f.dataset.country });
+        const r = await post('/api/funnel/start', { email, sku: state.sku, metro: state.metro, via: source, visit, country: f.dataset.country });
         if (r.state === 'code') { e.target.hidden = true; $('[data-form=code]', f).hidden = false; $('#f-code').focus(); }
         else show(next());
       } catch (x) { err(1, x.message); } finally { busy(e.target, false); }
