@@ -35,7 +35,7 @@
   const post = async (url, body) => {
     const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body ?? {}) });
     let data = {}; try { data = await r.json(); } catch {}
-    if (!r.ok || data.ok === false) throw new Error(data.error || 'Something went wrong. Try again.');
+    if (!r.ok || data.ok === false) { const x = new Error(data.error || 'Something went wrong. Try again.'); x.data = data; throw x; }
     return data;
   };
   const busy = (form, on) => { const b = form.querySelector('button[type=submit]'); if (b) b.disabled = on; };
@@ -136,7 +136,18 @@
         const r = await post('/api/funnel/alert', { ...state, plan, visit, via: source, country: f.dataset.country, ...extra });
         if (r.state === 'code') { busy(form, false); form.hidden = true; $('[data-form=code]', f).hidden = false; $('#f-code').focus(); return; }
         ga(/[?&]free=1/.test(r.next) ? 'free_alert' : 'checkout_start', () => { location.href = r.next; });
-      } catch (x) { err(n, x.message); busy(form, false); }
+      } catch (x) {
+        busy(form, false);
+        if (x.data?.step === 'plan') {
+          // refused (no plan, wrong plan, no shop): back to the paid plans, with a paid plan picked
+          const st = $('.step[data-step="2"]', f);
+          const pick = (v) => { const r = $(`input[name=plan][value=${v}]`, f); if (r) r.checked = true; };
+          if (x.data.code === 'multi') pick('multi'); else if (!$('input[name=plan]:checked', f) || $('input[name=plan]:checked', f).value === 'free') pick('solo');
+          show(2); err(2, x.data.code === 'plan_needed' ? (st.dataset.planNeeded || x.message) : x.message); $('.err', st)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          return;
+        }
+        err(n, x.message);
+      }
     }
     $('[data-form=email]', f).addEventListener('submit', (e) => {
       e.preventDefault(); email = e.target.email.value.trim();

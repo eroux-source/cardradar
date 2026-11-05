@@ -22,6 +22,13 @@ const SHOPS_UI = {
   es: { h: 'Tiendas vigiladas', all: 'Las {n} tiendas que lo venden', pick: 'Elegir', none: 'Elige al menos una tienda.', in: 'en stock' },
 };
 
+// Shown on the plan step when an alert is refused without a plan
+const PLAN_NEEDED = {
+  en: 'Alerts need a plan: pick Solo or Multi.', fr: 'Les alertes demandent une formule : choisissez Solo ou Multi.',
+  de: 'Alarme brauchen einen Tarif: wähle Solo oder Multi.', nl: 'Meldingen vragen een abonnement: kies Solo of Multi.',
+  it: 'Gli avvisi richiedono un piano: scegli Solo o Multi.', es: 'Las alertas necesitan un plan: elige Solo o Multi.', ja: 'プランを選んでください（Solo または Multi）。',
+};
+
 const EMAIL_OK = {
   en: 'Alerts come by email. That is fast enough: at the shops we track, a restock usually stays in stock for several hours before it sells out.',
   fr: 'Les alertes arrivent par e-mail. C\'est assez rapide : dans les boutiques suivies, un réassort reste généralement en stock plusieurs heures avant la rupture.',
@@ -99,7 +106,7 @@ export async function alertsPage(env, url, user) {
     <p class="err" role="alert"></p>
   </section>
 
-  <section class="step" data-step="2" hidden>
+  <section class="step" data-step="2" hidden data-plan-needed="${e(PLAN_NEEDED[T.cc.lang] ?? PLAN_NEEDED.en)}">
     <h2>${e(freeMode(env) ? F.s3h : F.s4h)}</h2>
     <form data-form="plan">
       ${(() => { const S = SHOPS_UI[T.cc.lang] ?? SHOPS_UI.en; return `<div class="shops-pick" hidden data-all="${e(S.all)}" data-none="${e(S.none)}" data-in="${e(S.in)}"><p class="sub"><strong>${e(S.h)}</strong> · <span class="shops-sum"></span> · <button type="button" class="link shops-toggle">${e(S.pick)}</button></p><div class="shop-list" hidden></div></div>`; })()}

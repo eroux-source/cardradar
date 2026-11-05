@@ -15,6 +15,8 @@ import { sourceName } from '../sources/index.js';
 
 export const json = (data, status = 200, headers = {}) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', ...headers } });
 const bad = (error, status = 400) => json({ ok: false, error }, status);
+/** A refusal the funnel answers by going back to the paid plan step. */
+const planBad = (error, code = 'plan') => json({ ok: false, error, step: 'plan', code }, 400);
 export const clientIp = (req) => req.headers.get('cf-connecting-ip') ?? '0.0.0.0';
 /** Rate-limit key per network: IPv4 /24, IPv6 /48 (§7: 20 reads/min per network). */
 export const netKey = (ip) => (ip.includes(':') ? ip.split(':').slice(0, 3).join(':') : ip.split('.').slice(0, 3).join('.'));
@@ -80,7 +82,7 @@ export async function api(env, req, url, ctx) {
   if (p === '/api/funnel/alert' && m === 'POST') {
     const b = await body(req);
     // Since 2026-11-05 every new alert needs a plan (Solo or Multi). Existing free alerts keep their daily email.
-    if (b.plan === 'free' && !freeMode(env)) return bad('Alerts need a plan: pick Solo or Multi.');
+    if (b.plan === 'free' && !freeMode(env)) return planBad('Alerts need a plan: pick Solo or Multi.', 'plan_needed');
     let actor = user; let setCookie = null; let guest = false;
     if (!actor) {
       // Plan first, email last (2026-11-05): no sign-in code before checkout. The email is confirmed after payment.
@@ -210,7 +212,7 @@ async function createAlert(env, b, user, guest) {
     const ok = new Set((await all(env, `SELECT DISTINCT s.id FROM listings l JOIN stock k ON k.listing_id = l.id JOIN stores s ON s.id = k.store_id
       WHERE l.sku_id = ? AND s.online = 1 AND s.country = ?`, skuId, cc)).map((r) => r.id));
     storeIds = [...new Set(b.stores.map(String))].filter((x) => ok.has(x)).slice(0, 300);
-    if (!storeIds.length) return bad('Pick at least one shop.');
+    if (!storeIds.length) return planBad('Pick at least one shop.');
   }
   const stores = JSON.stringify(storeIds);
   const pass = await activePass(env, user.id);
@@ -229,11 +231,11 @@ async function createAlert(env, b, user, guest) {
     return json({ ok: true, next: `/account?free=1&c=${cc}` });
   }
   const free = false; // no new free alerts (2026-11-05)
-  if (free && (setId || kind === 'lottery')) return bad('The free plan covers one product. Pick a single product or a paid plan.');
+  if (free && (setId || kind === 'lottery')) return planBad('Alerts need a plan: pick Solo or Multi.', 'plan_needed');
   const effPlan = pass?.plan ?? plan;
-  if (!free && (setId || (kind === 'lottery' && !setSlug)) && effPlan !== 'multi') return bad('"Anything from a set" needs the Multi plan.');
+  if (!free && (setId || (kind === 'lottery' && !setSlug)) && effPlan !== 'multi') return planBad('"Anything from a set" needs the Multi plan.', 'multi');
   const count = (await one(env, "SELECT COUNT(*) n FROM alerts WHERE user_id = ? AND status != 'deleted'", user.id)).n;
-  if (pass && count >= PLANS[pass.plan].maxAlerts) return bad(`Your ${PLANS[pass.plan].name} plan covers ${PLANS[pass.plan].maxAlerts} alert${PLANS[pass.plan].maxAlerts > 1 ? 's' : ''}. Delete one or switch to Multi.`);
+  if (pass && count >= PLANS[pass.plan].maxAlerts) return planBad(`Your ${PLANS[pass.plan].name} plan covers ${PLANS[pass.plan].maxAlerts} alert${PLANS[pass.plan].maxAlerts > 1 ? 's' : ''}. Delete one or switch to Multi.`);
   const channels = free ? ['email'] : ['email', ...(b.push ? ['push'] : []), ...(b.telegram ? ['telegram'] : []), ...(b.line ? ['line'] : [])];
   const t = now();
   if (free) {
