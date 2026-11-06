@@ -86,6 +86,8 @@ async function route(req, env, ctx) {
       compare_all: (await env.DB.prepare("SELECT json_extract(props, '$.shop') AS shop, COUNT(*) AS n, COUNT(DISTINCT visit) AS v, MIN(at) AS first FROM events WHERE name = 'buy_out' AND bot = 0 GROUP BY shop ORDER BY n DESC").all()).results.map((r) => `${r.shop} ${r.n} clics (${r.v} visiteurs) depuis ${new Date(r.first).toISOString().slice(0, 10)}`),
       clicks_7d: (await env.DB.prepare("SELECT name, json_extract(props, '$.shop') AS shop, COUNT(*) AS n FROM events WHERE name IN ('buy', 'buy_out') AND bot = 0 AND at > ? GROUP BY name, shop ORDER BY n DESC LIMIT 20").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.name} ${r.shop} ${r.n}`),
       relaunch: (await env.DB.prepare("SELECT value FROM settings WHERE key = 'relaunch.2026-11-03'").first())?.value ?? null,
+      merge: (await env.DB.prepare("SELECT value, updated_at FROM settings WHERE key = 'merge.last'").first().catch(() => null)) ?? null,
+      redirects: (await env.DB.prepare('SELECT COUNT(*) n FROM sku_redirects').first().catch(() => null))?.n ?? null,
       email: { postmark: !!env.POSTMARK_TOKEN, resend: !!env.RESEND_API_KEY, google_signin: !!env.GOOGLE_CLIENT_ID, outbox: (await env.DB.prepare("SELECT kind, COUNT(*) AS n, SUM(sent_at IS NOT NULL) AS sent, SUM(attempts >= 5) AS failed, MAX(last_error) AS err FROM email_outbox WHERE id > (SELECT COALESCE(MAX(id), 0) - 200 FROM email_outbox) GROUP BY kind").all()).results },
       users: (await env.DB.prepare("SELECT (SELECT COUNT(*) FROM users) AS users, (SELECT COUNT(*) FROM alerts WHERE status = 'active') AS alerts, (SELECT COUNT(*) FROM alerts WHERE status = 'active' AND free = 1) AS free_alerts, (SELECT COUNT(*) FROM passes WHERE status IN ('active','refunded_kept') AND ends_at > ?) AS paid").bind(now()).first().catch(() => null)),
       last_500: (await env.DB.prepare("SELECT value, updated_at FROM settings WHERE key = 'last_500'").first()) ?? null, ai_landings_7d: (await env.DB.prepare("SELECT source, path, COUNT(DISTINCT visit) AS n FROM events WHERE name = 'view' AND bot = 0 AND at > ? AND (source LIKE '%chatgpt%' OR source LIKE '%openai%' OR source LIKE '%perplexity%' OR source LIKE '%claude%' OR source LIKE '%gemini%' OR source LIKE '%copilot%') GROUP BY source, path ORDER BY n DESC LIMIT 15").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.source} ${r.path} ${r.n}`), proxy_mb: await (async () => { const r = (await env.DB.prepare("SELECT key, value FROM settings WHERE key LIKE 'proxy.bytes.%' ORDER BY key DESC LIMIT 7").all()).results; return Object.fromEntries(r.map((x) => [x.key.slice(12), Math.round(Number(x.value) / 1e5) / 10])); })(), audience: { last_24h: aud, all_time: audAll, sources_24h: srcs, bot_hits_24h: bots?.n ?? 0 }, billing: { api_key_set: !!env.WHOP_API_KEY, webhook_secret_set: !!env.WHOP_WEBHOOK_SECRET, plans: [env.WHOP_PLAN_SOLO, env.WHOP_PLAN_MULTI], last_webhook: bw ? { ...JSON.parse(bw.value), at: bw.updated_at } : null }, last_read: last?.t ?? null, age_s: last?.t ? Math.round((now() - last.t) / 1000) : null, counts: c,
@@ -105,6 +107,7 @@ async function route(req, env, ctx) {
     if (id) await publishRestocks(env, [id]);
     return json({ ok: true, restock: id, sent: await one(env, 'SELECT * FROM alert_sent WHERE restock_id = ?', id) });
   }
+  if (p === '/dev/merge' && env.DEV_TOOLS === '1') return json(await (await import('./crawler/merge.js')).mergeSkus(env));
   if (p === '/dev/daily' && env.DEV_TOOLS === '1') return json({ users: await (await import('./jobs/index.js')).dailyFree(env) });
   if (p === '/api/stock' && await limited(env, req)) return tooMany();
   if (p.startsWith('/api/')) return api(env, req, url, ctx);
@@ -202,6 +205,11 @@ async function route(req, env, ctx) {
     else if (seg[1] && seg[2] === 'restocks' && seg.length === 3) res = await pub.skuRestocks(env, cc, seg[1]);
     else if (seg[1] && seg[2] && seg.length === 3) res = await pub.sku(env, cc, seg[1], seg[2]);
     if (res) return res;
+    // merged product pages: the old address goes to the kept page (301)
+    if (seg[1] && !['restocks', 'cities', 'retailers', 'retailer', 'store'].includes(seg[1])) {
+      const r = await env.DB.prepare('SELECT new_slug FROM sku_redirects WHERE old_slug = ?').bind(seg[1]).first().catch(() => null);
+      if (r) return Response.redirect(`${env.BASE_URL}/${[cc, r.new_slug, ...seg.slice(2)].join('/')}`, 301);
+    }
     return notFound(env, cc);
   }
   return notFound(env);

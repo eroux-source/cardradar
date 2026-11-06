@@ -3,7 +3,15 @@
 // merges every retailer's listing of that set into clean product pages.
 export const KNOWN_SETS = [
   { name: 'Delta Reign', aliases: ['delta reign'] },
+  // local editions of Delta Reign (their own products in each country)
+  { name: 'Delta-Herrschaft', aliases: ['delta-herrschaft', 'delta herrschaft', 'delta herrscahft'] },
+  { name: 'Règne Delta', aliases: ['règne delta', 'regne delta'] },
+  { name: 'Dominio Delta', aliases: ['dominio delta'] },
   { name: '30th Celebration', aliases: ['30th celebration', '30th anniversary'] },
+  { name: 'Pitch Black', aliases: ['pitch black'] },
+  { name: 'Chaos Rising', aliases: ['chaos rising'] },
+  { name: 'Perfect Order', aliases: ['perfect order'] },
+  { name: 'Ascended Heroes', aliases: ['ascended heroes', 'ascenso heroico'] },
   { name: 'Phantasmal Flames', aliases: ['phantasmal flames'] },
   { name: 'Mega Evolution', aliases: ['mega evolution'] },
   { name: 'Black Bolt', aliases: ['black bolt'] },

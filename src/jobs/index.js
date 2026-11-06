@@ -103,6 +103,7 @@ export async function rollup(env, hourStart) {
 
 export async function hourly(env) {
   const t = now();
+  await (await import('../crawler/merge.js')).mergeSkus(env).catch(() => {}); // one page per product
   await rollup(env, Math.floor(t / HOUR) * HOUR - HOUR);
   // One follow-up per lead who left the funnel: 2 h to 48 h after, never twice (§2).
   const leads = await all(env, `SELECT l.*, k.name AS sku_name, k.slug FROM leads l LEFT JOIN skus k ON k.id = l.sku_id
