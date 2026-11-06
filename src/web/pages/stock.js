@@ -8,7 +8,7 @@ import { freeMode, freeWords } from '../free.js';
 import { dataPath, thirtyPath, words } from './local_data.js';
 import { GUIDES, guidePath } from './where_buy.js';
 import { escapeHtml as e } from '../../lib/util.js';
-import { sourceName, sourcesOf } from '../../sources/index.js';
+import { sourceName, sourcesOf, sourceList } from '../../sources/index.js';
 import * as d from '../data.js';
 import { affiliateBlock } from '../affiliate.js';
 import { page, home as homePath, base, crumbs, answers, hourChart, latestTable, shopsText, productGrid, placeLabel, alertCta } from '../html.js';
@@ -50,7 +50,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
   const sum = d.summarize(rs);
   // Places not read yet still show, so the page says what we watch (online listings without a reading)
   const seen = new Set(rows.filter((r) => r.online).map((r) => r.source));
-  const pending = listings.filter((l) => !seen.has(l.source) && (sourcesOf(cc).find((s) => s.id === l.source)?.kind ?? 'online') !== 'stores')
+  const pending = listings.filter((l) => !seen.has(l.source) && (sourceList.find((s) => s.id === l.source)?.kind ?? 'online') !== 'stores')
     .map((l) => ({ source: l.source, online: 1, url: l.url, in_stock: 0, seen_at: null }));
   const places = [...rows, ...pending];
   const inNow = rows.filter((r) => r.in_stock);

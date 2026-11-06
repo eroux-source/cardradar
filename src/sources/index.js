@@ -44,5 +44,6 @@ export async function refreshLive(env) {
     LIVE = ids.length ? new Set(ids) : null; // nothing read at all (e.g. empty local DB): name every enabled source
   } catch { /* keep the previous list */ }
 }
-export const sourcesOf = (cc) => sourceList.filter((s) => s.country === cc && (!ENABLED || ENABLED.has(s.id)) && (!LIVE || LIVE.has(s.id)));
+// Physical store-by-store sources (Target, GameStop…) are never named: their store stock is not read.
+export const sourcesOf = (cc) => sourceList.filter((s) => s.country === cc && s.kind !== 'stores' && (!ENABLED || ENABLED.has(s.id)) && (!LIVE || LIVE.has(s.id)));
 export const enabledSources = (env) => sourceList.filter((s) => (typeof s.enabled === 'function' ? s.enabled(env) : true));
