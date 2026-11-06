@@ -54,7 +54,7 @@ Owner: Eugène, eroux@kosmocgi.com. He writes in French. Reply in short, non-tec
 - Physical stores are not read, so the cities and store pages 301-redirect to the live pages.
 - One page per product (2026-11-06): `src/lib/catalog.js` names single booster packs, 3-pack blisters and Build & Battle boxes per set too, and strips shop notes (limit 2, pre-order, rip and ship, language tags, dates). `src/crawler/merge.js` runs hourly: it moves listings, alerts, leads and restocks to the right page and writes `sku_redirects` (old slug → kept slug, served as 301). Status in `/api/health` → `merge`, `redirects`.
 - Pages only name online shops that returned data in the last 3 days (`refreshLive` in `src/sources/index.js`); store-by-store sources are never named.
-- Commit messages must not contain double quotes (the deploy workflow pastes the message into a shell line; fixing it needs the workflow scope Eugène has).
+- The deploy workflow reads the commit message from env (fixed 2026-11-06), so any message is safe. The gh token here has no workflow scope: edit `.github/workflows/*` through the GitHub web editor (Eugène is signed in to GitHub in the app's browser).
 
 ## Rules
 - Never enter passwords, API keys or payment details, and never create accounts. The owner does that.
