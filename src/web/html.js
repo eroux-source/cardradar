@@ -43,7 +43,8 @@ ${env.GA_ID ? `<script async src="https://www.googletagmanager.com/gtag/js?id=${
 gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'granted'});
 gtag('consent','default',{analytics_storage:'denied',region:['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','IS','LI','NO','GB','CH']});
 gtag('js',new Date());gtag('config','${e(env.GA_ID)}',{country:'${cc}'});</script>
-` : ''}<title>${e(title)}</title><meta name="description" content="${e(description)}">
+` : ''}<script type="text/javascript">(function(i,m,p,a,c,t){c.ire_o=p;c[p]=c[p]||function(){(c[p].a=c[p].a||[]).push(arguments)};t=a.createElement(m);var z=a.getElementsByTagName(m)[0];t.async=1;t.src=i;z.parentNode.insertBefore(t,z)})('https://utt.impactcdn.com/P-A8137373-a120-41e3-bccb-6fffb60f8c5b1.js','script','impactStat',document,window);impactStat('transformLinks');impactStat('trackImpression');</script>
+<title>${e(title)}</title><meta name="description" content="${e(description)}">
 <link rel="canonical" href="${e(canonical)}">${alt}${noindex ? '<meta name="robots" content="noindex,follow">' : ''}
 <meta property="og:title" content="${e(title)}"><meta property="og:description" content="${e(description)}"><meta property="og:url" content="${e(canonical)}"><meta property="og:type" content="website"><meta property="og:locale" content="${T.cc.locale.replace('-', '_')}">
 <meta name="theme-color" content="#ffffff"><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icon.svg" type="image/svg+xml">
