@@ -81,8 +81,6 @@ export async function api(env, req, url, ctx) {
 
   if (p === '/api/funnel/alert' && m === 'POST') {
     const b = await body(req);
-    // Since 2026-11-05 every new alert needs a plan (Solo or Multi). Existing free alerts keep their daily email.
-    if (b.plan === 'free' && !freeMode(env)) return planBad('Alerts need a plan: pick Solo or Multi.', 'plan_needed');
     let actor = user; let setCookie = null; let guest = false;
     if (!actor) {
       // Plan first, email last (2026-11-05): no sign-in code before checkout. The email is confirmed after payment.
@@ -96,8 +94,8 @@ export async function api(env, req, url, ctx) {
         actor = await userByEmail(env, email, { create: true, source: via ? `funnel · ${via}` : 'funnel' });
         setCookie = await startSession(env, actor.id);
         await run(env, 'INSERT INTO events (at, visit, name, source, country, props) VALUES (?, ?, ?, ?, ?, ?)', now(), String(b.visit ?? '').slice(0, 40) || null, 'signup', via || null, req.cf?.country ?? null, JSON.stringify({ cc: cc0 }));
-      } else if (freeMode(env) || await activePass(env, existing.id)) {
-        // an account that already pays: only changed after a code
+      } else if (b.plan === 'free' || freeMode(env) || await activePass(env, existing.id)) {
+        // free alerts, or an account that already pays: an existing account is only changed after a code
         const r = await requestCode(env, email, clientIp(req));
         return r.ok ? json({ ok: true, state: 'code' }) : bad(r.error, 429);
       } else {
@@ -230,8 +228,8 @@ async function createAlert(env, b, user, guest) {
     if (ch.includes('telegram')) return json({ ok: true, next: `/account?free=1&c=${cc}` });
     return json({ ok: true, next: `/account?free=1&c=${cc}` });
   }
-  const free = false; // no new free alerts (2026-11-05)
-  if (free && (setId || kind === 'lottery')) return planBad('Alerts need a plan: pick Solo or Multi.', 'plan_needed');
+  const free = !pass && b.plan === 'free';
+  if (free && (setId || kind === 'lottery')) return bad('The free plan covers one product. Pick a single product or a paid plan.');
   const effPlan = pass?.plan ?? plan;
   if (!free && (setId || (kind === 'lottery' && !setSlug)) && effPlan !== 'multi') return planBad('"Anything from a set" needs the Multi plan.', 'multi');
   const count = (await one(env, "SELECT COUNT(*) n FROM alerts WHERE user_id = ? AND status != 'deleted'", user.id)).n;

@@ -31,7 +31,7 @@ export async function home(env, cc) {
     { '@context': 'https://schema.org', '@type': 'Organization', name: env.BRAND_NAME, url: env.BASE_URL, logo: `${env.BASE_URL}/icon.svg`, email: env.SUPPORT_EMAIL },
     { '@context': 'https://schema.org', '@type': 'WebApplication', name: env.BRAND_NAME, url: `${env.BASE_URL}${homePath(cc)}`, applicationCategory: 'ShoppingApplication', operatingSystem: 'Any (web browser)',
       description: T.home.desc(shops), inLanguage: T.cc.locale,
-      offers: freeMode(env) ? [{ '@type': 'Offer', name: 'Live stock pages + instant alerts (free during launch)', price: '0', priceCurrency: T.cc.currency }] : [
+      offers: freeMode(env) ? [{ '@type': 'Offer', name: 'Live stock pages + instant alerts (free during launch)', price: '0', priceCurrency: T.cc.currency }] : [{ '@type': 'Offer', name: 'Live stock pages + daily email alert', price: '0', priceCurrency: T.cc.currency },
         { '@type': 'Offer', name: 'Solo alerts, 30 days', price: T.cc.prices.solo, priceCurrency: T.cc.prices.currency ?? T.cc.currency },
         { '@type': 'Offer', name: 'Multi alerts, 30 days', price: T.cc.prices.multi, priceCurrency: T.cc.prices.currency ?? T.cc.currency }] }];
   // Like InStock Radar: the home IS the live stock of the product people chase most (hardest to find first)
@@ -143,6 +143,7 @@ export async function pricing(env, cc) {
     body: freeMode(env) ? `<div class="answer"><h1>${e(T.pricing.h1)}</h1><p class="lede">${e(freeWords(T).pricing)}</p></div>
     <p><a class="btn" href="/alerts?c=${cc}">${e(freeWords(T).btn)}</a></p>` : `<div class="answer"><h1>${e(T.pricing.h1)}</h1><p class="lede">${e(T.pricing.lede)}</p></div>
     <table><thead><tr><th>${e(T.th.plan)}</th><th>${e(T.th.watch)}</th><th>${e(T.th.days30)}</th></tr></thead><tbody>
+    ${T.pricing.free && cc !== 'jp' ? `<tr><td>Free</td><td>${e(T.pricing.free)}</td><td>${e(T.f.money(0))}</td></tr>` : ''}
     <tr><td>Solo</td><td>${e(T.pricing.solo)}</td><td>${e(T.f.planMoney(T.cc.prices.solo))}</td></tr>
     <tr><td>Multi</td><td>${e(T.pricing.multi)}</td><td>${e(T.f.planMoney(T.cc.prices.multi))}</td></tr></tbody></table>
     <p class="sub">${e(T.pricing.tax)}</p>

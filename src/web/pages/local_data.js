@@ -39,7 +39,7 @@ const L = {
     th: ['Product', 'Shops with stock', 'Lowest price in stock'], thR: ['Product', 'Shop', 'Back in stock', 'Lasted'], still: 'still in stock', lastR: 'last restock',
     tH1: (c) => `Pokémon 30th Celebration: where it is in stock in ${c}`,
     tLede: (w, n, inN, c, best) => `As of ${w}, ${inN} of the ${n} Pokémon 30th Celebration products we track in ${c} are in stock at independent card shops.${best ? ` Easiest to find: ${best}.` : ''}`,
-    tQ: (p, c) => `Where can I buy the ${p} in ${c}?`, tA: (w, p, shops) => (shops ? `As of ${w}, in stock at ${shops}.` : `As of ${w}, sold out at every shop we check; set an alert on the product page to hear when it is back.`),
+    tQ: (p, c) => `Where can I buy the ${p} in ${c}?`, tA: (w, p, shops) => (shops ? `As of ${w}, in stock at ${shops}.` : `As of ${w}, sold out at every shop we check; set a free alert on the product page to hear when it is back.`),
     tTh: ['Product', 'Shops with stock', 'Lowest price', 'Where'], seeAll: 'See all live stock', data: 'Live stock data', thirty: '30th Celebration stock',
   },
   de: {
@@ -59,7 +59,7 @@ const L = {
     th: ['Produkt', 'Shops mit Bestand', 'Günstigster Preis'], thR: ['Produkt', 'Shop', 'Wieder da', 'Dauer'], still: 'noch verfügbar', lastR: 'letzter Restock',
     tH1: (c) => `Pokémon 30 Jahre (30th Celebration): wo auf Lager in ${c}`,
     tLede: (w, n, inN, c, best) => `Stand ${w}: ${inN} von ${n} Produkten der Pokémon-30-Jahre-Reihe, die wir in ${c} verfolgen, sind bei unabhängigen Kartenläden auf Lager.${best ? ` Am leichtesten zu finden: ${best}.` : ''}`,
-    tQ: (p, c) => `Wo kann ich ${p} in ${c} kaufen?`, tA: (w, p, shops) => (shops ? `Stand ${w} auf Lager bei: ${shops}.` : `Stand ${w} überall ausverkauft; auf der Produktseite benachrichtigen lassen.`),
+    tQ: (p, c) => `Wo kann ich ${p} in ${c} kaufen?`, tA: (w, p, shops) => (shops ? `Stand ${w} auf Lager bei: ${shops}.` : `Stand ${w} überall ausverkauft; auf der Produktseite kostenlos benachrichtigen lassen.`),
     tTh: ['Produkt', 'Shops mit Bestand', 'Günstigster Preis', 'Wo'], seeAll: 'Alle Live-Bestände', data: 'Live-Bestandsdaten', thirty: '30 Jahre Pokémon: Bestand',
   },
   fr: {
@@ -79,7 +79,7 @@ const L = {
     th: ['Produit', 'Boutiques en stock', 'Prix le plus bas'], thR: ['Produit', 'Boutique', 'De retour', 'Durée'], still: 'encore en stock', lastR: 'dernier réassort',
     tH1: (c) => `Pokémon 30 ans (30th Celebration) : où en trouver en ${c}`,
     tLede: (w, n, inN, c, best) => `Au ${w}, ${inN} des ${n} produits de la gamme Pokémon 30 ans que nous suivons en ${c} sont en stock dans des boutiques indépendantes.${best ? ` Le plus facile à trouver : ${best}.` : ''}`,
-    tQ: (p, c) => `Où acheter ${p} en ${c} ?`, tA: (w, p, shops) => (shops ? `Au ${w}, en stock chez : ${shops}.` : `Au ${w}, en rupture partout ; activez une alerte sur la page du produit.`),
+    tQ: (p, c) => `Où acheter ${p} en ${c} ?`, tA: (w, p, shops) => (shops ? `Au ${w}, en stock chez : ${shops}.` : `Au ${w}, en rupture partout ; activez une alerte gratuite sur la page du produit.`),
     tTh: ['Produit', 'Boutiques en stock', 'Prix le plus bas', 'Où'], seeAll: 'Tout le stock en direct', data: 'Données de stock en direct', thirty: 'Stock Pokémon 30 ans',
   },
   it: {
@@ -99,7 +99,7 @@ const L = {
     th: ['Prodotto', 'Negozi disponibili', 'Prezzo più basso'], thR: ['Prodotto', 'Negozio', 'Di nuovo disponibile', 'Durata'], still: 'ancora disponibile', lastR: 'ultimo restock',
     tH1: (c) => `Pokémon 30 anni (30th Celebration): dove trovarlo in ${c}`,
     tLede: (w, n, inN, c, best) => `Al ${w}, ${inN} dei ${n} prodotti della linea Pokémon 30 anni che seguiamo in ${c} sono disponibili nei negozi indipendenti.${best ? ` Più facile da trovare: ${best}.` : ''}`,
-    tQ: (p, c) => `Dove comprare ${p} in ${c}?`, tA: (w, p, shops) => (shops ? `Al ${w}, disponibile da: ${shops}.` : `Al ${w}, esaurito ovunque; attiva un avviso nella pagina del prodotto.`),
+    tQ: (p, c) => `Dove comprare ${p} in ${c}?`, tA: (w, p, shops) => (shops ? `Al ${w}, disponibile da: ${shops}.` : `Al ${w}, esaurito ovunque; attiva un avviso gratuito nella pagina del prodotto.`),
     tTh: ['Prodotto', 'Negozi disponibili', 'Prezzo più basso', 'Dove'], seeAll: 'Tutta la disponibilità live', data: 'Dati di disponibilità live', thirty: 'Pokémon 30 anni: disponibilità',
   },
   es: {
@@ -119,7 +119,7 @@ const L = {
     th: ['Producto', 'Tiendas con stock', 'Precio más bajo'], thR: ['Producto', 'Tienda', 'De vuelta', 'Duró'], still: 'aún en stock', lastR: 'última reposición',
     tH1: (c) => `Pokémon 30 aniversario (30th Celebration): dónde hay stock en ${c}`,
     tLede: (w, n, inN, c, best) => `A ${w}, ${inN} de los ${n} productos de la línea Pokémon 30 aniversario que seguimos en ${c} están en stock en tiendas independientes.${best ? ` Más fácil de encontrar: ${best}.` : ''}`,
-    tQ: (p, c) => `¿Dónde comprar ${p} en ${c}?`, tA: (w, p, shops) => (shops ? `A ${w}, en stock en: ${shops}.` : `A ${w}, agotado en todas partes; activa una alerta en la página del producto.`),
+    tQ: (p, c) => `¿Dónde comprar ${p} en ${c}?`, tA: (w, p, shops) => (shops ? `A ${w}, en stock en: ${shops}.` : `A ${w}, agotado en todas partes; activa una alerta gratuita en la página del producto.`),
     tTh: ['Producto', 'Tiendas con stock', 'Precio más bajo', 'Dónde'], seeAll: 'Todo el stock en directo', data: 'Datos de stock en directo', thirty: 'Stock Pokémon 30 aniversario',
   },
   nl: {
@@ -139,7 +139,7 @@ const L = {
     th: ['Product', 'Winkels met voorraad', 'Laagste prijs'], thR: ['Product', 'Winkel', 'Terug op voorraad', 'Duur'], still: 'nog op voorraad', lastR: 'laatste restock',
     tH1: (c) => `Pokémon 30 jaar (30th Celebration): waar op voorraad in ${c}`,
     tLede: (w, n, inN, c, best) => `Per ${w} zijn ${inN} van de ${n} producten uit de Pokémon 30 jaar-reeks die we in ${c} volgen op voorraad bij onafhankelijke kaartwinkels.${best ? ` Makkelijkst te vinden: ${best}.` : ''}`,
-    tQ: (p, c) => `Waar kan ik ${p} kopen in ${c}?`, tA: (w, p, shops) => (shops ? `Per ${w} op voorraad bij: ${shops}.` : `Per ${w} overal uitverkocht; zet een melding aan op de productpagina.`),
+    tQ: (p, c) => `Waar kan ik ${p} kopen in ${c}?`, tA: (w, p, shops) => (shops ? `Per ${w} op voorraad bij: ${shops}.` : `Per ${w} overal uitverkocht; zet een gratis melding aan op de productpagina.`),
     tTh: ['Product', 'Winkels met voorraad', 'Laagste prijs', 'Waar'], seeAll: 'Alle live voorraad', data: 'Live voorraaddata', thirty: 'Pokémon 30 jaar: voorraad',
   },
 };
