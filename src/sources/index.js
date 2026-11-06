@@ -33,5 +33,16 @@ export const sourceName = (id) => SOURCES[id]?.name ?? id;
 // Pages only name retailers we can actually read: set once per request/cron from env (see src/index.js).
 let ENABLED = null;
 export const setEnv = (env) => { ENABLED = new Set(enabledSources(env).map((s) => s.id)); };
-export const sourcesOf = (cc) => sourceList.filter((s) => s.country === cc && (!ENABLED || ENABLED.has(s.id)));
+// ...and only those that really returned data lately (blocked ones, e.g. Target or GameStop, are not named on pages).
+let LIVE = null; let liveAt = 0;
+export async function refreshLive(env) {
+  if (Date.now() - liveAt < 15 * 60e3) return;
+  liveAt = Date.now();
+  try {
+    const r = await env.DB.prepare('SELECT source FROM listings WHERE last_seen > ? GROUP BY source').bind(Date.now() - 3 * 864e5).all();
+    const ids = (r.results ?? []).map((x) => x.source);
+    LIVE = ids.length ? new Set(ids) : null; // nothing read at all (e.g. empty local DB): name every enabled source
+  } catch { /* keep the previous list */ }
+}
+export const sourcesOf = (cc) => sourceList.filter((s) => s.country === cc && (!ENABLED || ENABLED.has(s.id)) && (!LIVE || LIVE.has(s.id)));
 export const enabledSources = (env) => sourceList.filter((s) => (typeof s.enabled === 'function' ? s.enabled(env) : true));

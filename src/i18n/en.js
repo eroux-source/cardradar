@@ -86,7 +86,7 @@ export default {
   // home
   home: {
     title: (brand) => `Pokémon Restock Tracker: Free Live Stock & Restock Alerts | ${brand}`,
-    desc: (shops) => `Free Pokémon restock tracker: live stock at ${shops}, real restock times and how long each restock lasted, and alerts email.`,
+    desc: (shops) => `Free Pokémon restock tracker: live stock at ${shops}, real restock times and how long each restock lasted, and email alerts.`,
     h1: 'Pokémon cards in stock near you, live',
     lede: (a, b) => `Right now <strong>${a} of ${b} stores</strong> we track have Pokémon cards on the shelf.`,
     latest: (name, place, ago) => ` Latest restock: <strong>${name}</strong> at ${place}, ${ago}.`,
@@ -108,8 +108,8 @@ export default {
     new: (name) => `We just started tracking ${name}. Live stock appears within the hour.`,
     lastLine: (place, ago, lasted) => ` Last restock: ${place}, ${ago}${lasted ? `; it lasted ${lasted}` : ''}.`,
     h1: (name, city) => `${name} in stock${city ? ` in ${city}` : ''}`,
-    title: (name, city) => `${name} in stock${city ? ` in ${city}` : ''} — live stock + alerts`,
-    desc: (name, n, total, place, online) => `${name}: ${n} of ${total} stores in ${place} have it${online ? `, online at ${online}` : ''}. Restock times and instant alerts.`,
+    title: (name, city) => `${name} in stock${city ? ` in ${city}` : ''} — where to buy + restock alerts`,
+    desc: (name, n, total, place, online) => (!total ? `${name}: live stock, restock times and alerts in ${place}.` : n ? `${name} in stock now at ${n} of ${total} shops we check in ${place}${online ? `: ${online}` : ''}. Prices, restock times and alerts.` : `${name}: sold out at all ${total} shops we check in ${place}. See when it restocks and set an alert.`),
     from: (price) => ` From ${price}.`,
     inOnline: 'In stock online', outOnlineCell: 'Sold out online', ofStores: (n, total) => `${n} of ${total} stores`,
     whereIs: (city) => `Where it is${city ? ` in ${city}` : ''}`, when: 'When it restocks', history: 'Full restock history',

@@ -22,7 +22,7 @@ import { jpHome, jpSet, jpShop } from './web/pages/lottery.js';
 import { bestTrackers, versus, howItWorks } from './web/pages/compare.js';
 import { lineWebhook } from './alerts/channels/line.js';
 import { COUNTRIES } from './data/countries.js';
-import { setEnv } from './sources/index.js';
+import { setEnv, refreshLive } from './sources/index.js';
 export { Relay } from './relay.js';
 import { ownerLottery } from './owner/lottery.js';
 import { applyReading } from './crawler/state.js';
@@ -214,6 +214,7 @@ async function logErr(env, ctx, path, e, note = '') {
 export default {
   async fetch(req, env, ctx) {
     setEnv(env);
+    await refreshLive(env);
     try {
       // Edge cache for public pages: bots read thousands of pages and the heavy stock queries
       // exceeded D1's CPU limit. Pages are kept 10 minutes (data pages say "refreshed hourly").

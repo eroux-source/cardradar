@@ -130,7 +130,10 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
   const cName = cc === 'us' ? null : cc === 'uk' ? 'UK' : T.cc.name;
   const withCountry = (x) => (cName && !metro ? x.replace(' — ', ` (${cName}) — `) : x);
   const title = withCountry(isHome ? T.home.title(env.BRAND_NAME) : T.sku.title(k.name, metro?.name));
-  const description = isHome ? T.home.desc(shops) : T.sku.desc(k.name, inNow.filter((r) => !r.online).length, rows.filter((r) => !r.online).length, metro?.name ?? T.cc.name, inNow.some((r) => r.online) ? T.f.list([...new Set(inNow.filter((r) => r.online).map((r) => sourceName(r.source)))]) : null);
+  // online shops (the only ones we read): how many list it, how many have it now
+  const onIn = [...new Set(inNow.filter((r) => r.online).map((r) => sourceName(r.source)))];
+  const onAll = new Set(rows.filter((r) => r.online).map((r) => r.source)).size;
+  const description = isHome ? T.home.desc(shops) : T.sku.desc(k.name, onIn.length, Math.max(onAll, onIn.length), metro?.name ?? T.cc.name, onIn.length ? T.f.list(onIn.length > 4 ? [...onIn.slice(0, 4), T.nav.moreShops(onIn.length - 4)] : onIn) : null);
   return page(env, T, { title, description, path, body, live, alternates, jsonLd: [c.ld, faq.ld, productLd, ...extraLd], noindex: !isHome && !rows.length && !rs.length });
 }
 
