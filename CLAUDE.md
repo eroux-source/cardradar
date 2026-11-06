@@ -41,12 +41,9 @@ Owner: Eugène, eroux@kosmocgi.com. He writes in French. Reply in short, non-tec
   - public GET pages are edge-cached for 10 min, with a day-old stale copy as fallback;
   - DB reads are retried once when D1 is busy;
   - heavy queries (`allSkus`, `liveCountries`, `popularity`, `latestRestocks`) are memoized for a short time per isolate.
-- Paid mode since 2026-11-05 (`FREE_ALERTS="0"`): instant email alerts are paid through Whop (Solo / Multi, 30 days); the free plan is one daily email for 1 product. Launch-era free alerts now fall back to the daily email.
-  - Telegram and push come back once there is a first real purchase (Eugène's call).
-  - `FREE_ALERTS="1"` switches back to launch mode (all alerts free and instant, up to 20 products).
-  - Alert funnel order (since 2026-11-05): 1 product → 2 plan → 3 email → Whop checkout. No sign-in code before paying; an existing account without a pass gets the alert unopened (inert until paid). A code is still asked for the free plan on an existing account, or an account that already pays. `funnel_7d` step_1/2/3 = product/plan/email.
-  - Offers (since 2026-11-05): Solo = 1 product in the shops the person picks (plan step, `/api/funnel/shops`; saved in `alerts.store_ids`, empty = every shop); Multi = several products or a whole set.
-  - Whop plans per currency: `WHOP_PLAN_<SOLO|MULTI>_<EUR|GBP|CAD|AUD>` in `wrangler.toml`; MX, CL and JP pay the USD plan.
+- Free again since 2026-11-06 (Eugène): launch mode `FREE_ALERTS="1"`, alerts free and instant by email (Resend), up to 20 products. Paid mode was live 2026-11-05 → 06 with 0 sales; traffic first.
+  - Paid mode stays ready: `FREE_ALERTS="0"` = Whop Solo / Multi. Whop plans per currency: `WHOP_PLAN_<SOLO|MULTI>_<EUR|GBP|CAD|AUD>` in `wrangler.toml`; MX, CL and JP pay the USD plan.
+  - Alert funnel order: 1 product → 2 plan → 3 email. Solo / free alerts can be limited to chosen shops (plan step, `/api/funnel/shops`, `alerts.store_ids`, empty = every shop).
   - Telegram and phone notifications were removed.
   - After subscribing, people are asked which other channels they want; the answers are counted in `wanted_channels`.
 - Affiliate-ready links live in `src/web/affiliate.js`.

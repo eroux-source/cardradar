@@ -133,7 +133,7 @@ export async function dailyFree(env) {
     const first = list[0];
     const lines = list.slice(0, 30).map((r) => `- ${new Date(r.started_at).toUTCString().slice(0, 22)} UTC: ${r.online ? `${sourceName(r.source)} online` : `${sourceName(r.source)} ${r.store_name}, ${r.city}`}${r.ended_at ? ` (sold out after ${Math.max(1, Math.round((r.ended_at - r.started_at) / 60e3))} min)` : ''}`);
     await queueEmail(env, { to: first.email, kind: 'digest', subject: `${first.sku_name}: ${list.length} restock${list.length > 1 ? 's' : ''} yesterday`,
-      text: `Your free daily summary for ${first.sku_name}:\n\n${lines.join('\n')}\n\nMost restocks sell out within minutes. Get an email the second each one lands: ${env.BASE_URL}/alerts?sku=${first.slug}&c=${first.country}\n\nLive stock: ${env.BASE_URL}/${first.country}/${first.slug}\n${env.BRAND_NAME}` });
+      text: `Your free daily summary for ${first.sku_name}:\n\n${lines.join('\n')}\n\nMost restocks sell out within minutes. Get each one the second it lands (phone notification, Telegram or email): ${env.BASE_URL}/alerts?sku=${first.slug}&c=${first.country}\n\nLive stock: ${env.BASE_URL}/${first.country}/${first.slug}\n${env.BRAND_NAME}` });
     for (const r of list) await run(env, "UPDATE alert_sent SET status = 'sent', channels_ok = 'daily_email' WHERE alert_id = ? AND restock_id = ?", r.alert_id, r.restock_id);
   }
   return byUser.size;
