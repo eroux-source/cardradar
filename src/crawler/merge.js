@@ -4,11 +4,15 @@
 import { all, run, now } from '../lib/db.js';
 import { classify } from '../lib/catalog.js';
 import { slugify } from '../lib/util.js';
+import { notSealed } from './catalog.js';
 
 const chunks = (a, n) => Array.from({ length: Math.ceil(a.length / n) }, (_, i) => a.slice(i * n, i * n + n));
 const batch = async (env, stmts) => { for (const c of chunks(stmts, 50)) await env.DB.batch(c); };
 
 export async function mergeSkus(env) {
+  // listings that are not a sealed product (rip & ship, breaks, events) stop being read and shown
+  const off = (await all(env, 'SELECT id, title FROM listings WHERE active = 1')).filter((r) => notSealed(r.title));
+  await batch(env, off.map((r) => env.DB.prepare('UPDATE listings SET active = 0 WHERE id = ?').bind(r.id)));
   const rows = await all(env, 'SELECT l.id, l.sku_id, l.title, l.price, k.slug FROM listings l JOIN skus k ON k.id = l.sku_id');
   const moves = [];
   for (const r of rows) {

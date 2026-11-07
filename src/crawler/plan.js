@@ -61,7 +61,8 @@ export async function planMinute(env) {
       src.queries.forEach((q, i) => { if (minute % day === (slot + i * 60) % day) tasks.push({ t: 'snapshot', source: src.id, q }); });
       // a new shop: run its searches once right away (spread by the queue), then daily
       if (!s[`firstsearch.${src.id}`]) {
-        src.queries.forEach((q) => tasks.push({ t: 'snapshot', source: src.id, q }));
+        // one search a minute (1 call per minute per shop), new shops spread over the hour
+        src.queries.forEach((q, i) => tasks.push({ t: 'snapshot', source: src.id, q, delay: ((slot % 60) + i) * 60 }));
         await env.DB.prepare('INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO NOTHING').bind(`firstsearch.${src.id}`, String(t), t).run();
         s[`firstsearch.${src.id}`] = String(t);
       }
@@ -98,36 +99,46 @@ export async function planMinute(env) {
     }
 
     // spread over the minute
-    tasks.forEach((body, i) => messages.push({ body, delaySeconds: Math.floor((i * 60) / Math.max(1, tasks.length)) }));
+    tasks.forEach((body, i) => messages.push({ body, delaySeconds: body.delay ?? Math.floor((i * 60) / Math.max(1, tasks.length)) }));
   }
 
-  // Shop product checks (see SHOP_EVERY), oldest first, at most 1 call per shop per minute (shops answer 429 above that)
+  // Shop product checks (see SHOP_EVERY) and the restock watch share ONE budget: at most
+  // `budget.shopcalls` calls a minute for all shops together (default 20) and 1 call per shop per
+  // minute, searches included (Shopify answers 429 above that, and the proxy IPs are shared).
+  // Order: HOT products first, then products that just restocked (to time the sell-out), then the rest.
   const shopIds = new Set(enabled.filter((x) => x.platform === 'shopify').map((x) => x.id));
   const resting = new Set((await all(env, "SELECT source FROM source_health WHERE status = 'blocked' AND last_block_at > ?", t - 10 * 60e3)).map((r) => r.source));
-  const due = await all(env, `SELECT ln.listing_id, ln.source FROM lanes ln JOIN listings l ON l.id = ln.listing_id AND l.active = 1
+  const due = await all(env, `SELECT ln.listing_id, ln.source, (${HOT_SQL}) AS hot FROM lanes ln JOIN listings l ON l.id = ln.listing_id AND l.active = 1
     LEFT JOIN stock st ON st.listing_id = ln.listing_id AND st.store_id = ln.source || ':online'
     WHERE ln.metro = '' AND ln.source LIKE 'shop\\_%' ESCAPE '\\' AND ln.last_checked_at < CASE
       WHEN (${HOT_SQL}) THEN (CASE WHEN st.in_stock = 1 THEN ? ELSE ? END)
       WHEN st.in_stock = 1 THEN ? WHEN ln.listing_id % 10 = 0 THEN ? ELSE ? END
     ORDER BY (${HOT_SQL}) DESC, ln.last_checked_at LIMIT ?`, t - SHOP_EVERY.hotIn, t - SHOP_EVERY.hotOut, t - SHOP_EVERY.in, t - SHOP_EVERY.test, t - SHOP_EVERY.out, 600);
-  const perShop = {}; const shopTasks = [];
-  const tasksBySource = Object.fromEntries(messages.map((m) => [m.body.source, true]));
-  const shopBudget = await numSetting(env, 'budget.shopcalls', 20); // calls per minute, all shops together (Shopify limits per IP)
-  for (const r of due) {
-    if (shopTasks.length >= shopBudget) break;
-    if (!shopIds.has(r.source) || resting.has(r.source) || (perShop[r.source] = (perShop[r.source] ?? 0) + 1) > 1 || tasksBySource[r.source]) continue;
-    shopTasks.push({ t: 'online', source: r.source, listingId: r.listing_id, metro: '' });
-  }
-  shopTasks.forEach((body, i) => messages.push({ body, delaySeconds: Math.floor((i * 60) / Math.max(1, shopTasks.length)) }));
-
   // Restock watch: every product that came back in stock in the last 48 h and has not sold out
   // yet is re-read about every 10 minutes, so we measure how long a restock really lasts.
   const watch = await all(env, `SELECT r.listing_id, r.source FROM restocks r JOIN lanes ln ON ln.listing_id = r.listing_id AND ln.metro = ''
+    JOIN listings l ON l.id = r.listing_id AND l.active = 1
     JOIN stores s ON s.id = r.store_id AND s.online = 1
     WHERE r.ended_at IS NULL AND r.started_at > ? AND ln.last_checked_at < ? GROUP BY r.listing_id ORDER BY ln.last_checked_at LIMIT ?`,
     t - 48 * 3600e3, t - SHOP_EVERY.watch + 20e3, await numSetting(env, 'budget.watch', 30));
-  const enabledIds = new Set(enabledSources(env).map((x) => x.id));
-  watch.filter((w) => enabledIds.has(w.source)).forEach((w, i, arr) => messages.push({ body: { t: 'online', source: w.source, listingId: w.listing_id, metro: '' }, delaySeconds: Math.floor((i * 60) / Math.max(1, arr.length)) }));
+  const enabledIds = new Set(enabled.map((x) => x.id));
+  const perShop = {}; const shopTasks = []; const otherWatch = []; const seen = new Set();
+  const thisMinute = messages.filter((m) => m.delaySeconds < 60);
+  const busy = new Set(thisMinute.map((m) => m.body.source)); // shops that already search this minute
+  const shopBudget = Math.max(0, (await numSetting(env, 'budget.shopcalls', 20)) - thisMinute.filter((m) => shopIds.has(m.body.source)).length);
+  const tryShop = (r) => {
+    if (shopTasks.length >= shopBudget || seen.has(r.listing_id)) return;
+    if (!shopIds.has(r.source) || resting.has(r.source) || busy.has(r.source) || perShop[r.source]) return;
+    perShop[r.source] = 1; seen.add(r.listing_id);
+    shopTasks.push({ t: 'online', source: r.source, listingId: r.listing_id, metro: '' });
+  };
+  due.filter((r) => r.hot).forEach(tryShop);
+  for (const w of watch) {
+    if (!enabledIds.has(w.source)) continue;
+    if (shopIds.has(w.source)) tryShop(w); else otherWatch.push({ t: 'online', source: w.source, listingId: w.listing_id, metro: '' });
+  }
+  due.filter((r) => !r.hot).forEach(tryShop);
+  [shopTasks, otherWatch].forEach((list) => list.forEach((body, i) => messages.push({ body, delaySeconds: Math.floor((i * 60) / Math.max(1, list.length)) })));
 
   for (let i = 0; i < messages.length; i += 100) await env.CRAWL_QUEUE.sendBatch(messages.slice(i, i + 100));
   return { tasks: messages.length };

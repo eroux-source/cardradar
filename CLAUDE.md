@@ -1,6 +1,6 @@
 # Card Restock Tracker (cardradar)
 
-Live site: https://cardrestocktracker.com. Pokémon TCG stock and restock tracker for 11 countries: us, uk, ca, au, de, fr, nl, it, es, mx, cl, plus a Japan lottery calendar. It reads about 190 independent online shops.
+Live site: https://cardrestocktracker.com. Pokémon TCG stock and restock tracker for 11 countries: us, uk, ca, au, de, fr, nl, it, es, mx, cl, plus a Japan lottery calendar. It reads about 195 independent online shops (list: `src/sources/shops.js`; pages only name shops that answered in the last 3 days).
 
 Owner: Eugène, eroux@kosmocgi.com. He writes in French. Reply in short, non-technical French and give results, not process.
 

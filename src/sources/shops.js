@@ -188,4 +188,18 @@ export const SHOPS = [
   { id: 'shop_oasisgames_cl', name: 'Oasis Games', domain: 'www.oasisgames.cl', country: 'cl', lang: 'es' },
   { id: 'shop_collectorcenter_cl', name: 'Collector Center', domain: 'collectorcenter.cl', country: 'cl', lang: 'es' },
   { id: 'shop_arcadiacollects_cl', name: 'Arcadia Collects', domain: 'arcadiacollects.cl', country: 'cl', lang: 'es' },
+  // Added 2026-11-07 (checked: Shopify search answers, /meta.json country and currency match)
+  { id: 'shop_universetcg_es', name: 'Universe TCG', domain: 'www.universetcg.com', country: 'es', lang: 'es' },
+  { id: 'shop_laescotilla_es', name: 'La Escotilla', domain: 'laescotillajuegos.com', country: 'es', lang: 'es' },
+  { id: 'shop_toyplanet_es', name: 'Toy Planet', domain: 'www.toyplanet.com', country: 'es', lang: 'es' },
+  { id: 'shop_kantocards_mx', name: 'Kanto Cards', domain: 'kantocards.com', country: 'mx', lang: 'es' },
+  { id: 'shop_tcgstudio_mx', name: 'TCG Studio', domain: 'tcgstudio.com.mx', country: 'mx', lang: 'es' },
+  { id: 'shop_ansaldo_cl', name: 'Ansaldo', domain: 'ansaldo.cl', country: 'cl', lang: 'es' },
+  { id: 'shop_afkstore_cl', name: 'AFK Store', domain: 'www.afkstore.cl', country: 'cl', lang: 'es' },
+  { id: 'shop_vcollect_fr', name: 'vCollect', domain: 'vcollect.fr', country: 'fr', lang: 'fr' },
+  { id: 'shop_tradingcardsxxx_fr', name: 'Trading Cards XXX', domain: 'tradingcardsxxx.fr', country: 'fr', lang: 'fr' },
+  { id: 'shop_bangydreams_it', name: 'Bangy Dreams', domain: 'bangydreams.it', country: 'it', lang: 'it' },
+  { id: 'shop_iobimboarcole_it', name: 'Io Bimbo Arcole', domain: 'iobimboarcole.it', country: 'it', lang: 'it' },
+  { id: 'shop_kofuku_de', name: 'Kofuku', domain: 'kofuku.de', country: 'de', lang: 'de' },
+  { id: 'shop_pushdich_de', name: 'Pushdich TCG', domain: 'www.pushdich-tcg.de', country: 'de', lang: 'de' },
 ];

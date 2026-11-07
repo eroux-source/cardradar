@@ -9,10 +9,16 @@ import { SOURCES } from '../sources/index.js';
 const KEEP = /(trading card|tcg|booster|elite trainer|etb|collection|tin|blister|build & battle|battle deck|card game|sammelkarten|top-trainer|display|coffret|cartes?|kaarten|carte|cartas|sobres|buste|set allenatore|caja de entrenador|拡張パック|ハイクラスパック|box)/i;
 const DROP = /\b(binder|sleeves?|deck box|playmat|portfolio|plush(ie)?|plüsch|peluche|peluches|kuscheltier|t-shirt|shirt|hoodie|pin|dice|card case|toploader|storage|album|keychain|sticker|puzzle|squishmallow|figure(?! collection)|psa|bgs|cgc|graded|slab|gradiert|code card|online code|digital code|poster|art print|empty|leer|vide|wrapper|lot of|jumbo card|oversized card)\b/i;
 
+// Not a sealed product you receive: the shop opens it for you live (rip & ship, breaks),
+// or it is an event entry. Lib/catalog strips "rip & ship" from names, so without this
+// these listings landed on the sealed product's page and showed it "in stock".
+const NOT_SEALED = /\b(rip\s*(and|&|n|'n'|\+)\s*ship|rip\s*&\s*send|live\s*rip|live\s*break|box\s*break|case\s*break|group\s*break|pack\s*battle|energy\s*battle|launch\s*event|pre-?release\s*event|tournament|turnier|tournoi|torneo|entry\s*ticket|ticket|eintritt|mystery|repack)\b/i;
+export const notSealed = (title) => NOT_SEALED.test(String(title ?? ''));
+
 export function keepItem(source, item) {
   if (!item?.sourceSku || !item?.title) return false;
   const pokemon = SOURCES[source]?.titleNeedsPokemon === false || /pok[eé]mon/i.test(item.title);
-  return pokemon && KEEP.test(item.title) && !DROP.test(item.title);
+  return pokemon && KEEP.test(item.title) && !DROP.test(item.title) && !notSealed(item.title);
 }
 
 /** Upsert set + sku + listing; create the lanes the crawler will read. Returns listing id. */
