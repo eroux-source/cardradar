@@ -46,7 +46,11 @@ export async function sku(env, cc, slug, metroSlug = null) {
   const k = await d.skuBySlug(env, slug);
   const metro = metroSlug ? metroInCountry(cc, metroSlug) : null;
   if (!k || (metroSlug && !metro) || !(await d.skuInCountry(env, k.id, cc))) return null;
-  return stockPage(env, T, cc, k, { metro });
+  if (metro) return stockPage(env, T, cc, k, { metro });
+  // hreflang: the same product page in every other country that sells it (x-default = the US page when there is one)
+  const ccs = await d.skuCountries(env, k.id).catch(() => []);
+  const alternates = ccs.length > 1 ? Object.fromEntries(countryList.filter((c) => ccs.includes(c.code)).map((c) => [c.code, `${base(c.code)}/${k.slug}`])) : null;
+  return stockPage(env, T, cc, k, { alternates, xDefault: alternates?.us ?? null });
 }
 
 /** /{cc}/search?q= : one clear match → its page; else the matching products (or all of them). */

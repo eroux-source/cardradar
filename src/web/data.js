@@ -50,6 +50,9 @@ export const skuBySlug = (env, slug) => one(env, `SELECT k.*, st.name AS set_nam
   (SELECT image FROM listings l WHERE l.sku_id = k.id AND l.image IS NOT NULL ORDER BY l.source = 'pokemoncenter' DESC LIMIT 1) AS image
   FROM skus k LEFT JOIN sets st ON st.id = k.set_id WHERE k.slug = ?`, slug);
 export const skuInCountry = (env, skuId, cc) => one(env, 'SELECT 1 AS ok FROM listings WHERE sku_id = ? AND country = ? AND active = 1 LIMIT 1', skuId, cc);
+/** Countries where a product has a live page (active listings), for hreflang: one map for all products, shared for 10 min. */
+const skuCountryMap = (env) => memo('skucc', 600e3, async () => new Map((await all(env, 'SELECT sku_id, GROUP_CONCAT(DISTINCT country) AS ccs FROM listings WHERE active = 1 GROUP BY sku_id')).map((r) => [r.sku_id, String(r.ccs ?? '').split(',').filter((c) => COUNTRIES[c])])));
+export const skuCountries = async (env, skuId) => (await skuCountryMap(env)).get(skuId) ?? [];
 export const storeBySlug = (env, slug) => one(env, 'SELECT * FROM stores WHERE slug = ?', slug);
 export const listingsOf = (env, skuId, cc) => all(env, 'SELECT * FROM listings WHERE sku_id = ? AND country = ? AND active = 1 ORDER BY source', skuId, cc);
 

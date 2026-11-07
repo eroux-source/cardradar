@@ -27,12 +27,12 @@ const AFF_NOTE = {
   nl: 'Sommige links zijn affiliate-links: we kunnen een commissie ontvangen, zonder extra kosten voor jou. Als Amazon-partner verdienen we aan in aanmerking komende aankopen.',
   ja: '一部のリンクはアフィリエイトリンクです。購入時に手数料を受け取る場合がありますが、お客様の負担は増えません。',
 };
-export function page(env, T, { title, description, path, body, jsonLd = [], noindex = false, nav = '', alternates = null, live = null }) {
+export function page(env, T, { title, description, path, body, jsonLd = [], noindex = false, nav = '', alternates = null, xDefault = '/', live = null }) {
   const cc = T.cc.code;
   const canonical = `${env.BASE_URL}${path}`;
   const cur = (k) => (k === nav ? ' aria-current="page"' : '');
   const b = base(cc);
-  const alt = alternates ? Object.entries(alternates).map(([code, p]) => `<link rel="alternate" hreflang="${COUNTRIES[code].locale}" href="${env.BASE_URL}${p}">`).join('') + `<link rel="alternate" hreflang="x-default" href="${env.BASE_URL}/">` : '';
+  const alt = alternates ? Object.entries(alternates).map(([code, p]) => `<link rel="alternate" hreflang="${COUNTRIES[code].locale}" href="${env.BASE_URL}${p}">`).join('') + (xDefault ? `<link rel="alternate" hreflang="x-default" href="${env.BASE_URL}${xDefault}">` : '') : '';
   const shops = [...new Set(sourcesOf(cc).map((s) => s.name))].join(', ');
   const countries = countryList.map((c) => `<a href="${home(c.code)}" hreflang="${c.locale}"${c.code === cc ? ' aria-current="true"' : ''}>${e(c.name)}${live && !live.has(c.code) ? ` <small>(${e(T.soon)})</small>` : ''}</a>`).join('');
   return new Response(`<!doctype html>

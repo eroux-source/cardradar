@@ -33,7 +33,7 @@ function placeCard(T, cc, s, alertHref, sku = null) {
     ${meta ? `<p class="place-meta">${meta}</p>` : ''}<div class="place-actions">${s.in_stock ? go + dir + alert : alert + go + dir}</div></li>`;
 }
 
-export async function stockPage(env, T, cc, k, { metro = null, isHome = false, live = null, alternates = null, extraLd = [] } = {}) {
+export async function stockPage(env, T, cc, k, { metro = null, isHome = false, live = null, alternates = null, xDefault = '/', extraLd = [] } = {}) {
   const S = T.sv;
   const [rows, rs, listings, allK, latest, pop] = await Promise.all([
     d.availability(env, cc, k.id, metro?.id),
@@ -134,7 +134,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
   const onIn = [...new Set(inNow.filter((r) => r.online).map((r) => sourceName(r.source)))];
   const onAll = new Set(rows.filter((r) => r.online).map((r) => r.source)).size;
   const description = isHome ? T.home.desc(shops) : T.sku.desc(k.name, onIn.length, Math.max(onAll, onIn.length), metro?.name ?? T.cc.name, onIn.length ? T.f.list(onIn.length > 4 ? [...onIn.slice(0, 4), T.nav.moreShops(onIn.length - 4)] : onIn) : null);
-  return page(env, T, { title, description, path, body, live, alternates, jsonLd: [c.ld, faq.ld, productLd, ...extraLd], noindex: !isHome && !rows.length && !rs.length });
+  return page(env, T, { title, description, path, body, live, alternates, xDefault, jsonLd: [c.ld, faq.ld, productLd, ...extraLd], noindex: !isHome && !rows.length && !rs.length });
 }
 
 /**

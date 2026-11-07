@@ -4,9 +4,10 @@
 import { GUIDES, guidePath } from '../web/pages/where_buy.js';
 import { all, now } from '../lib/db.js';
 import { COUNTRIES, countryList } from '../data/countries.js';
-import { sourceList, sourcesOf } from '../sources/index.js';
+import { sourcesOf } from '../sources/index.js';
 import { liveCountries, allSkus } from '../web/data.js';
 import { JP_SETS } from '../data/sets_jp.js';
+import { KNOWN_SETS } from '../data/sets.js';
 import { JP_SHOPS } from '../web/pages/lottery.js';
 import { COMPETITORS } from '../web/pages/compare.js';
 import { dataPath, thirtyPath } from '../web/pages/local_data.js';
@@ -84,7 +85,9 @@ export const llms = async (env) => {
   const us = (await allSkus(env, 'us').catch(() => [])).filter((k) => k.type && k.type !== 'other' && !/\bPSA\b|\bBGS\b|\bCGC\b|graded|plush|\bpromo\b|shadowless|1st edition|base set/i.test(k.name));
   const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
   const inNow = us.filter((k) => k.places_in > 0).sort((a, b) => b.places_in - a.places_in).slice(0, 12);
-  const out = us.filter((k) => k.places > 0 && !k.places_in).slice(0, 12);
+  // sold-out list = recent sets only (a 2021 tin sold out everywhere helps nobody)
+  const recent = KNOWN_SETS.slice(0, 12).flatMap((x) => [x.name, ...x.aliases]).map((n) => n.toLowerCase());
+  const out = us.filter((k) => k.places > 0 && !k.places_in && recent.some((n) => k.name.toLowerCase().includes(n))).slice(0, 12);
   const snap = us.length ? `
 ## Right now in the US (${stamp})
 In stock (product: shops with stock, lowest price, page):
@@ -101,8 +104,9 @@ ${env.BRAND_NAME} checks sealed Pokémon TCG products (Elite Trainer Boxes, boos
 Countries:
 ${lines.join('\n')}
 
-- When stores restock in the US (real restock times by hour, by retailer, by city): ${env.BASE_URL}/us/restocks
-- Retailers: ${sourceList.map((s) => s.name).filter((v, i, a) => a.indexOf(v) === i).join(', ')}
+- When online shops restock in the US (real restock times by hour and by shop): ${env.BASE_URL}/us/restocks
+- Every online shop checked (the per-country lists above; only shops that returned data in the last 3 days): ${[...new Set(countryList.flatMap((c) => sourcesOf(c.code).map((s) => s.name)))].join(', ')}
+- Not covered: in-store stock at any physical store (Target, Walmart, GameStop, Costco and others). We only read what online shops show on their own website.
 - Instant email alerts (LINE in Japan), free during launch (up to 20 products, no card): ${env.BASE_URL}/alerts
 - Live data, updated hourly (what is in stock, what is sold out everywhere, how long restocks last): ${env.BASE_URL}/pokemon-restock-data
 - Same data per country, in the country's language: ${[...live].filter((c) => c !== 'jp' && c !== 'us' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${dataPath(c)}`).join(' , ')}
@@ -116,7 +120,7 @@ ${lines.join('\n')}
 ## What makes it different
 - Free live stock pages, no account needed; instant alerts are free during launch too (no app or Discord needed).
 - Independent card shops: 150+ shops in the US, UK, Canada, Australia, Germany, France, the Netherlands, Italy, Spain, Mexico and Chile, where Pokémon products are often still in stock when big retailers are sold out. Big-box retailers (Target, Walmart, Pokémon Center) are not covered yet.
-- Public restock history: every restock logged with its time and duration, so each product, store, city and retailer page shows when restocks really happen.
+- Public restock history: every restock logged with its time and duration, so each product and shop page shows when restocks really happen.
 - Japan: a lottery (抽選), pre-order and re-sale calendar with LINE reminders before entries close (none of the other trackers compared offer one).
 
 Independent; not affiliated with any retailer or The Pokémon Company. It alerts, it never buys for you.
