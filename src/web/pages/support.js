@@ -13,6 +13,16 @@ export const isTipPlan = (id) => Object.values(TIP_PLANS).some((p) => Object.val
 // Euro plans in Europe (Whop shows the buyer's own currency, £ in the UK), dollar plans elsewhere
 const EURO = new Set(['uk', 'de', 'fr', 'nl', 'it', 'es']);
 
+export const supportHref = (cc) => (cc === 'us' ? '/support' : `/${cc}/support`);
+// Header button (short word) and the band shown under the content of public pages
+export const SUPPORT_BAND = {
+  en: { h: 'Support', t: 'Free, ad-free, made by a fellow fan.', s: 'A small tip keeps it running for everyone.', b: '♥ Support the site' },
+  fr: { h: 'Soutenir', t: 'Gratuit, sans pub, fait par un fan.', s: 'Un coup de pouce de 1 € ou 2 € aide à le garder en ligne pour tout le monde.', b: '♥ Soutenir le site' },
+  de: { h: 'Unterstützen', t: 'Kostenlos, werbefrei, von einem Fan gemacht.', s: 'Ein Beitrag von 1 € oder 2 € hält die Seite für alle am Laufen.', b: '♥ Seite unterstützen' },
+  nl: { h: 'Steunen', t: 'Gratis, zonder advertenties, gemaakt door een fan.', s: 'Een bijdrage van € 1 of € 2 houdt de site voor iedereen online.', b: '♥ Steun de site' },
+  it: { h: 'Sostieni', t: 'Gratis, senza pubblicità, fatto da un fan.', s: 'Un contributo di 1 € o 2 € lo tiene online per tutti.', b: '♥ Sostieni il sito' },
+  es: { h: 'Apoyar', t: 'Gratis, sin anuncios, hecho por un fan.', s: 'Una ayuda de 1 € o 2 € lo mantiene en línea para todos.', b: '♥ Apoya la web' },
+};
 export const SUPPORT_NAV = { en: 'Support us ♥', fr: 'Nous soutenir ♥', de: 'Unterstützen ♥', nl: 'Steun ons ♥', it: 'Sostienici ♥', es: 'Apóyanos ♥' };
 
 const COPY = {
