@@ -158,6 +158,7 @@ async function route(req, env, ctx) {
   // US lives at the root (/, /us/...); other countries at /{cc}, /{cc}/...
   if (p === '/') return pub.home(env, 'us');
   if (p === '/us') return Response.redirect(`${env.BASE_URL}/`, 301);
+  if (p === '/support') return (await import('./web/pages/support.js')).supportPage(env, COUNTRIES[url.searchParams.get('c')] ? url.searchParams.get('c') : 'us');
   if (p === '/pricing') return pub.pricing(env, COUNTRIES[url.searchParams.get('c')] ? url.searchParams.get('c') : 'us');
   if (p === '/press') return pub.press(env);
   if (p === '/best-pokemon-restock-trackers') return bestTrackers(env);
@@ -177,6 +178,7 @@ async function route(req, env, ctx) {
   if (COUNTRIES[cc]) {
     if (seg.length === 1) return pub.home(env, cc);
     if (seg[1] === 'pricing' && seg.length === 2) return pub.pricing(env, cc);
+    if (seg[1] === 'support' && seg.length === 2) return (await import('./web/pages/support.js')).supportPage(env, cc);
     if (seg[1] === 'search' && seg.length === 2) return pub.search(env, cc, url.searchParams.get('q') ?? '');
     const lang = COUNTRIES[cc].lang;
     if (seg.length === 2 && seg[1] === (DATA_SLUG[lang] ?? DATA_SLUG.en)) {

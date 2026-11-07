@@ -146,7 +146,7 @@ export async function accountPage(env, url, user) {
   const body = `<div class="account" id="account" data-vapid="${e(env.VAPID_PUBLIC_KEY ?? '')}">
   <h1>Your alerts</h1>
   ${paid ? '<p class="ok" role="status">Payment received. Your alerts are live: we email you the moment a restock is detected.</p>' : ''}
-  ${url.searchParams.get('free') ? (freeMode(env) ? '<p class="ok" role="status">Your alert is on. We email you as soon as it is back in stock.</p>' : '<p class="ok" role="status">Your free alert is on. Every morning you get one email with the restocks it caught the day before.</p>') : ''}
+  ${url.searchParams.get('free') ? (freeMode(env) ? '<p class="ok" role="status">Your alert is on. We email you as soon as it is back in stock.</p><p class="sub">The site is free and ad-free, run by a fellow fan. If it helps you, <a href="/support">a $1 or $2 tip ♥</a> keeps it going.</p>' : '<p class="ok" role="status">Your free alert is on. Every morning you get one email with the restocks it caught the day before.</p>') : ''}
   <p class="lede">${e(user.email)} · ${pass ? `<strong>${e(PLANS[pass.plan]?.name ?? pass.plan)}</strong> until ${formatUtc(pass.ends_at)}${pass.renews ? ' (renews)' : ' (will not renew)'}` : alerts.some((a) => a.free) ? '<strong>Free plan</strong>: one email a day with yesterday\'s restocks. Paid alerts arrive within seconds of a restock.' : '<strong>No active plan</strong>: alerts are paused until you pick one.'}</p>
   ${pass ? (pass.renews ? '<p><button class="btn ghost" data-act="cancel">Cancel renewal</button></p>' : '') : `<p><a class="btn" href="/alerts">${alerts.some((a) => a.free) ? 'Get instant alerts' : 'Pick a plan'}</a></p>`}
 

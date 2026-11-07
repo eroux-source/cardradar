@@ -46,6 +46,7 @@ Owner: Eugène, eroux@kosmocgi.com. He writes in French. Reply in short, non-tec
   - Alert funnel order: 1 product → 2 plan → 3 email. Solo / free alerts can be limited to chosen shops (plan step, `/api/funnel/shops`, `alerts.store_ids`, empty = every shop).
   - Telegram and phone notifications were removed.
   - After subscribing, people are asked which other channels they want; the answers are counted in `wanted_channels`.
+- Support page (2026-11-07): `/support` and `/<cc>/support` (`src/web/pages/support.js`, fan tone, 6 languages), linked in every footer and after an alert is set. One-time Whop tips 1/2/5 in EUR (Europe, UK) or USD (elsewhere), product Support Card Restock Tracker (`TIP_PLANS`). The webhook records tips (event `tip_paid`) and never grants a pass; clicks are the event `tip`.
 - Affiliate-ready links live in `src/web/affiliate.js`.
   - Worker variables: `AFF_AMAZON_<CC>`, `AFF_EBAY_CAMPID`, `AFF_TCGPLAYER`, `AFF_CARDMARKET`.
   - The footer disclosure appears automatically once any `AFF_` value is set.

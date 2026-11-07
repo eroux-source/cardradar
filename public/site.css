@@ -350,3 +350,8 @@ html, body { overflow-x: clip; }
 .survey{margin-top:1.2rem;padding:1rem;border:1px solid var(--line,#ddd);border-radius:10px}
 .survey .radio{display:block;margin:.35rem 0}
 .survey[data-open]{border-color:currentColor}
+
+/* support page */
+.support .tips { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 8px; }
+.support .tips .btn { min-width: 88px; }
+.site-foot .support-link { font-weight: 700; }

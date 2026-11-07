@@ -13,6 +13,7 @@
 import { one, run, now } from '../lib/db.js';
 import { grantPass, stopRenewal } from './pass.js';
 import { userByEmail } from '../auth/session.js';
+import { isTipPlan } from '../web/pages/support.js';
 
 const enc = new TextEncoder();
 const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -91,6 +92,11 @@ export async function billingWebhook(env, request) {
   await run(env, 'INSERT OR IGNORE INTO payments (provider, provider_ref, user_id, amount, currency, kind, at, raw) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     'whop', `${type}:${ref}`, user.id, amount, pick(data, ['currency']) ?? 'usd', type, now(), raw.slice(0, 4000));
 
+  // one-time tips (support page): recorded above as a payment, no alert pass
+  if (isTipPlan(planId)) {
+    if (/payment\.succeeded/.test(type)) await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', now(), null, 'tip_paid', JSON.stringify({ amount, currency: pick(data, ['currency']) ?? null }));
+    return new Response('ok');
+  }
   if (/went_valid|activated|payment\.succeeded|renewed/.test(type)) {
     await grantPass(env, { userId: user.id, plan: planFromId(env, planId) ?? 'solo', provider: 'whop', ref: `${type}:${ref}` });
     await run(env, "UPDATE leads SET step = 'paid', updated_at = ? WHERE email = ?", now(), user.email);
