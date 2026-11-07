@@ -2,6 +2,7 @@
 // Add new expansions here on release day (name + aliases), the catalogue then
 // merges every retailer's listing of that set into clean product pages.
 export const KNOWN_SETS = [
+  { name: 'Flowing Fists', aliases: ['flowing fists'] },
   { name: 'Delta Reign', aliases: ['delta reign'] },
   // local editions of Delta Reign (their own products in each country)
   { name: 'Delta-Herrschaft', aliases: ['delta-herrschaft', 'delta herrschaft', 'delta herrscahft'] },

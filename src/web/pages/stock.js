@@ -166,7 +166,7 @@ export async function homeList(env, T, cc, { live = null, alternates = null, ext
   const body = `<section class="hl-head">
     <h1>${e(H.h1(T.cc.name))}</h1>
     <p class="lede">${e(inNow.length ? H.lede(inNow.length, shopsN) : H.ledeNone(shopsN))}</p>
-    ${cc === 'jp' ? '' : `<p class="quick-links"><a href="${dataPath(cc)}">${e(words(cc).data)}</a><a href="${thirtyPath(cc)}">${e(words(cc).thirty)}</a><a href="${guidePath(cc, 'delta-reign')}">Delta Reign</a></p>`}
+    ${cc === 'jp' ? '' : `<p class="quick-links"><a href="${dataPath(cc)}">${e(words(cc).data)}</a><a href="${thirtyPath(cc)}">${e(words(cc).thirty)}</a><a href="${guidePath(cc, 'delta-reign')}">Delta Reign</a><a href="${guidePath(cc, 'flowing-fists')}">Flowing Fists (ME07)</a></p>`}
     <form class="find" action="${base(cc)}/search" method="get" role="search">
       <input name="q" list="sku-list" autocomplete="off" placeholder="${e(S.findPh)}" aria-label="${e(S.findPh)}" data-find>
       <datalist id="sku-list">${skus.map((x) => `<option value="${e(x.name)}" data-href="${base(cc)}/${e(x.slug)}"></option>`).join('')}</datalist>

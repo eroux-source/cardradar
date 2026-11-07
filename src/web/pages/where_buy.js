@@ -30,6 +30,15 @@ export const GUIDES = {
     name: { en: 'Pokémon TCG Mega Evolution—Delta Reign', de: 'Pokémon Mega-Entwicklung: Delta-Herrschaft (ME06, Delta Reign)', fr: 'Pokémon Méga-Évolution Règne Delta (ME06, Delta Reign)', it: 'Pokémon Megaevoluzione Dominio Delta (ME06, Delta Reign)', es: 'Pokémon Megaevolución Dominio Delta (ME06, Delta Reign)', nl: 'Pokémon Mega Evolution Delta Reign (ME06)' },
     short: { en: 'Delta Reign', de: 'Delta-Herrschaft (Delta Reign)', fr: 'Règne Delta', it: 'Dominio Delta', es: 'Dominio Delta', nl: 'Delta Reign' },
   },
+  // ME07, English counterpart of the Japanese Hadou Seeker (2026-11-27). English name and date are REPORTED, not confirmed
+  // by The Pokémon Company (tentative: true). Local names (DE/FR/IT/ES) not announced yet: when they are, rename the slugs and keep the old ones in `old`.
+  'flowing-fists': {
+    multi: true, release: '2027-02-05', tentative: true,
+    match: (n) => /flowing[\s-]*fists|aura[\s-]*seeker|hadou[\s-]*seeker|ハドウシーカー|\bME\s?0?7\b/i.test(n),
+    slug: { en: 'where-to-buy-flowing-fists', de: 'wo-kaufen-flowing-fists', fr: 'ou-acheter-flowing-fists', it: 'dove-comprare-flowing-fists', es: 'donde-comprar-flowing-fists', nl: 'waar-kopen-flowing-fists' },
+    name: { en: 'Pokémon TCG Mega Evolution—Flowing Fists (ME07)', de: 'Pokémon Mega-Entwicklung Flowing Fists (ME07)', fr: 'Pokémon Méga-Évolution Flowing Fists (ME07)', it: 'Pokémon Megaevoluzione Flowing Fists (ME07)', es: 'Pokémon Megaevolución Flowing Fists (ME07)', nl: 'Pokémon Mega Evolution Flowing Fists (ME07)' },
+    short: { en: 'Flowing Fists', de: 'Flowing Fists (ME07)', fr: 'Flowing Fists (ME07)', it: 'Flowing Fists (ME07)', es: 'Flowing Fists (ME07)', nl: 'Flowing Fists' },
+  },
 };
 const REL = { en: (d) => `English release: ${d}. Booster boxes, Elite Trainer Boxes and bundles appear here as soon as shops list them (pre-orders included).`,
   de: (d) => `Englischer Release: ${d}. Displays, Top-Trainer-Boxen und Bundles erscheinen hier, sobald Shops sie listen (auch Vorbestellungen).`,
@@ -37,6 +46,14 @@ const REL = { en: (d) => `English release: ${d}. Booster boxes, Elite Trainer Bo
   it: (d) => `Uscita in inglese: ${d}. Box, Set Allenatore Fuoriclasse e bundle compaiono qui appena i negozi li elencano (preordini inclusi).`,
   es: (d) => `Lanzamiento en inglés: ${d}. Cajas de sobres, Cajas de Entrenador Élite y bundles aparecen aquí en cuanto las tiendas los listan (preventas incluidas).`,
   nl: (d) => `Engelse release: ${d}. Booster boxes, Elite Trainer Boxes en bundels verschijnen hier zodra winkels ze tonen (pre-orders inbegrepen).` };
+// Release date reported by specialist sites but not yet confirmed by The Pokémon Company.
+const REL_TBC = { en: (d) => `Expected English release: ${d} (reported, not yet confirmed by The Pokémon Company). Products appear here as soon as shops list them, pre-orders and Japanese editions included.`,
+  de: (d) => `Erwarteter englischer Release: ${d} (berichtet, noch nicht von The Pokémon Company bestätigt). Produkte erscheinen hier, sobald Shops sie listen, auch Vorbestellungen und japanische Ausgaben.`,
+  fr: (d) => `Sortie en anglais attendue : ${d} (annoncée par des sites spécialisés, pas encore confirmée par The Pokémon Company). Les produits apparaissent ici dès que les boutiques les listent, précommandes et éditions japonaises comprises.`,
+  it: (d) => `Uscita in inglese prevista: ${d} (riportata, non ancora confermata da The Pokémon Company). I prodotti compaiono qui appena i negozi li elencano, preordini ed edizioni giapponesi inclusi.`,
+  es: (d) => `Lanzamiento en inglés previsto: ${d} (publicado por sitios especializados, aún sin confirmar por The Pokémon Company). Los productos aparecen aquí en cuanto las tiendas los listan, preventas y ediciones japonesas incluidas.`,
+  nl: (d) => `Verwachte Engelse release: ${d} (gemeld, nog niet bevestigd door The Pokémon Company). Producten verschijnen hier zodra winkels ze tonen, inclusief pre-orders en Japanse edities.` };
+const QREL = { en: (p) => `When does ${p} come out?`, de: (p) => `Wann erscheint ${p}?`, fr: (p) => `Quand sort ${p} ?`, it: (p) => `Quando esce ${p}?`, es: (p) => `¿Cuándo sale ${p}?`, nl: (p) => `Wanneer komt ${p} uit?` };
 // Key facts shown on the guide (sources: TCGplayer "Delta Reign Quick Facts", Pokébip, WikiDex). English dates; local editions may differ.
 const FACTS = {
   'delta-reign': {
@@ -48,6 +65,14 @@ const FACTS = {
     nl: ['Kort', ['Set: Mega Evolution—Delta Reign (ME06).', 'Engelse release: 6 november 2026 (prereleases 24 oktober t/m 5 november).', 'Topkaart: Mega Rayquaza ex (Special Illustration Rare en Mega Hyper Rare).', 'Producten: booster box, Elite Trainer Box, Pokémon Center Elite Trainer Box, booster bundle, Build & Battle Box, blisters.']],
   },
 };
+FACTS['flowing-fists'] = {
+  en: ['Key facts (reported, not yet official)', ['Set: Mega Evolution—Flowing Fists (ME07), the English version of the Japanese set Hadou Seeker (ハドウシーカー, also written Aura Seeker), out in Japan on November 27, 2026.', 'English release: February 5, 2027, as reported by specialist sites; The Pokémon Company has not announced it yet.', 'Reported headline Pokémon: Mega Lucario.', 'Local names (German, French, Italian, Spanish) are not announced yet. Until then shops list it as Flowing Fists or ME07.', 'Japanese Hadou Seeker boxes sold by our shops are listed here too, marked Japanese edition.']],
+  de: ['Das Wichtigste (berichtet, noch nicht offiziell)', ['Set: Mega-Entwicklung „Flowing Fists“ (ME07), die englische Version des japanischen Sets Hadou Seeker (ハドウシーカー, auch Aura Seeker), in Japan seit dem 27. November 2026.', 'Englischer Release: 5. Februar 2027, laut Fachseiten; The Pokémon Company hat ihn noch nicht angekündigt.', 'Berichtetes Top-Pokémon: Mega-Lucario.', 'Der deutsche Name ist noch nicht bekannt. Bis dahin listen Shops es als Flowing Fists oder ME07.', 'Japanische Hadou-Seeker-Displays unserer Shops stehen auch hier, als japanische Version markiert.']],
+  fr: ['L\'essentiel (annoncé, pas encore officiel)', ['Extension : Méga-Évolution « Flowing Fists » (ME07), la version anglaise du set japonais Hadou Seeker (ハドウシーカー, aussi écrit Aura Seeker), sorti au Japon le 27 novembre 2026.', 'Sortie en anglais : 5 février 2027 d\'après les sites spécialisés ; The Pokémon Company ne l\'a pas encore annoncée.', 'Pokémon phare annoncé : Méga-Lucario.', 'Le nom français n\'est pas encore connu. En attendant, les boutiques l\'appellent Flowing Fists ou ME07.', 'Les displays japonais Hadou Seeker vendus par nos boutiques sont aussi listés ici, marqués version japonaise.']],
+  it: ['In breve (riportato, non ancora ufficiale)', ['Espansione: Megaevoluzione “Flowing Fists” (ME07), la versione inglese del set giapponese Hadou Seeker (ハドウシーカー, anche Aura Seeker), uscito in Giappone il 27 novembre 2026.', 'Uscita in inglese: 5 febbraio 2027 secondo i siti specializzati; The Pokémon Company non l\'ha ancora annunciata.', 'Pokémon di punta riportato: Mega Lucario.', 'Il nome italiano non è ancora noto. Nel frattempo i negozi lo chiamano Flowing Fists o ME07.', 'Anche i box giapponesi Hadou Seeker dei nostri negozi sono elencati qui, come edizione giapponese.']],
+  es: ['Lo esencial (publicado, aún no oficial)', ['Expansión: Megaevolución “Flowing Fists” (ME07), la versión en inglés del set japonés Hadou Seeker (ハドウシーカー, también Aura Seeker), a la venta en Japón desde el 27 de noviembre de 2026.', 'Lanzamiento en inglés: 5 de febrero de 2027 según sitios especializados; The Pokémon Company aún no lo ha anunciado.', 'Pokémon estrella publicado: Mega-Lucario.', 'El nombre en español aún no se conoce. Mientras tanto, las tiendas lo listan como Flowing Fists o ME07.', 'Las cajas japonesas Hadou Seeker de nuestras tiendas también aparecen aquí, como edición japonesa.']],
+  nl: ['Kort (gemeld, nog niet officieel)', ['Set: Mega Evolution—Flowing Fists (ME07), de Engelse versie van de Japanse set Hadou Seeker (ハドウシーカー, ook Aura Seeker), in Japan uit op 27 november 2026.', 'Engelse release: 5 februari 2027 volgens gespecialiseerde sites; The Pokémon Company heeft het nog niet aangekondigd.', 'Gemelde topkaart-Pokémon: Mega Lucario.', 'Japanse Hadou Seeker-boxen van onze winkels staan hier ook, als Japanse editie.']],
+};
 const factsHtml = (id, lang) => { const f = FACTS[id]?.[lang] ?? FACTS[id]?.en; return f ? `<section><h2>${e(f[0])}</h2><ul>${f[1].map((x) => `<li>${e(x)}</li>`).join('')}</ul></section>` : ''; };
 export const guidePath = (cc, id) => `/${cc}/${GUIDES[id].slug[COUNTRIES[cc]?.lang] ?? GUIDES[id].slug.en}`;
 export const guideIdForSlug = (lang, slug) => Object.keys(GUIDES).find((id) => (GUIDES[id].slug[lang] ?? GUIDES[id].slug.en) === slug) ?? null;
@@ -56,7 +81,7 @@ export const guideOldSlug = (lang, slug) => Object.keys(GUIDES).find((id) => GUI
 
 /** edition from the product name: which language the cards are printed in */
 const EDITION = [['de', /jahre|top[-\s]*trainer|\(de\)|deutsch/i], ['fr', /30\s*ans|coffret|\(fr\)|français|francais/i], ['it', /30\s*anni|allenatore|\(it\)|italian/i], ['es', /aniversario|entrenador|\(es\)|españ|espan/i], ['nl', /30\s*jaar|\(nl\)/i], ['ja', /japan|japon|\(jp\)|日本/i]];
-const editionOf = (name) => EDITION.find(([, re]) => re.test(name))?.[0] ?? 'en';
+const editionOf = (name) => (/aura[\s-]*seeker|hadou[\s-]*seeker|ハドウシーカー/i.test(name) ? 'ja' : EDITION.find(([, re]) => re.test(name))?.[0] ?? 'en');
 
 const L = {
   en: { prod: 'Product', ed: { en: 'English edition', de: 'German edition', fr: 'French edition', it: 'Italian edition', es: 'Spanish edition', nl: 'Dutch edition', ja: 'Japanese edition' },
@@ -133,7 +158,7 @@ export async function guidePage(env, cc, id) {
   const ts = now(); const w = T.f.when(ts); const C = countryIn(cc);
   const P = G.name[lang] ?? G.name.en; const PS = G.short[lang] ?? G.short.en;
   const { skus, rows } = await offers(env, cc, id);
-  const rel = G.release ? (REL[lang] ?? REL.en)(new Intl.DateTimeFormat(T.cc.locale, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(G.release))) : '';
+  const rel = G.release ? ((G.tentative ? REL_TBC : REL)[lang] ?? (G.tentative ? REL_TBC : REL).en)(new Intl.DateTimeFormat(T.cc.locale, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(G.release))) : '';
   const money = (v) => (v ? T.f.money(v) : '—');
   const inRows = rows.filter((r) => r.in_stock);
   const shopsN = new Set(rows.map((r) => r.shop)).size;
@@ -147,6 +172,7 @@ export async function guidePage(env, cc, id) {
     { q: W.q1(PS, C), a: lede },
     ...(prices.length ? [{ q: W.q2(PS), a: W.a2(money(prices[0]), prices.length > 1 ? money(prices[prices.length - 1]) : null) }] : []),
     { q: W.q3(PS), a: med ? W.a3(med) : W.a3n },
+    ...(G.tentative && rel ? [{ q: (QREL[lang] ?? QREL.en)(PS), a: rel }] : []),
   ], 'FAQ');
   const alertHref = `/alerts?${new URLSearchParams({ c: cc, ...(skus.length ? { sku: (skus.find((k) => k.places_in > 0) ?? skus[0]).slug } : {}) })}`;
   const live = await d.liveCountries(env);
@@ -187,11 +213,12 @@ export async function guideOverview(env, id) {
     per.push({ cc, shops: new Set(rows.map((r) => r.shop)).size, inShops: new Set(inRows.map((r) => r.shop)).size, cheap: cheap ? `${shopName(cheap.shop)} · ${Tc.f.money(cheap.price)}` : '—' });
   }
   const P = G.name.en;
-  const lede = `As of ${w}, the ${P} is in stock in ${per.filter((p) => p.inShops).length} of the ${per.length} countries we track. Pick your country for today's shops and prices.`;
+  const lede = per.length ? `As of ${w}, the ${P} is in stock in ${per.filter((p) => p.inShops).length} of the ${per.length} countries we track. Pick your country for today's shops and prices.`
+    : `As of ${w}, no shop we check lists the ${P} yet. Each country page below fills in the moment a shop lists it (pre-orders included), and free alerts tell you first.`;
   const body = `<div class="answer"><h1>${e(`Where to buy the ${P}`)}</h1><p class="asof">${e(W.upd(w))}</p><p class="lede">${e(lede)}</p></div>
   <section><div class="table-scroll"><table><thead><tr><th>Country</th><th>Shops with stock</th><th>Cheapest in stock</th></tr></thead><tbody>
   ${per.map((p) => `<tr><td><a href="${guidePath(p.cc, id)}">${e(new Intl.DisplayNames(['en'], { type: 'region' }).of(p.cc === 'uk' ? 'GB' : p.cc.toUpperCase()))}</a></td><td>${p.inShops} / ${p.shops}</td><td>${e(p.cheap)}</td></tr>`).join('')}
-  </tbody></table></div></section>${G.release ? `<p class="answer-line">${e(REL.en(new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(G.release))))}</p>` : ''}${factsHtml(id, 'en')}
+  </tbody></table></div></section>${G.release ? `<p class="answer-line">${e((G.tentative ? REL_TBC : REL).en(new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(G.release))))}</p>` : ''}${factsHtml(id, 'en')}
   <section><h2>By country</h2><p class="quick-links">${live.map((c) => `<a href="${guidePath(c, id)}">${e(new Intl.DisplayNames(['en'], { type: 'region' }).of(c === 'uk' ? 'GB' : c.toUpperCase()))}</a>`).join('')}</p></section>`;
   return page(env, T, { title: `Where to buy the ${P} (${T.f.date(ts)}) | ${env.BRAND_NAME}`, description: lede, path: `/${G.slug.en}`, body,
     alternates: Object.fromEntries(per.map((p) => [p.cc, guidePath(p.cc, id)])) });
