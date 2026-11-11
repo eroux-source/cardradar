@@ -429,3 +429,6 @@ html, body { overflow-x: clip; }
   .brand { gap: 8px; }
   .brand-word { white-space: normal; font-size: 16px; line-height: 1; }
 }
+/* stock chip inside a narrow product card wraps instead of being cut off */
+.product .chip { white-space: normal; line-height: 1.2; max-width: 100%; }
+.product .chip::before { flex: none; }
