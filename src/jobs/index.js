@@ -6,6 +6,7 @@ import { flushOutbox, queueEmail } from '../email/outbox.js';
 import { heal } from '../alerts/pipeline.js';
 import { announce } from '../crawler/lotteries.js';
 import { alertText } from '../alerts/deliver.js';
+import { langOf, alertEmailText } from '../alerts/words.js';
 import { pushToUser } from '../alerts/channels/push.js';
 import { sourceName } from '../sources/index.js';
 
@@ -73,9 +74,8 @@ async function testAlertOnce(env) {
   const r = (u && await one(env, `${sql} WHERE r.sku_id IN (SELECT sku_id FROM alerts WHERE user_id = ? AND status = 'active') ORDER BY r.started_at DESC LIMIT 1`, u.id))
     ?? await one(env, `${sql} ORDER BY r.started_at DESC LIMIT 1`);
   if (!r) { await run(env, 'UPDATE settings SET value = ? WHERE key = ?', 'no restock', key); return 'none'; }
-  const msg = alertText(env, r);
-  await queueEmail(env, { userId: u?.id, to: u?.email ?? owner, kind: 'alert', subject: `[Test] ${msg.title}`,
-    text: `${msg.line}\n\nBuy or reserve: ${msg.url}\nLive stock: ${msg.page}\n\nStock moves within minutes. Check the retailer before you travel.` });
+  const msg = alertText(env, r, langOf(r.country));
+  await queueEmail(env, { userId: u?.id, to: u?.email ?? owner, kind: 'alert', subject: `[Test] ${msg.title}`, text: alertEmailText(msg, langOf(r.country)) });
   await run(env, 'UPDATE settings SET value = ?, updated_at = ? WHERE key = ?', `queued ${r.sku_slug}`, now(), key);
   return 'queued';
 }
@@ -113,7 +113,7 @@ async function pushDemoOnce(env) {
   for (const email of owners) {
     const u = await one(env, 'SELECT id FROM users WHERE lower(email) = ?', email);
     if (!u) continue;
-    const msg = r ? alertText(env, r) : { title: 'In stock: demo', line: 'Demo restock alert.', page: env.BASE_URL };
+    const msg = r ? alertText(env, r, langOf(r.country)) : { title: 'In stock: demo', line: 'Demo restock alert.', page: env.BASE_URL };
     devices += await pushToUser(env, u.id, { title: msg.title, body: msg.line, url: msg.url || msg.page, tag: 'demo' }, 'demo');
   }
   await run(env, "UPDATE settings SET value = ?, updated_at = ? WHERE key = 'push.demo'", `done:${devices}`, now());

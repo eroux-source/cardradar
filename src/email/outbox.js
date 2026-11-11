@@ -2,6 +2,7 @@
 // a Gmail pause (`email_pause`), alerts merged into a 1-per-hour digest.
 // Two identities (playbook §5): sign-in codes + support via Postmark from the
 // root domain; alerts via Resend from alerts@notify.<domain>.
+import { alertWords, splitAlertEmail } from '../alerts/words.js';
 import { all, run, now, isFlagOn } from '../lib/db.js';
 
 export async function queueEmail(env, { userId = null, to, kind, subject, text, notBefore = now() }) {
@@ -56,8 +57,11 @@ export async function flushOutbox(env, limit = 50) {
     if (n++) await new Promise((r) => setTimeout(r, 160));
     const first = msgs[0];
     if (n++) await sleep(SEND_GAP_MS); // stay under the provider's per-second limit
-    const subject = msgs.length > 1 ? `${msgs.length} restocks you asked about` : first.subject;
-    const text = msgs.length > 1 ? msgs.map((m) => m.text.split('\n\nStock moves')[0]).join('\n\n———\n\n') + '\n\nStock moves within minutes. Check the retailer before you travel.' : first.text;
+    // digest in the language of the alerts (words.js): parts without their closing line, then one closing line
+    const parts = msgs.map((m) => splitAlertEmail(m.text));
+    const DL = alertWords(parts[0].lang);
+    const subject = msgs.length > 1 ? DL.digest(msgs.length) : first.subject;
+    const text = msgs.length > 1 ? parts.map((x) => x.body).join('\n\n———\n\n') + `\n\n${DL.foot}` : first.text;
     let ok = false; let err = null;
     try {
       ok = key.startsWith('alert:') ? await viaResend(env, first.to_email, subject, text) : await viaPostmark(env, first.to_email, subject, text);

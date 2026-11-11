@@ -10,13 +10,15 @@ import { sendTelegram } from './channels/telegram.js';
 import { pushToUser } from './channels/push.js';
 import { sendLine } from './channels/line.js';
 import { queueEmail } from '../email/outbox.js';
+import { alertWords, alertEmailText, langOf } from './words.js';
 
-export function alertText(env, r) {
-  const where = r.online ? `${sourceName(r.source)} online` : `${sourceName(r.source)} ${r.store_name}, ${r.city}`;
-  const qty = r.qty > 1 ? ` (${r.qty} available)` : '';
+/** Alert text in `lang` (the alert's country language, see words.js). */
+export function alertText(env, r, lang = 'en') {
+  const L = alertWords(lang);
+  const where = r.online ? L.online(sourceName(r.source)) : `${sourceName(r.source)} ${r.store_name}, ${r.city}`;
   return {
-    title: `In stock: ${r.sku_name}`,
-    line: `${r.sku_name} is in stock at ${where}${qty}.`,
+    title: L.title(r.sku_name),
+    line: L.line(r.sku_name, where, r.qty),
     url: r.url,
     page: `${env.BASE_URL}/${r.country ?? 'us'}/${r.sku_slug}`,
   };
@@ -35,7 +37,8 @@ export async function deliver(env, { alertId, restockId }) {
     return;
   }
   const channels = JSON.parse(a.channels || '["email"]');
-  const msg = alertText(env, r);
+  const lang = langOf(a.country ?? r.country);
+  const msg = alertText(env, r, lang);
 
   const pushing = channels.includes('push')
     ? pushToUser(env, a.user_id, { title: msg.title, body: msg.line, url: msg.url || msg.page, tag: `r${restockId}` }).catch(() => 0)
@@ -53,7 +56,7 @@ export async function deliver(env, { alertId, restockId }) {
     const notBefore = t - lastEmail < 3600e3 ? lastEmail + 3600e3 : t;
     await queueEmail(env, {
       userId: a.user_id, to: a.email, kind: 'alert',
-      subject: msg.title, text: `${msg.line}\n\nBuy or reserve: ${msg.url}\nLive stock: ${msg.page}\n\nStock moves within minutes. Check the retailer before you travel.`,
+      subject: msg.title, text: alertEmailText(msg, lang),
       notBefore,
     });
     if (notBefore === t) await run(env, 'UPDATE users SET last_email_alert_at = ? WHERE id = ?', t, a.user_id);

@@ -10,6 +10,7 @@ import { jpSetBySlug } from '../data/sets_jp.js';
 import { sendTelegram } from '../alerts/channels/telegram.js';
 import { pushToUser, pushReady } from '../alerts/channels/push.js';
 import { alertText } from '../alerts/deliver.js';
+import { langOf } from '../alerts/words.js';
 import { availability, skuBySlug } from './data.js';
 import { sourceName } from '../sources/index.js';
 
@@ -128,13 +129,13 @@ export async function api(env, req, url, ctx) {
     if (!user) return bad('Sign in first.', 401);
     if (p === '/api/me/latest') {
       // the service worker asks what the newest alert was (pushes carry no payload)
-      const r = await one(env, `SELECT r.*, k.name AS sku_name, k.slug AS sku_slug, l.url, s.name AS store_name, s.city, s.online FROM alert_sent x
+      const r = await one(env, `SELECT r.*, a.country AS alert_cc, k.name AS sku_name, k.slug AS sku_slug, l.url, s.name AS store_name, s.city, s.online, s.country FROM alert_sent x
         JOIN alerts a ON a.id = x.alert_id JOIN restocks r ON r.id = x.restock_id JOIN skus k ON k.id = r.sku_id JOIN listings l ON l.id = r.listing_id JOIN stores s ON s.id = r.store_id
         WHERE a.user_id = ? ORDER BY x.claimed_at DESC LIMIT 1`, user.id);
       const lot = await one(env, `SELECT l.*, x.moment, x.at FROM lottery_sent x JOIN alerts a ON a.id = x.alert_id JOIN lotteries l ON l.id = x.lottery_id WHERE a.user_id = ? ORDER BY x.at DESC LIMIT 1`, user.id);
       if (lot && (!r || lot.at > (r.started_at ?? 0))) return json({ title: `${lot.moment === 'open' ? '【受付開始】' : '【締切間近】'}${lot.title}`, body: lot.title, url: lot.url ?? '/jp' });
       if (!r) return json({ title: env.BRAND_NAME, body: 'Notifications are on. You will hear about the next restock here.', url: '/account' });
-      const msg = alertText(env, r);
+      const msg = alertText(env, r, langOf(r.alert_cc ?? r.country));
       return json({ title: msg.title, body: msg.line, url: msg.url ?? msg.page });
     }
     if (p === '/api/me/push' && m === 'POST') {
