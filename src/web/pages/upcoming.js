@@ -16,7 +16,7 @@ const THIRTY = /30th|30\s*(jahre|ans|anni|aniversario|jaar)/i;
 // Sources: pokemon.com / pokemon-card.com (official), Pokénnoisseur, Lv1 Gaming, Cardrake, Bill's Archive (reported).
 const RELEASES = [
   { id: 'delta-reign', date: '2026-11-06', status: 'official', name: 'Mega Evolution—Delta Reign (ME06)', guide: 'delta-reign', match: GUIDES['delta-reign'].match },
-  { id: '30th-wave4', date: '2026-11-06', status: 'official', name: '30th Celebration wave 4: Ultra-Premium Collections, Ditto Premium Collection, Mew & Mewtwo Figure Collections', thirty: true, match: (n) => THIRTY.test(n) },
+  { id: '30th-wave4', date: '2026-11-06', status: 'official', name: '30th Celebration wave 4: Ultra-Premium Collections, Ditto Premium Collection, Mew & Mewtwo Figure Collections', thirty: true, match: (n) => THIRTY.test(n) && /ultra[-\s]*premium|\bupc\b|ditto|mewtwo|figure\s*collection/i.test(n) },
   { id: 'jp-special-deck', date: '2026-11-13', status: 'officialJp', name: 'Special Deck Set MEGA (Japan)', jp: true },
   { id: 'jp-hadou-seeker', date: '2026-11-27', status: 'officialJp', name: 'Hadou Seeker / Aura Seeker (Japan; Japanese version of Flowing Fists)', guide: 'flowing-fists' },
   { id: 'binder-tins', date: '2026-12-04', status: 'reported', name: '30th Celebration Binder Collection; Greninja ex and Sylveon ex tins', thirty: true },
