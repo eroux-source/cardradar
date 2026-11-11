@@ -17,6 +17,8 @@ export function slugify(text) {
 // listings from different retailers land on the same product page.
 export function canonicalTitle(raw) {
   let t = decodeEntities(raw).replace(/[™®©]/g, '').trim();
+  // "Pokémon – Coffret …": the brand before the dash is not the name, so drop it first (else the name came out empty)
+  t = t.replace(/^(the\s+)?pok[eé]mon(\s+(tcg|jcc|gcc|trading card game))?\s*[|–—]\s+/i, '');
   t = t.split(/\s[|–]\s/)[0];                                   // drop marketing tails after " | "
   t = t.replace(/^collectible\s+/i, '');
   t = t.replace(/^(the\s+)?pok[eé]mon\s*(company\s*)?(international\s*)?/i, '');

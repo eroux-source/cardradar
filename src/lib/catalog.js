@@ -93,7 +93,7 @@ export function classify(rawTitle) {
   // wording of "the Mega Evolution ETB" lands on the same page.
   // Only for types that exist once per set; collections, decks and blisters
   // come in many variants per set and keep their full name.
-  let name = tidy(canonical);
+  let name = tidy(canonical) || canonicalTitle(rawTitle) || String(rawTitle).trim();
   // one page per set for products that exist once per set (2026-11-06: single booster packs,
   // 3-pack blisters and Build & Battle boxes too; several packs, checklanes and promos keep their name)
   const many = MULTI_QTY.test(title);
