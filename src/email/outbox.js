@@ -10,6 +10,10 @@ export async function queueEmail(env, { userId = null, to, kind, subject, text, 
 }
 
 class NoProvider extends Error {}
+// Resend allows 10 requests a second: a 429 is "too fast", not a failure, so it never uses an attempt.
+class RateLimited extends Error {}
+const SEND_GAP_MS = 150;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const isLocal = (env) => !env.BASE_URL?.startsWith('https');
 
 async function viaPostmark(env, to, subject, text) {
@@ -29,6 +33,7 @@ async function viaResend(env, to, subject, text, from = env.ALERTS_FROM) {
     method: 'POST', headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify({ from: env.RESEND_FROM || from, to, reply_to: env.REPLY_TO || env.SUPPORT_EMAIL, subject, text }),
   });
+  if (r.status === 429) throw new RateLimited(`resend 429: ${(await r.text()).slice(0, 120)}`);
   if (!r.ok) throw new Error(`resend ${r.status}: ${(await r.text()).slice(0, 160)}`);
   return true;
 }
@@ -45,9 +50,10 @@ export async function flushOutbox(env, limit = 50) {
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(m);
   }
-  let sent = 0;
+  let sent = 0; let n = 0;
   for (const [key, msgs] of groups) {
     const first = msgs[0];
+    if (n++) await sleep(SEND_GAP_MS); // stay under the provider's per-second limit
     const subject = msgs.length > 1 ? `${msgs.length} restocks you asked about` : first.subject;
     const text = msgs.length > 1 ? msgs.map((m) => m.text.split('\n\nStock moves')[0]).join('\n\n———\n\n') + '\n\nStock moves within minutes. Check the retailer before you travel.' : first.text;
     let ok = false; let err = null;
@@ -57,6 +63,12 @@ export async function flushOutbox(env, limit = 50) {
       // nothing configured yet: keep the mail waiting (no attempt used), it leaves once a provider is set
       if (e instanceof NoProvider) continue;
       err = String(e.message);
+      if (e instanceof RateLimited) {
+        // too fast: try again in a minute, no attempt used, and stop this batch
+        const ids = msgs.map((m) => m.id);
+        await run(env, `UPDATE email_outbox SET last_error = ?, not_before = ? WHERE id IN (${ids.map(() => '?').join(',')})`, err, now() + 60e3, ...ids);
+        break;
+      }
     }
     const ids = msgs.map((m) => m.id);
     const placeholders = ids.map(() => '?').join(',');
