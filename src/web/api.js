@@ -8,7 +8,7 @@ import { checkoutUrl, cancelRenewal } from '../billing/provider.js';
 import { COUNTRIES, metroInCountry } from '../data/countries.js';
 import { jpSetBySlug } from '../data/sets_jp.js';
 import { sendTelegram } from '../alerts/channels/telegram.js';
-import { sendPush } from '../alerts/channels/push.js';
+import { pushToUser, pushReady } from '../alerts/channels/push.js';
 import { alertText } from '../alerts/deliver.js';
 import { availability, skuBySlug } from './data.js';
 import { sourceName } from '../sources/index.js';
@@ -31,6 +31,15 @@ async function lead(env, email, patch) {
       sku_id = COALESCE(excluded.sku_id, leads.sku_id), metro = COALESCE(excluded.metro, leads.metro), updated_at = excluded.updated_at`,
   email, patch.step, patch.skuId ?? null, patch.metro ?? null, patch.source ?? null, t, t);
 }
+
+const TEST_PUSH = {
+  en: 'Notifications work. Your next restock alert will show up here, at the same time as the email.',
+  fr: 'Les notifications marchent. Votre prochaine alerte de réassort arrivera ici, en même temps que l’email.',
+  de: 'Benachrichtigungen funktionieren. Dein nächster Restock-Alarm erscheint hier, gleichzeitig mit der E-Mail.',
+  es: 'Las notificaciones funcionan. Tu próxima alerta de reposición llegará aquí, a la vez que el email.',
+  it: 'Le notifiche funzionano. Il tuo prossimo avviso di riassortimento arriverà qui, insieme all’email.',
+  nl: 'Meldingen werken. Je volgende restock-alert verschijnt hier, tegelijk met de e-mail.',
+};
 
 export async function api(env, req, url, ctx) {
   const p = url.pathname;
@@ -129,10 +138,31 @@ export async function api(env, req, url, ctx) {
       return json({ title: msg.title, body: msg.line, url: msg.url ?? msg.page });
     }
     if (p === '/api/me/push' && m === 'POST') {
-      const sub = (await body(req)).subscription;
-      if (!sub?.endpoint) return bad('No subscription.');
-      await run(env, 'UPDATE users SET push_endpoint = ?, push_keys = ? WHERE id = ?', sub.endpoint, JSON.stringify(sub.keys ?? {}), user.id);
+      // this device accepted notifications: keep it, and add 'push' to every alert of the account
+      const b = await body(req);
+      const sub = b.subscription;
+      const ok = (x) => typeof x === 'string' && /^[A-Za-z0-9_-]{16,200}$/.test(x);
+      let host = '';
+      try { host = new URL(sub?.endpoint).hostname; } catch {}
+      if (!/^https:/.test(sub?.endpoint ?? '') || !host || sub.endpoint.length > 1000 || !ok(sub.keys?.p256dh) || !ok(sub.keys?.auth)) return bad('No subscription.');
+      const ua = req.headers.get('user-agent') ?? '';
+      const device = /iphone|ipad/i.test(ua) ? 'ios' : /android/i.test(ua) ? 'android' : 'desktop';
+      const fresh = !(await one(env, 'SELECT 1 FROM push_subs WHERE endpoint = ? AND user_id = ?', sub.endpoint, user.id));
+      await run(env, `INSERT INTO push_subs (user_id, endpoint, p256dh, auth, device, standalone, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(endpoint) DO UPDATE SET user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth, device = excluded.device, standalone = excluded.standalone, fails = 0`,
+        user.id, sub.endpoint, sub.keys.p256dh, sub.keys.auth, device, b.standalone ? 1 : 0, now());
       await run(env, `UPDATE alerts SET channels = json_insert(channels, '$[#]', 'push') WHERE user_id = ? AND status != 'deleted' AND NOT EXISTS (SELECT 1 FROM json_each(alerts.channels) WHERE value = 'push')`, user.id);
+      if (fresh) await run(env, 'INSERT INTO events (at, visit, name, path, device, bot, props, country) VALUES (?, ?, ?, ?, ?, 0, ?, ?)',
+        now(), String(b.visit ?? '').slice(0, 40) || null, 'push_optin', String(b.from ?? '').slice(0, 40), device, JSON.stringify({ standalone: b.standalone ? 1 : 0, from: String(b.from ?? '').slice(0, 20) }), req.cf?.country ?? null);
+      return json({ ok: true });
+    }
+    if (p === '/api/me/push' && m === 'DELETE') {
+      // notifications off on this device; the account keeps 'push' only if another device remains
+      const b = await body(req);
+      await run(env, 'DELETE FROM push_subs WHERE endpoint = ? AND user_id = ?', String(b.endpoint ?? ''), user.id);
+      if (!(await one(env, 'SELECT 1 FROM push_subs WHERE user_id = ?', user.id))) {
+        await run(env, `UPDATE alerts SET channels = (SELECT json_group_array(value) FROM json_each(alerts.channels) WHERE value != 'push') WHERE user_id = ? AND status != 'deleted'`, user.id);
+      }
       return json({ ok: true });
     }
     if (p === '/api/me/line' && m === 'POST') {
@@ -147,9 +177,12 @@ export async function api(env, req, url, ctx) {
       return json({ ok: true, url: `https://t.me/${env.TELEGRAM_BOT_NAME}?start=${token}` });
     }
     if (p === '/api/me/test' && m === 'POST') {
-      const ch = (await body(req)).ch;
+      // test notification: only to the devices of the signed-in account
+      const b = await body(req);
+      const ch = b.ch;
       const msg = { title: 'Test alert', line: `This is a test from ${env.BRAND_NAME}. Real alerts look like this.`, url: `${env.BASE_URL}/account`, page: env.BASE_URL };
-      const ok = ch === 'telegram' ? await sendTelegram(env, user.telegram_chat_id, msg) : ch === 'push' ? await sendPush(env, user) : false;
+      const ok = ch === 'telegram' ? await sendTelegram(env, user.telegram_chat_id, msg)
+        : ch === 'push' ? pushReady(env) && (await pushToUser(env, user.id, { title: '✓ Card Restock Tracker', body: TEST_PUSH[b.lang] ?? TEST_PUSH.en, url: '/account', tag: 'test' }, 'test')) > 0 : false;
       return ok ? json({ ok: true }) : bad(ch === 'push' ? 'This device did not accept the notification. Turn notifications on again.' : 'Telegram did not accept the message. Reconnect it.');
     }
     if (p === '/api/me/cancel' && m === 'POST') {

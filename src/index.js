@@ -25,6 +25,7 @@ import { COUNTRIES } from './data/countries.js';
 import { setEnv, refreshLive } from './sources/index.js';
 export { Relay } from './relay.js';
 import { ownerLottery } from './owner/lottery.js';
+import { webManifest } from './web/pwa.js';
 import { applyReading } from './crawler/state.js';
 import { publishRestocks } from './alerts/pipeline.js';
 
@@ -46,6 +47,7 @@ async function route(req, env, ctx) {
   if (url.pathname !== p && m === 'GET') return Response.redirect(`${env.BASE_URL}${p}${url.search}`, 301);
 
   // --- machine endpoints ---
+  if (p === '/manifest.webmanifest') return webManifest(env, url);
   if (p === '/api/geo') return new Response(JSON.stringify({ country: req.cf?.country ?? null }), { headers: { 'content-type': 'application/json', 'cache-control': 'private, no-store' } });
   if (p === '/api/health') {
     const last = await one(env, 'SELECT MAX(seen_at) t FROM stock');
@@ -73,6 +75,21 @@ async function route(req, env, ctx) {
       under_1h: tl.filter((d) => d < 3600e3).length,
       catch_pct: Object.fromEntries([10, 30, 60, 120, 360, 1440].map((m) => [`every_${m}min`, tl.length ? Math.round((100 * tl.reduce((a, d) => a + Math.min(1, d / (m * 60e3)), 0)) / tl.length) : null])) };
     return json({ ok: true, restocks_24h: { ...rs, median_minutes_in_stock_7d: med, measured: durs.length }, interval_test, daily_7d: (await env.DB.prepare("SELECT strftime('%m-%d', at / 1000, 'unixepoch', '-3 hours') AS day, COUNT(DISTINCT visit) AS visits, COUNT(DISTINCT CASE WHEN source LIKE '%chatgpt%' THEN visit END) AS chatgpt, COUNT(DISTINCT CASE WHEN source LIKE '%google%' THEN visit END) AS google, COUNT(*) AS views FROM events WHERE name = 'view' AND bot = 0 AND at > ? GROUP BY day ORDER BY day").bind(now() - 8 * 864e5).all()).results,
+      push: await (async () => {
+        // installable app + push funnel, last 7 days (counts only, no personal data)
+        const since = now() - 7 * 864e5;
+        const ev = Object.fromEntries((await env.DB.prepare("SELECT name, COUNT(*) AS n FROM events WHERE bot = 0 AND at > ? AND name IN ('pwa_hint','pwa_prompt','pwa_prompt_ok','pwa_install','push_optin','push_sent','push_click') GROUP BY name").bind(since).all()).results.map((r) => [r.name, r.n]));
+        const sent = (await env.DB.prepare("SELECT COALESCE(SUM(json_extract(props, '$.ok')), 0) AS ok, COUNT(*) AS n, COALESCE(SUM(json_extract(props, '$.removed')), 0) AS removed FROM events WHERE name = 'push_sent' AND at > ? AND json_extract(props, '$.kind') = 'alert'").bind(since).first().catch(() => null)) ?? {};
+        const subs = (await env.DB.prepare('SELECT device, standalone, COUNT(*) AS n FROM push_subs GROUP BY device, standalone').all().catch(() => ({ results: [] }))).results;
+        return {
+          public: (await env.DB.prepare("SELECT value FROM settings WHERE key = 'push_public'").first().catch(() => null))?.value ?? 'off',
+          keys_set: !!(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY),
+          devices: subs.reduce((n, r) => n + r.n, 0), devices_by: Object.fromEntries(subs.map((r) => [`${r.device}${r.standalone ? '_app' : ''}`, r.n])),
+          users: (await env.DB.prepare('SELECT COUNT(DISTINCT user_id) AS n FROM push_subs').first().catch(() => null))?.n ?? 0,
+          funnel_7d: { pwa_hint: ev.pwa_hint ?? 0, pwa_prompt: ev.pwa_prompt ?? 0, pwa_install: ev.pwa_install ?? 0, push_optin: ev.push_optin ?? 0, push_sent: ev.push_sent ?? 0, push_click: ev.push_click ?? 0 },
+          alerts_7d: { tried: sent.n ?? 0, delivered: sent.ok ?? 0, dead_removed: sent.removed ?? 0 },
+        };
+      })(),
       wanted_channels: Object.entries((await env.DB.prepare("SELECT props FROM events WHERE name = 'wants_channel' AND bot = 0").all()).results.reduce((m, r) => { for (const c of String(JSON.parse(r.props || '{}').ch ?? '').split(',').filter(Boolean)) m[c] = (m[c] ?? 0) + 1; return m; }, {})),
       funnel_7d: (await env.DB.prepare("SELECT name, COUNT(*) AS n, COUNT(DISTINCT visit) AS v FROM events WHERE name != 'view' AND bot = 0 AND at > ? GROUP BY name ORDER BY n DESC LIMIT 20").bind(now() - 7 * 864e5).all()).results,
       top_pages_7d: (await env.DB.prepare("SELECT path, COUNT(DISTINCT visit) AS v FROM events WHERE name = 'view' AND bot = 0 AND at > ? GROUP BY path ORDER BY v DESC LIMIT 15").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.path} ${r.v}`),

@@ -3,6 +3,7 @@
 // The email is captured at step 1 (lead), so a visitor who stops still gets one
 // follow-up. Steps run client-side (public/app.js) against /api/funnel/*.
 import { freeMode, freeWords } from '../free.js';
+import { pushVisible, pushOption, pushAccountBlock } from '../pwa.js';
 import { escapeHtml as e, timeAgo, formatUtc } from '../../lib/util.js';
 import { COUNTRIES, metroById } from '../../data/countries.js';
 import { JP_SETS } from '../../data/sets_jp.js';
@@ -85,6 +86,7 @@ export async function alertsPage(env, url, user) {
     return page(env, T, { title: `${F.title} — ${env.BRAND_NAME}`, description: F.title, path: '/alerts', noindex: true, nav: 'alerts',
       body: `<div class="funnel"><h1>${e(F.h1)}</h1><p class="lede">${T.home.soon(T.cc.name)}</p><p><a href="/">United States</a> · <a href="/jp">日本</a></p></div>` });
   }
+  const showPush = await pushVisible(env, user);
   const body = `<div class="funnel" id="funnel" data-country="${cc}" data-sku="${skus.some((k) => k.slug === sku) || sku.startsWith('jpset:') ? e(sku) : ''}" data-signed="${user ? 1 : 0}" data-pass="${pass ? e(pass.plan) : ''}" data-vapid="${e(env.VAPID_PUBLIC_KEY ?? '')}">
   <h1>${e(F.h1)}</h1>
   <ol class="steps" aria-label="Progress">${[F.steps[1], F.steps[3], F.steps[0]].map((x, i) => `<li data-s="${i + 1}">${e(x)}</li>`).join('')}</ol>
@@ -115,6 +117,7 @@ export async function alertsPage(env, url, user) {
       ${!lottery && F.free ? `<label class="plan"><input type="radio" name="plan" value="free"><span><strong>${e(F.freeName)} · ${e(T.f.money(0))}</strong><br><span class="fine">${e(F.free)}</span></span></label>` : ''}
       <p class="fine">${e(F.renew)}</p>`}
       ${cc === 'jp' ? `<fieldset class="channels"><label class="radio"><input type="checkbox" name="line" value="1" checked> ${e(F.line)} <span class="fine">${e(F.lineFine)}</span></label></fieldset>` : ''}
+      ${showPush ? pushOption(T) : ''}
       <p class="sub">${e(EMAIL_OK[T.cc.lang] ?? EMAIL_OK.en)}</p>
       <button class="btn" type="submit">${e(freeMode(env) ? freeWords(T).btn : user ? F.checkout : F.cont)}</button></form>
     <p class="err" role="alert"></p>
@@ -143,6 +146,7 @@ export async function accountPage(env, url, user) {
   const metroName = (id) => metroById[id]?.name ?? id;
   const T = t(visitCountry(url, user));
   const paid = url.searchParams.get('paid');
+  const showPush = await pushVisible(env, user);
   const body = `<div class="account" id="account" data-vapid="${e(env.VAPID_PUBLIC_KEY ?? '')}">
   <h1>Your alerts</h1>
   ${paid ? '<p class="ok" role="status">Payment received. Your alerts are live: we email you the moment a restock is detected.</p>' : ''}
@@ -163,6 +167,7 @@ export async function accountPage(env, url, user) {
       <label class="radio"><input type="radio" name="reason" value="other"> Something else</label>
       <button class="btn" value="ok">Delete alert</button> <button class="link" value="cancel">Keep it</button></form></dialog></section>
 
+  ${showPush ? pushAccountBlock(T) : ''}
   <section><h2>How we reach you</h2><ul class="rows">
     ${user.country === 'jp' || alerts.some((a) => a.country === 'jp') ? `<li class="row"><span class="name">LINE</span><span class="meta">${user.line_user_id ? 'Connected' : 'Not connected'}</span><span class="side">${env.LINE_BOT_ID ? `<button class="link" data-act="line">${user.line_user_id ? 'Reconnect' : 'Connect'}</button>` : ''}</span></li>` : ''}
     <li class="row"><span class="name">Email</span><span class="meta">${e(user.email)}</span><span class="side"></span></li></ul>

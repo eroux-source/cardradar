@@ -35,7 +35,7 @@ CODES_FROM = "Card Restock Tracker <hello@cardrestocktracker.com>"
 TELEGRAM_BOT_NAME = ""               # bot username, without @
 PRICE_SOLO = "5.99"                  # 27/10/2026: InStock Radar model ($5.99 / $14.99 per 30 days) + free plan
 PRICE_MULTI = "14.99"
-VAPID_PUBLIC_KEY = "BMAxII6sWYgTbvvIM3e85qmSodeJ7rZZTFtkksSitH3S6nW6dT4DlVASQGYrPAz45VBSJYLaPDfWNQYIskQKcG8"   # public half of the push key pair
+VAPID_PUBLIC_KEY = "BGyehkiI3Gec2KwOyj37wBI8OIC6BQ_hKQ9MUb76I4jW52NEm-FyVXbpOun4mxNvU21QRnJe0y9AoCsBn9N0V7A"   # public half of the web push key pair (2026-11-11); private half = secret VAPID_PRIVATE_KEY
 INDEXNOW_KEY = "e411abef1fa0fa6fb2de7e9b58aa1882"            # public by design (served at /<key>.txt for Bing)
 
 [[d1_databases]]
@@ -88,7 +88,7 @@ crons = ["* * * * *"]
 
 # Secrets (wrangler secret put …): WHOP_API_KEY, WHOP_WEBHOOK_SECRET, WHOP_PLAN_SOLO,
 # WHOP_PLAN_MULTI, POSTMARK_TOKEN, RESEND_API_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET,
-# VAPID_PRIVATE_JWK, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, BESTBUY_API_KEY,
+# VAPID_PRIVATE_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, BESTBUY_API_KEY,
 # PROXY_LIST, ADMIN_KEY, SESSION_SECRET
 
 # Node relay for proxied requests (Workers cannot tunnel TLS through an HTTP proxy)

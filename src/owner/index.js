@@ -22,6 +22,7 @@ const shell = (title, body, key) => new Response(`<!doctype html><html lang="fr"
 const SWITCHES = [
   ['crawl', 'Lecture des magasins', 'kill'], ['alert_pipeline', 'Envoi des alertes', 'kill'], ['deliver_fanout', 'Envoi en file (gros volumes)', 'kill'],
   ['budget.proxy', 'Proxies', 'kill'], ['email_pause', 'Pause des emails (sauf codes)', 'flag'],
+  ['push_public', 'Notifications push proposées à tous (sinon : propriétaire seulement)', 'flag'],
 ];
 
 export async function monitor(env, url) {

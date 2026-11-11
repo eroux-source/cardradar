@@ -49,7 +49,7 @@ gtag('js',new Date());gtag('config','${e(env.GA_ID)}',{country:'${cc}'});</scrip
 <title>${e(title)}</title><meta name="description" content="${e(description)}">
 <link rel="canonical" href="${e(canonical)}">${alt}${noindex ? '<meta name="robots" content="noindex,follow">' : ''}
 <meta property="og:title" content="${e(title)}"><meta property="og:description" content="${e(description)}"><meta property="og:url" content="${e(canonical)}"><meta property="og:type" content="website"><meta property="og:locale" content="${T.cc.locale.replace('-', '_')}">
-<meta name="theme-color" content="#ffffff"><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#ffffff"><link rel="manifest" href="/manifest.webmanifest?c=${cc}"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="apple-mobile-web-app-title" content="Restocks"><link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="preload" href="/fonts/bc-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/site.css">
 ${jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, '\\u003c')}</script>`).join('')}

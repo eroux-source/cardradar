@@ -2,15 +2,16 @@
 // parallel; email only if none of them reached the person, max 1/hour digest).
 import { run, now } from '../lib/db.js';
 import { sendTelegram } from './channels/telegram.js';
-import { sendPush } from './channels/push.js';
+import { pushToUser } from './channels/push.js';
 import { sendLine } from './channels/line.js';
 import { queueEmail } from '../email/outbox.js';
 
 export async function notifyUser(env, u, channels, msg) {
   const tries = [];
   if (channels.includes('telegram') && u.telegram_chat_id) tries.push(sendTelegram(env, u.telegram_chat_id, msg).then((ok) => ok && 'telegram'));
-  if (channels.includes('push') && u.push_endpoint) tries.push(sendPush(env, u).then((ok) => ok && 'push'));
   if (channels.includes('line') && u.line_user_id) tries.push(sendLine(env, u.line_user_id, msg).then((ok) => ok && 'line'));
+  // push goes out alongside, it never replaces the email
+  const pushed = channels.includes('push') ? pushToUser(env, u.user_id ?? u.id, { title: msg.title, body: msg.line, url: msg.url ?? msg.page }, 'lottery').catch(() => 0) : Promise.resolve(0);
   const ok = (await Promise.allSettled(tries)).map((x) => (x.status === 'fulfilled' ? x.value : null)).filter(Boolean);
   if (!ok.length) {
     const t = now();
@@ -20,5 +21,6 @@ export async function notifyUser(env, u, channels, msg) {
     if (notBefore === t) await run(env, 'UPDATE users SET last_email_alert_at = ? WHERE id = ?', t, u.id);
     ok.push('email');
   }
+  if (await pushed) ok.push('push');
   return ok;
 }

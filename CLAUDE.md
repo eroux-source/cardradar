@@ -44,8 +44,16 @@ Owner: Eugène, eroux@kosmocgi.com. He writes in French. Reply in short, non-tec
 - Free again since 2026-11-06 (Eugène): launch mode `FREE_ALERTS="1"`, alerts free and instant by email (Resend), up to 20 products. Paid mode was live 2026-11-05 → 06 with 0 sales; traffic first.
   - Paid mode stays ready: `FREE_ALERTS="0"` = Whop Solo / Multi. Whop plans per currency: `WHOP_PLAN_<SOLO|MULTI>_<EUR|GBP|CAD|AUD>` in `wrangler.toml`; MX, CL and JP pay the USD plan.
   - Alert funnel order: 1 product → 2 plan → 3 email. Solo / free alerts can be limited to chosen shops (plan step, `/api/funnel/shops`, `alerts.store_ids`, empty = every shop).
-  - Telegram and phone notifications were removed.
+  - Telegram was removed. Phone notifications are back as free Web Push (2026-11-11), see below.
   - After subscribing, people are asked which other channels they want; the answers are counted in `wanted_channels`.
+- Installable app + free push (2026-11-11):
+  - `/manifest.webmanifest?c=<cc>` (worker, `src/web/pwa.js`): one app (`id: /`), start page = country home, PNG icons 192/512/maskable + `apple-touch-icon.png` in `public/`.
+  - `public/sw.js`: notifications only, NO fetch handler and no cache (edge cache and SEO unchanged). Registered only on `/alerts`, `/account` and inside the installed app.
+  - Web Push in `src/alerts/channels/push.js`: VAPID ES256 + aes128gcm, WebCrypto only. Public key `VAPID_PUBLIC_KEY` in `wrangler.toml`, private key = secret `VAPID_PRIVATE_KEY` (base64url of the 32-byte scalar, set by Eugène). Devices in D1 `push_subs` (migration 0009), deleted on 404/410.
+  - Sent at the same moment as the restock email (`src/alerts/deliver.js`), never instead of it. Alerts with `push` in `alerts.channels` go to every device of the account.
+  - UI: tick box « Recevoir aussi en notification » in the alert form and a « Notifications sur cet appareil » block on `/account` (on / test / off, Android install button, iPhone Share → « Sur l'écran d'accueil » card). 6 languages.
+  - Visible to the owner only until the setting `push_public` is `on` (switch on `/owner/monitor`).
+  - Numbers: `/api/health` → `push` (devices, `funnel_7d`: pwa_hint, pwa_prompt, pwa_install, push_optin, push_sent, push_click; `alerts_7d`: tried, delivered, dead_removed).
 - Support page (2026-11-07): `/support` and `/<cc>/support` (`src/web/pages/support.js`, fan tone, 6 languages), linked in every footer and after an alert is set. One-time Whop tips 1/2/5 in EUR (Europe, UK) or USD (elsewhere), product Support Card Restock Tracker (`TIP_PLANS`). The webhook records tips (event `tip_paid`) and never grants a pass; clicks are the event `tip`.
 - Visitor feedback (2026-11-11): block at the bottom of every public page plus a floating 💬 button (`src/web/feedback.js`, 6 languages): missing country, next card game to track, free comment, optional email. Saved in D1 `feedback` (max 5 per network per hour). Counts in `/api/health` → `feedback_30d` (never texts or emails); every answer on `/owner/feedback`.
 - Affiliate-ready links live in `src/web/affiliate.js`.

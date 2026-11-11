@@ -64,15 +64,50 @@
     $$('[data-grid]').forEach((g) => { let shown = 0; $$('li[data-type]', g).forEach((li) => { const ok = !t || li.dataset.type === t; li.hidden = !ok; if (ok) shown++; }); const none = g.parentElement.querySelector('[data-none]'); if (none) none.hidden = shown > 0; });
   }));
 
-  /* ---------- phone notifications ---------- */
+  /* ---------- installable app + free push notifications (2026-11-11) ---------- */
+  // Service worker only where notifications are offered (alert form, account, installed app): public pages stay untouched.
+  const ua = navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isIOSSafari = isIOS && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\//.test(ua);
+  const canPush = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  const pushUI = !!document.querySelector('[data-push-opt], #push-box');
+  const swReady = canPush && (pushUI || standalone) ? navigator.serviceWorker.register('/sw.js').catch(() => null) : null;
   const b64 = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (s.length % 4)) % 4)), (c) => c.charCodeAt(0));
-  async function enablePush(vapid) {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) throw new Error(/iPhone|iPad/.test(navigator.userAgent) && !standalone ? 'On iPhone, tap Share › Add to Home Screen, open the app from your Home Screen, then turn notifications on.' : 'This browser cannot receive notifications. Use Telegram instead.');
-    if (!vapid) throw new Error('Notifications are not set up yet on our side. Use Telegram or email.');
-    const reg = await navigator.serviceWorker.register('/sw.js');
-    if ((await Notification.requestPermission()) !== 'granted') throw new Error('Notifications are blocked. Allow them in your browser settings.');
-    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(vapid) });
-    await post('/api/me/push', { subscription: sub.toJSON() });
+  const b64e = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const vapidKey = () => ($('#funnel') || $('#account'))?.dataset.vapid || '';
+  // Must start inside the tap (iPhone asks permission only from a user gesture): permission first, then subscribe.
+  async function askPush() {
+    if (!canPush) { const x = new Error('unsupported'); x.code = 'unsupported'; throw x; }
+    const perm = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+    if (perm !== 'granted') { const x = new Error('denied'); x.code = 'denied'; throw x; }
+    const reg = (await swReady) || (await navigator.serviceWorker.register('/sw.js'));
+    await navigator.serviceWorker.ready;
+    const key = vapidKey();
+    const old = await reg.pushManager.getSubscription();
+    if (old) { const k = old.options?.applicationServerKey; if (!k || b64e(k) === key) return old; await old.unsubscribe(); }
+    return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(key) });
+  }
+  const savePush = (sub, from) => post('/api/me/push', { subscription: sub.toJSON(), standalone: !!standalone, from, visit });
+  // Installed app opened for the first time = one install (works on iPhone too, which has no install event)
+  if (standalone) { try { if (!localStorage.getItem('pwa-open')) { localStorage.setItem('pwa-open', '1'); ev('pwa_install', { via: 'first_open', ios: isIOS ? 1 : 0 }); } } catch {} }
+  let installEv = null;
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEv = e; $$('.pwa-install').forEach((x) => { x.hidden = false; }); });
+  window.addEventListener('appinstalled', () => { ev('pwa_prompt_ok'); $$('.pwa-install').forEach((x) => { x.hidden = true; }); });
+  document.addEventListener('click', async (e) => {
+    if (!e.target.closest('[data-pwa-install]') || !installEv) return;
+    installEv.prompt(); const r = await installEv.userChoice.catch(() => null); ev('pwa_prompt', { outcome: r?.outcome || '' }); installEv = null;
+  });
+  const showIOSCard = (root) => { const c = $('[data-pwa-ios]', root); if (!c || !c.hidden) return; c.hidden = false; const ns = $('[data-pwa-not-safari]', c); if (ns) ns.hidden = isIOSSafari; ev('pwa_hint', { from: root.id || 'form' }); };
+  // In the installed app, a small bar leads to the account page until notifications are on
+  if (standalone && canPush && !pushUI && Notification.permission === 'default') {
+    try { if (!localStorage.getItem('push-bar-off')) {
+      const BAR = { en: 'Turn on restock notifications', fr: 'Activer les notifications de réassort', de: 'Restock-Benachrichtigungen einschalten', es: 'Activar notificaciones de reposición', it: 'Attiva le notifiche di riassortimento', nl: 'Restock-meldingen aanzetten' };
+      const lang = (document.documentElement.lang || 'en').slice(0, 2);
+      const bar = document.createElement('div'); bar.className = 'geo-bar push-bar';
+      bar.innerHTML = `<a href="/account?c=${document.body.dataset.cc || 'us'}" data-ev="push_bar">🔔 ${BAR[lang] || BAR.en}</a><button type="button" aria-label="Close">×</button>`;
+      bar.querySelector('button').addEventListener('click', () => { bar.remove(); try { localStorage.setItem('push-bar-off', '1'); } catch {} });
+      document.querySelector('main')?.prepend(bar);
+    } } catch {}
   }
 
   /* ---------- wrong country: offer the visitor's own (ChatGPT often links the US page) ---------- */
@@ -128,6 +163,17 @@
       } catch {}
     }
     $('.shops-toggle', f)?.addEventListener('click', () => { const l = $('.shop-list', sp); l.hidden = !l.hidden; });
+    // "Also get a phone notification": on iPhone outside the installed app, show how to add it to the Home Screen instead
+    const po = $('[data-push-opt]', f);
+    let pendingSub = null;
+    if (po && (canPush || isIOS)) {
+      po.hidden = false;
+      const box = $('input[name=push]', po);
+      box.addEventListener('change', () => {
+        $('.push-msg', po).textContent = '';
+        if (box.checked && !canPush && isIOS) { box.checked = false; showIOSCard(po); }
+      });
+    }
     const toPlan = () => { show(2); loadShops(); };
     if (f.dataset.sku) toPlan(); else show(1);
 
@@ -136,6 +182,7 @@
       try {
         const r = await post('/api/funnel/alert', { ...state, plan, visit, via: source, country: f.dataset.country, ...extra });
         if (r.state === 'code') { busy(form, false); form.hidden = true; $('[data-form=code]', f).hidden = false; $('#f-code').focus(); return; }
+        if (pendingSub) { try { await savePush(pendingSub, 'funnel'); } catch {} }
         ga(/[?&]free=1/.test(r.next) ? 'free_alert' : 'checkout_start', () => { location.href = r.next; });
       } catch (x) {
         busy(form, false);
@@ -168,8 +215,11 @@
     $('[data-form=plan]', f).addEventListener('submit', async (e) => {
       e.preventDefault(); err(2);
       const t = e.target;
-      state.push = !!t.push?.checked; state.telegram = !!t.telegram?.checked; state.line = !!t.line?.checked;
-      if (state.push) { try { await enablePush(f.dataset.vapid); } catch (x) { state.push = false; t.push.checked = false; return err(2, x.message); } }
+      state.telegram = !!t.telegram?.checked; state.line = !!t.line?.checked;
+      if (t.push?.checked && !pendingSub) {
+        // never blocks the alert: if the phone says no, the alert still goes out by email
+        try { pendingSub = await askPush(); } catch (x) { t.push.checked = false; }
+      }
       if (sp && !sp.hidden) {
         const all = boxes(); const on = all.filter((x) => x.checked).map((x) => x.value);
         if (!on.length) return err(2, sp.dataset.none);
@@ -222,6 +272,36 @@
     $$('label, button', sv).forEach((x) => { x.hidden = true; }); $('.ok', sv).hidden = false;
   });
 
+  /* ---------- account: notifications on this device ---------- */
+  const pb = $('#push-box');
+  if (pb) {
+    const st = $('.push-state', pb); const acts = $('.push-actions', pb);
+    const btn = (k) => $(`[data-push=${k}]`, pb);
+    const paint = async () => {
+      if (!canPush) {
+        if (isIOS && !standalone) { st.textContent = ''; showIOSCard(pb); } else st.textContent = pb.dataset.tUnsupported;
+        acts.hidden = true; return;
+      }
+      acts.hidden = false;
+      const reg = await swReady; const sub = reg && Notification.permission === 'granted' ? await reg.pushManager.getSubscription() : null;
+      st.textContent = Notification.permission === 'denied' ? pb.dataset.tDenied : sub ? pb.dataset.tOn : pb.dataset.tOff;
+      btn('on').hidden = !!sub; btn('test').hidden = !sub; btn('off').hidden = !sub;
+      if (sub) savePush(sub, 'refresh').catch(() => {}); // keeps the server copy in step (no new opt-in counted)
+    };
+    paint();
+    pb.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-push]'); if (!b) return;
+      const k = b.dataset.push; b.disabled = true;
+      try {
+        if (k === 'on') { const sub = await askPush(); await savePush(sub, 'account'); }
+        else if (k === 'test') { await post('/api/me/test', { ch: 'push', lang: pb.dataset.lang }); b.textContent = pb.dataset.tSent; }
+        else if (k === 'off') { const reg = await swReady; const sub = await reg?.pushManager.getSubscription(); if (sub) { await fetch('/api/me/push', { method: 'DELETE', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ endpoint: sub.endpoint }) }); await sub.unsubscribe(); } }
+        if (k !== 'test') await paint();
+      } catch (x) { st.textContent = x.code === 'denied' ? pb.dataset.tDenied : x.code === 'unsupported' ? pb.dataset.tUnsupported : x.message; }
+      b.disabled = false;
+    });
+  }
+
   /* ---------- account ---------- */
   const acc = $('#account');
   if (acc) {
@@ -234,7 +314,7 @@
         else if (act === 'delete') {
           const d = $('#del-dialog'); d.showModal();
           d.addEventListener('close', async () => { if (d.returnValue === 'ok') { await post(`/api/me/alerts/${id}`, { act: 'delete', reason: $('input[name=reason]:checked', d).value }); location.reload(); } }, { once: true });
-        } else if (act === 'push') { await enablePush(acc.dataset.vapid); location.reload(); }
+        }
         else if (act === 'telegram') { const r = await post('/api/me/telegram'); location.href = r.url; }
         else if (act === 'line') { const r = await post('/api/me/line'); b.closest('.row').querySelector('.meta').textContent = `LINEで友だち追加して、このコードを送ってください: ${r.code}`; window.open(r.url, '_blank', 'noopener'); }
         else if (act === 'test') { await post('/api/me/test', { ch: b.dataset.ch }); b.textContent = 'Sent ✓'; }

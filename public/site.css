@@ -392,3 +392,21 @@ html, body { overflow-x: clip; }
 .fb-fab { position: fixed; right: 16px; bottom: 16px; z-index: 20; background: var(--navy); color: #fff; text-decoration: none; font-weight: 700; padding: 12px 16px; border-radius: 999px; box-shadow: 0 6px 18px rgba(32, 48, 110, .35); }
 .fb-fab:hover { background: #17245a; }
 @media (max-width: 560px) { .fb-fab { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); padding: 10px 14px; font-size: 14px; } .feedback { padding: 18px 16px; } }
+
+/* Installable app + push (2026-11-11): iPhone "Add to Home Screen" card, account block */
+#push-box { margin-top: 1.2rem; padding: 1rem; border: 1px solid var(--rule); border-radius: var(--r); }
+#push-box h2 { margin-top: 0; }
+.push-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.push-opt { margin: .8rem 0; }
+.ios-install { margin-top: .8rem; padding: .9rem 1rem; background: var(--tint); border-radius: 10px; }
+.ios-install p { margin: .2rem 0 .5rem; }
+.ios-pic { display: flex; align-items: center; gap: 10px; margin: .6rem 0; flex-wrap: wrap; }
+.ios-bar { display: flex; gap: 14px; align-items: center; padding: 8px 14px; background: #fff; border: 1px solid var(--rule); border-radius: 12px; color: #2f6fec; font-size: 18px; line-height: 1; }
+.ios-hl { display: inline-flex; padding: 4px; border-radius: 8px; box-shadow: 0 0 0 3px var(--yellow); }
+.ios-arrow { font-size: 20px; color: var(--soft); }
+.ios-sheet { padding: 6px; background: #fff; border: 1px solid var(--rule); border-radius: 12px; }
+.ios-row { display: inline-flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 8px; box-shadow: 0 0 0 3px var(--yellow); font-size: 15px; color: var(--ink); }
+.ios-steps { margin: .4rem 0 0 1.2rem; padding: 0; }
+.ios-steps li { margin: .3rem 0; }
+.ios-steps svg, .ios-row svg { vertical-align: -3px; color: #2f6fec; }
+#push-box [hidden], .push-opt[hidden], .push-opt [hidden], .ios-install[hidden] { display: none !important; }
