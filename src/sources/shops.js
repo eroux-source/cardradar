@@ -49,7 +49,6 @@ export const SHOPS = [
   { id: 'shop_pokedealtcg_es', name: 'PokeDeal TCG', domain: 'www.pokedealtcg.es', country: 'es', lang: 'es' },
   { id: 'shop_jjcollection_es', name: 'JJ Collection', domain: 'www.jjcollection.es', country: 'es', lang: 'es' },
   { id: 'shop_cardcosmos_de', name: 'cardcosmos', domain: 'cardcosmos.de', country: 'de', lang: 'de' },
-  { id: 'shop_stunningcards_de', name: 'Stunning Cards', domain: 'stunning-cards.de', country: 'de', lang: 'de' },
   { id: 'shop_cardcentre_de', name: 'Card Centre', domain: 'card-centre.de', country: 'de', lang: 'de' },
   { id: 'shop_battleofcards_de', name: 'Battle of Cards', domain: 'www.battleofcards.de', country: 'de', lang: 'de' },
   { id: 'shop_pokedirris_de', name: 'PokeDirris', domain: 'pokedirris.de', country: 'de', lang: 'de' },
@@ -73,8 +72,6 @@ export const SHOPS = [
   { id: 'shop_dracaustore_fr', name: 'Dracau Store', domain: 'www.dracaustore.fr', country: 'fr', lang: 'fr' },
   { id: 'shop_pokeca_nl', name: 'Pokeca.NL', domain: 'pokeca.nl', country: 'nl', lang: 'nl' },
   { id: 'shop_cardnation_nl', name: 'CardNation', domain: 'www.cardnation.nl', country: 'nl', lang: 'nl' },
-  { id: 'shop_ripandship_nl', name: 'Rip and Ship', domain: 'www.ripandship.nl', country: 'nl', lang: 'nl' },
-  { id: 'shop_pocketgames_nl', name: 'PocketGames', domain: 'pocketgames.nl', country: 'nl', lang: 'nl' },
   { id: 'shop_vividnerd_nl', name: 'VividNerd', domain: 'vividnerd.nl', country: 'nl', lang: 'nl' },
   { id: 'shop_holograil_nl', name: 'Holograil', domain: 'holograil.nl', country: 'nl', lang: 'nl' },
   { id: 'shop_xytoys_nl', name: 'XY Toys', domain: 'xytoys.nl', country: 'nl', lang: 'nl' },
@@ -202,4 +199,7 @@ export const SHOPS = [
   { id: 'shop_iobimboarcole_it', name: 'Io Bimbo Arcole', domain: 'iobimboarcole.it', country: 'it', lang: 'it' },
   { id: 'shop_kofuku_de', name: 'Kofuku', domain: 'kofuku.de', country: 'de', lang: 'de' },
   { id: 'shop_pushdich_de', name: 'Pushdich TCG', domain: 'www.pushdich-tcg.de', country: 'de', lang: 'de' },
+  // Added 2026-11-11 to replace closed shops (Stunning Cards: domain parked; Rip and Ship: now password-only; PocketGames: Cloudflare bot challenge)
+  { id: 'shop_tcgshoppers_nl', name: 'TCG Shoppers', domain: 'www.tcgshoppers.nl', country: 'nl', lang: 'nl' },
+  { id: 'shop_steelduck_de', name: 'Steelduck', domain: 'www.steelduck.de', country: 'de', lang: 'de' },
 ];
