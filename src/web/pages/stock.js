@@ -7,6 +7,8 @@
 import { freeMode, freeWords } from '../free.js';
 import { dataPath, thirtyPath, words } from './local_data.js';
 import { GUIDES, guidePath } from './where_buy.js';
+import { upcomingPath, UPCOMING_LINK } from './upcoming.js';
+import { COUNTRIES } from '../../data/countries.js';
 import { escapeHtml as e } from '../../lib/util.js';
 import { sourceName, sourcesOf, sourceList } from '../../sources/index.js';
 import * as d from '../data.js';
@@ -146,7 +148,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
  */
 export async function homeList(env, T, cc, { live = null, alternates = null, extraLd = [] } = {}) {
   const H = T.hl; const S = T.sv;
-  const [skus, pop] = await Promise.all([d.allSkus(env, cc), d.popularity(env, cc)]);
+  const [skus, pop, checked] = await Promise.all([d.allSkus(env, cc), d.popularity(env, cc), d.lastCheck(env, cc).catch(() => null)]);
   const shopsN = new Set(sourcesOf(cc).map((s) => s.id)).size;
   // most clicked / viewed first (14 days), then the easiest to find
   const p = (k) => pop.get(k.slug) ?? 0;
@@ -166,7 +168,8 @@ export async function homeList(env, T, cc, { live = null, alternates = null, ext
   const body = `<section class="hl-head">
     <h1>${e(H.h1(T.cc.name))}</h1>
     <p class="lede">${e(inNow.length ? H.lede(inNow.length, shopsN) : H.ledeNone(shopsN))}</p>
-    ${cc === 'jp' ? '' : `<p class="quick-links"><a href="${dataPath(cc)}">${e(words(cc).data)}</a><a href="${thirtyPath(cc)}">${e(words(cc).thirty)}</a><a href="${guidePath(cc, 'delta-reign')}">Delta Reign</a><a href="${guidePath(cc, 'flowing-fists')}">Flowing Fists (ME07)</a></p>`}
+    ${checked ? `<p class="asof"><time datetime="${new Date(checked).toISOString()}">${e(T.asOf(T.f.when(checked)))}</time></p>` : ''}
+    ${cc === 'jp' ? '' : `<p class="quick-links"><a href="${dataPath(cc)}">${e(words(cc).data)}</a><a href="${thirtyPath(cc)}">${e(words(cc).thirty)}</a><a href="${guidePath(cc, 'delta-reign')}">Delta Reign</a><a href="${guidePath(cc, 'flowing-fists')}">Flowing Fists (ME07)</a><a href="${upcomingPath(cc)}">${e(UPCOMING_LINK[COUNTRIES[cc]?.lang] ?? UPCOMING_LINK.en)}</a></p>`}
     <form class="find" action="${base(cc)}/search" method="get" role="search">
       <input name="q" list="sku-list" autocomplete="off" placeholder="${e(S.findPh)}" aria-label="${e(S.findPh)}" data-find>
       <datalist id="sku-list">${skus.map((x) => `<option value="${e(x.name)}" data-href="${base(cc)}/${e(x.slug)}"></option>`).join('')}</datalist>

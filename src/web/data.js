@@ -53,6 +53,8 @@ export const skuInCountry = (env, skuId, cc) => one(env, 'SELECT 1 AS ok FROM li
 /** Countries where a product has a live page (active listings), for hreflang: one map for all products, shared for 10 min. */
 const skuCountryMap = (env) => memo('skucc', 600e3, async () => new Map((await all(env, 'SELECT sku_id, GROUP_CONCAT(DISTINCT country) AS ccs FROM listings WHERE active = 1 GROUP BY sku_id')).map((r) => [r.sku_id, String(r.ccs ?? '').split(',').filter((c) => COUNTRIES[c])])));
 export const skuCountries = async (env, skuId) => (await skuCountryMap(env)).get(skuId) ?? [];
+/** Time of the latest stock reading in a country (shown on the country home). Shared for a minute. */
+export const lastCheck = (env, cc) => memo(`lastcheck:${cc}`, 60e3, async () => (await one(env, 'SELECT MAX(x.seen_at) AS t FROM stock x JOIN stores s ON s.id = x.store_id WHERE s.country = ?', cc))?.t ?? null);
 export const storeBySlug = (env, slug) => one(env, 'SELECT * FROM stores WHERE slug = ?', slug);
 export const listingsOf = (env, skuId, cc) => all(env, 'SELECT * FROM listings WHERE sku_id = ? AND country = ? AND active = 1 ORDER BY source', skuId, cc);
 

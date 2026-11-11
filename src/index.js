@@ -1,5 +1,6 @@
 // Worker entry: HTTP routes, the minute cron, and the four queue consumers.
 import { hasStoreData } from './web/data.js';
+import { upcomingPage, UPCOMING_SLUG } from './web/pages/upcoming.js';
 import { GUIDES, guideIdForSlug, guideOldSlug, guidePage, guideOverview, guidePath } from './web/pages/where_buy.js';
 import { now, run, one } from './lib/db.js';
 import { conversion, convLine } from './lib/conversion.js';
@@ -208,6 +209,7 @@ async function route(req, env, ctx) {
       return (await countryData(env, cc)) ?? notFound(env, cc);
     }
     if (seg.length === 2 && seg[1] === (THIRTY_SLUG[lang] ?? THIRTY_SLUG.en)) return (await thirtyPage(env, cc)) ?? notFound(env, cc);
+    if (seg.length === 2 && seg[1] === (UPCOMING_SLUG[lang] ?? UPCOMING_SLUG.en)) return (await upcomingPage(env, cc)) ?? notFound(env, cc);
     const gid = seg.length === 2 ? guideIdForSlug(lang, seg[1]) : null;
     if (gid) return (await guidePage(env, cc, gid)) ?? notFound(env, cc);
     const oid = seg.length === 2 ? guideOldSlug(lang, seg[1]) : null;

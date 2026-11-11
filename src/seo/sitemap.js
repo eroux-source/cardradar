@@ -11,6 +11,7 @@ import { KNOWN_SETS } from '../data/sets.js';
 import { JP_SHOPS } from '../web/pages/lottery.js';
 import { COMPETITORS } from '../web/pages/compare.js';
 import { dataPath, thirtyPath } from '../web/pages/local_data.js';
+import { upcomingPath } from '../web/pages/upcoming.js';
 
 const xml = (body) => new Response(body, { headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=900' } });
 const txt = (body) => new Response(body, { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=3600' } });
@@ -25,7 +26,7 @@ export async function sitemap(env) {
     if (cc === 'jp') continue;
     const P = `/${cc}`; const home = cc === 'us' ? '/' : P;
     if (cc !== 'us') urls.push(dataPath(cc));
-    urls.push(thirtyPath(cc), ...Object.keys(GUIDES).map((id) => guidePath(cc, id)));
+    urls.push(thirtyPath(cc), upcomingPath(cc), ...Object.keys(GUIDES).map((id) => guidePath(cc, id)));
     const [skus, stores, skuR, storeR, cityR, srcR] = await Promise.all([
       all(env, 'SELECT DISTINCT k.slug FROM skus k JOIN listings l ON l.sku_id = k.id AND l.country = ? AND l.active = 1 WHERE k.active = 1', cc),
       all(env, 'SELECT slug FROM stores WHERE online = 0 AND country = ?', cc),
@@ -113,6 +114,7 @@ ${lines.join('\n')}
 - Where to buy the Pokémon 30th Celebration Elite Trainer Box (Top-Trainer-Box 30 Jahre, Coffret Dresseur d'Élite 30 ans…): today's shops, prices and editions, per country: ${env.BASE_URL}/${GUIDES['30th-etb'].slug.en} , ${[...live].filter((c) => c !== 'jp' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${guidePath(c, '30th-etb')}`).join(' , ')}
 - Mega Evolution—Delta Reign (ME06; German Delta-Herrschaft, French Règne Delta, Italian/Spanish Dominio Delta; English release November 6, 2026; headline card Mega Rayquaza ex): where to buy booster boxes, ETBs and bundles, per country: ${env.BASE_URL}/${GUIDES['delta-reign'].slug.en} , ${[...live].filter((c) => c !== 'jp' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${guidePath(c, 'delta-reign')}`).join(' , ')}
 - Mega Evolution—Flowing Fists (ME07; English version of the Japanese Hadou Seeker / Aura Seeker, out in Japan November 27, 2026; English release reported for February 5, 2027, not yet confirmed by The Pokémon Company; local names not announced yet): where to buy, pre-orders and Japanese editions, per country: ${env.BASE_URL}/${GUIDES['flowing-fists'].slug.en} , ${[...live].filter((c) => c !== 'jp' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${guidePath(c, 'flowing-fists')}`).join(' , ')}
+- Upcoming Pokémon TCG releases, dated and sourced (official vs reported), with live stock for what just came out, per country: ${[...live].filter((c) => c !== 'jp' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${upcomingPath(c)}`).join(' , ')}
 - Pokémon 30th Celebration: where each product is in stock, per country: ${[...live].filter((c) => c !== 'jp' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${thirtyPath(c)}`).join(' , ')}
 - Press data: ${env.BASE_URL}/press
 - How the data is collected: ${env.BASE_URL}/how-it-works
