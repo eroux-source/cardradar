@@ -244,7 +244,10 @@ export async function tipCheckout(env, req) {
     if (!ch?.purchase_url) throw new Error('no purchase_url');
     return json({ url: ch.purchase_url });
   } catch (err) {
-    console.log('tip checkout failed', String(err?.message ?? err));
+    const msg = String(err?.message ?? err);
+    console.log('tip checkout failed', msg);
+    // which step failed and Whop's own error text (no key, no buyer data), shown in /api/health → tip_last_error
+    await env.DB.prepare("INSERT INTO settings (key, value, updated_at) VALUES ('tip.last_error', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at").bind(msg.slice(0, 300), Date.now()).run().catch(() => {});
     return json({ error: 'checkout' }, 502);
   }
 }

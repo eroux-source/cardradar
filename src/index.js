@@ -106,6 +106,7 @@ async function route(req, env, ctx) {
       feedback_ask: (await env.DB.prepare("SELECT value FROM settings WHERE key = 'feedbackask.2026-11-11'").first().catch(() => null))?.value ?? null,
       merge: (await env.DB.prepare("SELECT value, updated_at FROM settings WHERE key = 'merge.last'").first().catch(() => null)) ?? null,
       redirects: (await env.DB.prepare('SELECT COUNT(*) n FROM sku_redirects').first().catch(() => null))?.n ?? null,
+      tip_last_error: (await env.DB.prepare("SELECT value, updated_at FROM settings WHERE key = 'tip.last_error'").first().catch(() => null)) ?? null,
       feedback_30d: await (await import('./web/feedback.js')).feedbackCounts(env, 30).catch(() => null),
       email: { postmark: !!env.POSTMARK_TOKEN, resend: !!env.RESEND_API_KEY, google_signin: !!env.GOOGLE_CLIENT_ID, outbox: (await env.DB.prepare("SELECT kind, COUNT(*) AS n, SUM(sent_at IS NOT NULL) AS sent, SUM(attempts >= 5) AS failed, MAX(last_error) AS err FROM email_outbox WHERE id > (SELECT COALESCE(MAX(id), 0) - 200 FROM email_outbox) GROUP BY kind").all()).results },
       users: (await env.DB.prepare("SELECT (SELECT COUNT(*) FROM users) AS users, (SELECT COUNT(*) FROM alerts WHERE status = 'active') AS alerts, (SELECT COUNT(*) FROM alerts WHERE status = 'active' AND free = 1) AS free_alerts, (SELECT COUNT(*) FROM passes WHERE status IN ('active','refunded_kept') AND ends_at > ?) AS paid").bind(now()).first().catch(() => null)),
