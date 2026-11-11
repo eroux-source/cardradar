@@ -88,6 +88,7 @@ async function route(req, env, ctx) {
       relaunch: (await env.DB.prepare("SELECT value FROM settings WHERE key = 'relaunch.2026-11-03'").first())?.value ?? null,
       merge: (await env.DB.prepare("SELECT value, updated_at FROM settings WHERE key = 'merge.last'").first().catch(() => null)) ?? null,
       redirects: (await env.DB.prepare('SELECT COUNT(*) n FROM sku_redirects').first().catch(() => null))?.n ?? null,
+      feedback_30d: await (await import('./web/feedback.js')).feedbackCounts(env, 30).catch(() => null),
       email: { postmark: !!env.POSTMARK_TOKEN, resend: !!env.RESEND_API_KEY, google_signin: !!env.GOOGLE_CLIENT_ID, outbox: (await env.DB.prepare("SELECT kind, COUNT(*) AS n, SUM(sent_at IS NOT NULL) AS sent, SUM(attempts >= 5) AS failed, MAX(last_error) AS err FROM email_outbox WHERE id > (SELECT COALESCE(MAX(id), 0) - 200 FROM email_outbox) GROUP BY kind").all()).results },
       users: (await env.DB.prepare("SELECT (SELECT COUNT(*) FROM users) AS users, (SELECT COUNT(*) FROM alerts WHERE status = 'active') AS alerts, (SELECT COUNT(*) FROM alerts WHERE status = 'active' AND free = 1) AS free_alerts, (SELECT COUNT(*) FROM passes WHERE status IN ('active','refunded_kept') AND ends_at > ?) AS paid").bind(now()).first().catch(() => null)),
       last_500: (await env.DB.prepare("SELECT value, updated_at FROM settings WHERE key = 'last_500'").first()) ?? null, ai_landings_7d: (await env.DB.prepare("SELECT source, path, COUNT(DISTINCT visit) AS n FROM events WHERE name = 'view' AND bot = 0 AND at > ? AND (source LIKE '%chatgpt%' OR source LIKE '%openai%' OR source LIKE '%perplexity%' OR source LIKE '%claude%' OR source LIKE '%gemini%' OR source LIKE '%copilot%') GROUP BY source, path ORDER BY n DESC LIMIT 15").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.source} ${r.path} ${r.n}`), proxy_mb: await (async () => { const r = (await env.DB.prepare("SELECT key, value FROM settings WHERE key LIKE 'proxy.bytes.%' ORDER BY key DESC LIMIT 7").all()).results; return Object.fromEntries(r.map((x) => [x.key.slice(12), Math.round(Number(x.value) / 1e5) / 10])); })(), audience: { last_24h: aud, all_time: audAll, sources_24h: srcs, bot_hits_24h: bots?.n ?? 0 }, billing: { api_key_set: !!env.WHOP_API_KEY, webhook_secret_set: !!env.WHOP_WEBHOOK_SECRET, plans: [env.WHOP_PLAN_SOLO, env.WHOP_PLAN_MULTI], last_webhook: bw ? { ...JSON.parse(bw.value), at: bw.updated_at } : null }, last_read: last?.t ?? null, age_s: last?.t ? Math.round((now() - last.t) / 1000) : null, counts: c,
@@ -124,6 +125,7 @@ async function route(req, env, ctx) {
   if (p.startsWith('/owner')) {
     if (!ownerAllowed(env, req, url) && !(await ownerSignedIn(env, req))) return new Response('Accès réservé. Connecte-toi sur le site avec ton e-mail propriétaire.', { status: 403 });
     if (p === '/owner/users') return ownerUsers(env);
+    if (p === '/owner/feedback') return (await import('./web/feedback.js')).ownerFeedback(env);
     if (p === '/owner/clicks') return ownerClicks(env, Number(url.searchParams.get('days')) || 30);
     if (p === '/owner/monitor') return monitor(env, url);
     if (p === '/owner/marketing') return marketing(env, url);

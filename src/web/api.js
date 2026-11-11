@@ -68,6 +68,12 @@ export async function api(env, req, url, ctx) {
     return json({ shops: shops.map((x) => ({ id: x.id, name: sourceName(x.source), in: x.inStock ? 1 : 0 })).sort((a, b) => b.in - a.in || a.name.localeCompare(b.name)) });
   }
 
+  if (p === '/api/feedback' && m === 'POST') {
+    const { saveFeedback } = await import('./feedback.js');
+    const r = await saveFeedback(env, await body(req), clientIp(req));
+    return r.ok ? json({ ok: true }) : bad(r.error, r.error === 'empty' ? 400 : 429);
+  }
+
   if (p === '/api/auth/code' && m === 'POST') {
     const r = await requestCode(env, (await body(req)).email, clientIp(req));
     return r.ok ? json({ ok: true }) : bad(r.error, 429);

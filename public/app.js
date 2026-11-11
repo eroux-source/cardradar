@@ -179,7 +179,24 @@
     });
   }
 
-  /* ---------- sign-in ---------- */
+  /* ---------- feedback (country, next game, comment) ---------- */
+  const fb = $('#feedback');
+  if (fb) {
+    const form = $('[data-form=feedback]', fb);
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault(); $('.err', fb).textContent = '';
+      const d = Object.fromEntries(new FormData(form));
+      if (!d.country && !d.game && !String(d.text || '').trim()) { $('.err', fb).textContent = fb.dataset.empty; return; }
+      busy(form, true);
+      try {
+        await post('/api/feedback', { ...d, cc: document.body.dataset.cc, page: location.pathname, visit });
+        ev('feedback_sent', { game: d.game || '', country: d.country || '' });
+        form.outerHTML = `<p class="ok fb-thanks" role="status">${fb.dataset.thanks}</p>`;
+      } catch (x) { $('.err', fb).textContent = x.message; busy(form, false); }
+    });
+  }
+
+
   const si = $('#signin');
   if (si) {
     let email = '';

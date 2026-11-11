@@ -2,6 +2,7 @@
 // Design: simple and literal — real product photos from the retailers, a clear
 // "in stock / sold out" status, the price. No metaphors.
 import { SUPPORT_NAV, SUPPORT_BAND, supportHref } from './pages/support.js';
+import { feedbackBlock, feedbackFab } from './feedback.js';
 import { freeMode, freeWords } from './free.js';
 import { escapeHtml as e } from '../lib/util.js';
 import { COUNTRIES, countryList } from '../data/countries.js';
@@ -65,7 +66,9 @@ ${jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).repl
     <a class="cta" href="/alerts?c=${cc}"${cur('alerts')}><span class="long">${e(T.nav.alerts)}</span><span class="short">${e(T.nav.alertsShort)}</span></a>
   </nav></div></header>
 <main class="wrap">${body}${cc === 'jp' || /\/(support|alerts|account|signin|owner)\b/.test(path ?? '') ? '' : (() => { const S = SUPPORT_BAND[T.cc.lang] ?? SUPPORT_BAND.en; return `
-<aside class="support-band" aria-label="${e(S.h)}"><div><strong>${e(S.t)}</strong> <span>${e(S.s)}</span></div><a class="btn tip-btn" href="${supportHref(cc)}" data-ev="tip_open" data-from="band">${e(S.b)}</a></aside>`; })()}</main>
+${feedbackBlock(T)}
+<aside class="support-band" aria-label="${e(S.h)}"><div><strong>${e(S.t)}</strong> <span>${e(S.s)}</span></div><a class="btn tip-btn" href="${supportHref(cc)}" data-ev="tip_open" data-from="band">${e(S.b)}</a></aside>
+${feedbackFab(T)}`; })()}</main>
 <footer class="site-foot"><div class="wrap">
   <nav aria-label="Footer"><a href="${home(cc)}">${e(T.nav.live)}</a>${cc === 'jp' ? '' : `<a href="${b}/restocks">${e(T.nav.restocks)}</a><a href="${b}/retailers">${e(T.nav.retailers)}</a>`}<a href="${cc === 'us' ? '' : `/${cc}`}/support" class="support-link">${e(SUPPORT_NAV[T.cc.lang] ?? SUPPORT_NAV.en)}</a><a href="/pricing?c=${cc}">${e(T.nav.pricing)}</a><a href="/account?c=${cc}">${e(T.nav.account)}</a><a href="${cc === 'jp' ? '/pokemon-restock-data' : dataPath(cc)}">${e(cc === 'jp' ? 'Restock data' : words(cc).data)}</a>${cc === 'jp' ? '' : `<a href="${thirtyPath(cc)}">${e(words(cc).thirty)}</a>`}<a href="/press">${e(T.nav.press)}</a><a href="/best-pokemon-restock-trackers">Compare trackers</a><a href="/how-it-works">How it works</a><a href="/terms">${e(T.nav.terms)}</a><a href="/privacy">${e(T.nav.privacy)}</a><a href="mailto:${e(env.SUPPORT_EMAIL)}">${e(T.nav.contact)}</a></nav>
   <nav class="countries" aria-label="${e(T.nav.countries)}"><span>${e(T.countryPicker)}:</span> ${countries}</nav>

@@ -47,6 +47,7 @@ Owner: Eugène, eroux@kosmocgi.com. He writes in French. Reply in short, non-tec
   - Telegram and phone notifications were removed.
   - After subscribing, people are asked which other channels they want; the answers are counted in `wanted_channels`.
 - Support page (2026-11-07): `/support` and `/<cc>/support` (`src/web/pages/support.js`, fan tone, 6 languages), linked in every footer and after an alert is set. One-time Whop tips 1/2/5 in EUR (Europe, UK) or USD (elsewhere), product Support Card Restock Tracker (`TIP_PLANS`). The webhook records tips (event `tip_paid`) and never grants a pass; clicks are the event `tip`.
+- Visitor feedback (2026-11-11): block at the bottom of every public page plus a floating 💬 button (`src/web/feedback.js`, 6 languages): missing country, next card game to track, free comment, optional email. Saved in D1 `feedback` (max 5 per network per hour). Counts in `/api/health` → `feedback_30d` (never texts or emails); every answer on `/owner/feedback`.
 - Affiliate-ready links live in `src/web/affiliate.js`.
   - Worker variables: `AFF_AMAZON_<CC>`, `AFF_EBAY_CAMPID`, `AFF_TCGPLAYER`, `AFF_CARDMARKET`.
   - The footer disclosure appears automatically once any `AFF_` value is set.
