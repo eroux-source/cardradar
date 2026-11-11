@@ -86,6 +86,7 @@ async function route(req, env, ctx) {
       compare_all: (await env.DB.prepare("SELECT json_extract(props, '$.shop') AS shop, COUNT(*) AS n, COUNT(DISTINCT visit) AS v, MIN(at) AS first FROM events WHERE name = 'buy_out' AND bot = 0 GROUP BY shop ORDER BY n DESC").all()).results.map((r) => `${r.shop} ${r.n} clics (${r.v} visiteurs) depuis ${new Date(r.first).toISOString().slice(0, 10)}`),
       clicks_7d: (await env.DB.prepare("SELECT name, json_extract(props, '$.shop') AS shop, COUNT(*) AS n FROM events WHERE name IN ('buy', 'buy_out') AND bot = 0 AND at > ? GROUP BY name, shop ORDER BY n DESC LIMIT 20").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.name} ${r.shop} ${r.n}`),
       relaunch: (await env.DB.prepare("SELECT value FROM settings WHERE key = 'relaunch.2026-11-03'").first())?.value ?? null,
+      feedback_ask: (await env.DB.prepare("SELECT value FROM settings WHERE key = 'feedbackask.2026-11-11'").first().catch(() => null))?.value ?? null,
       merge: (await env.DB.prepare("SELECT value, updated_at FROM settings WHERE key = 'merge.last'").first().catch(() => null)) ?? null,
       redirects: (await env.DB.prepare('SELECT COUNT(*) n FROM sku_redirects').first().catch(() => null))?.n ?? null,
       feedback_30d: await (await import('./web/feedback.js')).feedbackCounts(env, 30).catch(() => null),

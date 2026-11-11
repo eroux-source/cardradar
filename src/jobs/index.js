@@ -34,6 +34,32 @@ async function relaunchOnce(env) {
   return n;
 }
 
+/** One-off feedback ask (text approved by Eugène 2026-11-11): every account, once. French for France, English otherwise. */
+async function feedbackAskOnce(env) {
+  const key = 'feedbackask.2026-11-11';
+  if (await one(env, 'SELECT 1 FROM settings WHERE key = ?', key) || !env.RESEND_API_KEY) return 'skip';
+  await run(env, "INSERT INTO settings (key, value, updated_at) VALUES (?, 'sending', ?)", key, now());
+  const owners = String(env.OWNER_EMAILS ?? '').toLowerCase().split(',').map((x) => x.trim());
+  const rows = await all(env, 'SELECT email, country FROM users');
+  let n = 0;
+  for (const r of rows) {
+    const email = String(r.email ?? '').toLowerCase();
+    if (!email.includes('@') || owners.includes(email) || /@example\.(test|com)$/.test(email)) continue;
+    const cc = r.country && r.country !== 'jp' ? r.country : 'us';
+    const link = `${env.BASE_URL}${cc === 'us' ? '/' : `/${cc}`}#feedback`;
+    const fr = cc === 'fr';
+    const subject = fr ? 'Une petite question de Card Restock Tracker (30 secondes)' : 'Quick question from Card Restock Tracker (30 seconds)';
+    const text = fr
+      ? `Salut,\n\nTu t'es inscrit sur Card Restock Tracker, alors d'abord : merci !\n\nJe suis un fan du JCC Pokémon qui construit ce site tout seul, et j'aimerais ton avis pour choisir la suite :\n- Ton pays n'est pas encore là ?\n- Quel jeu de cartes on suit ensuite : One Piece, Lorcana, Magic, Yu-Gi-Oh!… ?\n- Un truc qui t'agace, ou que tu aimerais voir ?\n\nÇa prend 30 secondes : ${link}\n\nOu réponds simplement à cet e-mail, je lis tout.\n\nMerci, et bonne chance pour ton prochain réassort !\nEugène, Card Restock Tracker\n\nTu ne veux plus de ces e-mails ? Réponds « stop » et on ne t'écrira plus.`
+      : `Hi,\n\nYou signed up on Card Restock Tracker, so first: thank you!\n\nI'm a Pokémon TCG fan building this on my own, and I'd love your help choosing what comes next:\n- Is your country missing?\n- Which card game should we track next: One Piece, Lorcana, Magic, Yu-Gi-Oh!…?\n- Anything that bugs you, or that you'd like to see?\n\nIt takes 30 seconds: ${link}\n\nOr just hit reply, I read everything.\n\nThanks, and good luck with your next restock!\nEugène, Card Restock Tracker\n\nDon't want these emails? Reply "stop" and we won't write again.`;
+    // not sent inline: the minute cron sends them, paced, 50 a minute
+    await queueEmail(env, { to: email, kind: 'feedback_ask', subject, text, notBefore: now() + 60e3 });
+    n++;
+  }
+  await run(env, 'UPDATE settings SET value = ?, updated_at = ? WHERE key = ?', `queued ${n}`, now(), key);
+  return n;
+}
+
 // One-off: a real alert email to the owner's account, built exactly like a live restock alert.
 async function testAlertOnce(env) {
   const key = 'testalert.2026-11-03b';
@@ -74,6 +100,7 @@ export async function everyMinute(env) {
   out.plan = await planMinute(env).catch((e) => ({ error: e.message }));
   out.test = await testAlertOnce(env).catch((e) => ({ error: e.message }));
   out.relaunch = await relaunchOnce(env).catch((e) => ({ error: e.message }));
+  out.feedbackAsk = await feedbackAskOnce(env).catch((e) => ({ error: e.message }));
   out.emails = await flushOutbox(env).catch((e) => ({ error: e.message }));
   out.lotteries = await announce(env).then(() => 'ok').catch((e) => ({ error: e.message })); // Japan: opening / closing-soon notices
   // heartbeat + visible errors for the owner page
