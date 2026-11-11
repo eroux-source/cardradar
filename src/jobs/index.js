@@ -6,6 +6,7 @@ import { flushOutbox, queueEmail } from '../email/outbox.js';
 import { heal } from '../alerts/pipeline.js';
 import { announce } from '../crawler/lotteries.js';
 import { alertText } from '../alerts/deliver.js';
+import { pushToUser } from '../alerts/channels/push.js';
 import { sourceName } from '../sources/index.js';
 
 import { dataPath, thirtyPath } from '../web/pages/local_data.js';
@@ -95,12 +96,37 @@ export async function indexNowAll(env, only = null) {
   return urls.length;
 }
 
+/**
+ * Owner test (2026-11-11): when the setting push.demo is 'pending', send ONE restock
+ * alert, built from the latest real restock exactly like a live alert, to the
+ * devices of the OWNER accounts only (OWNER_EMAILS). Nobody else gets it.
+ */
+async function pushDemoOnce(env) {
+  const s = await one(env, "SELECT value FROM settings WHERE key = 'push.demo'");
+  if (s?.value !== 'pending') return 'idle';
+  await run(env, "UPDATE settings SET value = 'running', updated_at = ? WHERE key = 'push.demo'", now());
+  const owners = String(env.OWNER_EMAILS ?? '').toLowerCase().split(',').map((x) => x.trim()).filter(Boolean);
+  const r = await one(env, `SELECT r.*, k.name AS sku_name, k.slug AS sku_slug, l.url, st.name AS store_name, st.city, st.online, st.country
+    FROM restocks r JOIN skus k ON k.id = r.sku_id JOIN listings l ON l.id = r.listing_id JOIN stores st ON st.id = r.store_id
+    WHERE st.online = 1 AND l.url IS NOT NULL ORDER BY (st.country = 'fr') DESC, r.started_at DESC LIMIT 1`);
+  let devices = 0;
+  for (const email of owners) {
+    const u = await one(env, 'SELECT id FROM users WHERE lower(email) = ?', email);
+    if (!u) continue;
+    const msg = r ? alertText(env, r) : { title: 'In stock: demo', line: 'Demo restock alert.', page: env.BASE_URL };
+    devices += await pushToUser(env, u.id, { title: msg.title, body: msg.line, url: msg.url || msg.page, tag: 'demo' }, 'demo');
+  }
+  await run(env, "UPDATE settings SET value = ?, updated_at = ? WHERE key = 'push.demo'", `done:${devices}`, now());
+  return { devices };
+}
+
 export async function everyMinute(env) {
   const out = {};
   out.plan = await planMinute(env).catch((e) => ({ error: e.message }));
   out.test = await testAlertOnce(env).catch((e) => ({ error: e.message }));
   out.relaunch = await relaunchOnce(env).catch((e) => ({ error: e.message }));
   out.feedbackAsk = await feedbackAskOnce(env).catch((e) => ({ error: e.message }));
+  out.pushDemo = await pushDemoOnce(env).catch((e) => ({ error: e.message }));
   out.emails = await flushOutbox(env).catch((e) => ({ error: e.message }));
   out.lotteries = await announce(env).then(() => 'ok').catch((e) => ({ error: e.message })); // Japan: opening / closing-soon notices
   // heartbeat + visible errors for the owner page
