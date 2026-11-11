@@ -410,3 +410,22 @@ html, body { overflow-x: clip; }
 .ios-steps li { margin: .3rem 0; }
 .ios-steps svg, .ios-row svg { vertical-align: -3px; color: #2f6fec; }
 #push-box [hidden], .push-opt[hidden], .push-opt [hidden], .ios-install[hidden] { display: none !important; }
+
+/* Safari fixes (2026-11-11): Safari does not resolve % heights inside an aspect-ratio box,
+   so product photos showed at full size. Pin the photo inside its square instead. */
+.ph, .hero2-photo, .hero-photo { position: relative; overflow: hidden; }
+.ph img, .hero2-photo img, .hero-photo img { position: absolute; inset: 0; width: 100%; height: 100%; max-height: none; padding: inherit; box-sizing: border-box; object-fit: contain; }
+/* product grid: two equal columns that never grow wider than the screen */
+.products > li { min-width: 0; }
+.pname { overflow-wrap: anywhere; }
+@media (max-width: 480px) { .products { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* header on phones: even spacing between buttons, brand name wraps before the nav is pushed off screen */
+.site-nav { flex: none; }
+.brand { min-width: 0; }
+@media (max-width: 420px) {
+  .site-nav { gap: 6px; }
+  .site-nav a { padding: 8px 6px; }
+  .site-nav a.tip, .site-nav a.cta { padding: 8px 10px; }
+  .brand { gap: 8px; }
+  .brand-word { white-space: normal; font-size: 16px; line-height: 1; }
+}
