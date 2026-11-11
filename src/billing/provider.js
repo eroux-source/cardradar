@@ -93,7 +93,7 @@ export async function billingWebhook(env, request) {
     'whop', `${type}:${ref}`, user.id, amount, pick(data, ['currency']) ?? 'usd', type, now(), raw.slice(0, 4000));
 
   // one-time tips (support page): recorded above as a payment, no alert pass
-  if (isTipPlan(planId)) {
+  if (isTipPlan(planId) || pick(data, ['metadata.kind', 'checkout_configuration.metadata.kind', 'membership.metadata.kind']) === 'tip') {
     if (/payment\.succeeded/.test(type)) await run(env, 'INSERT INTO events (at, visit, name, props) VALUES (?, ?, ?, ?)', now(), null, 'tip_paid', JSON.stringify({ amount, currency: pick(data, ['currency']) ?? null }));
     return new Response('ok');
   }

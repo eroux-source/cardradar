@@ -128,6 +128,7 @@ async function route(req, env, ctx) {
   }
   if (p === '/dev/merge' && env.DEV_TOOLS === '1') return json(await (await import('./crawler/merge.js')).mergeSkus(env));
   if (p === '/dev/daily' && env.DEV_TOOLS === '1') return json({ users: await (await import('./jobs/index.js')).dailyFree(env) });
+  if (p === '/api/tip' && m === 'POST') return (await limited(env, req)) ? tooMany() : (await import('./web/pages/support.js')).tipCheckout(env, req);
   if (p === '/api/stock' && await limited(env, req)) return tooMany();
   if (p.startsWith('/api/')) return api(env, req, url, ctx);
   if (p === '/auth/google') return googleStart(env, url.searchParams.get('next') ?? '/account');
@@ -178,7 +179,7 @@ async function route(req, env, ctx) {
   // US lives at the root (/, /us/...); other countries at /{cc}, /{cc}/...
   if (p === '/') return pub.home(env, 'us');
   if (p === '/us') return Response.redirect(`${env.BASE_URL}/`, 301);
-  if (p === '/support') return (await import('./web/pages/support.js')).supportPage(env, COUNTRIES[url.searchParams.get('c')] ? url.searchParams.get('c') : 'us');
+  if (p === '/support') return (await import('./web/pages/support.js')).supportPage(env, COUNTRIES[url.searchParams.get('c')] ? url.searchParams.get('c') : 'us', url);
   if (p === '/pricing') return pub.pricing(env, COUNTRIES[url.searchParams.get('c')] ? url.searchParams.get('c') : 'us');
   if (p === '/press') return pub.press(env);
   if (p === '/best-pokemon-restock-trackers') return bestTrackers(env);
@@ -198,7 +199,7 @@ async function route(req, env, ctx) {
   if (COUNTRIES[cc]) {
     if (seg.length === 1) return pub.home(env, cc);
     if (seg[1] === 'pricing' && seg.length === 2) return pub.pricing(env, cc);
-    if (seg[1] === 'support' && seg.length === 2) return (await import('./web/pages/support.js')).supportPage(env, cc);
+    if (seg[1] === 'support' && seg.length === 2) return (await import('./web/pages/support.js')).supportPage(env, cc, url);
     if (seg[1] === 'search' && seg.length === 2) return pub.search(env, cc, url.searchParams.get('q') ?? '');
     const lang = COUNTRIES[cc].lang;
     if (seg.length === 2 && seg[1] === (DATA_SLUG[lang] ?? DATA_SLUG.en)) {

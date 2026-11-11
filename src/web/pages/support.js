@@ -82,19 +82,169 @@ const COPY = {
   },
 };
 
-export async function supportPage(env, cc) {
+const UI = {
+ "en": {
+  "pick": "Pick an amount",
+  "other": "Other amount",
+  "give": "Give",
+  "ph": "Amount",
+  "err": "The payment page could not open. Please pick 1, 2 or 5, or try again.",
+  "min": "Enter an amount between {min} and {max}.",
+  "thanks": "Thank you so much! ♥ Your support keeps the site free for every collector.",
+  "why": [
+   "Free alerts for everyone",
+   "No ads, ever",
+   "Shops checked around the clock"
+  ],
+  "wait": "Opening…"
+ },
+ "fr": {
+  "pick": "Choisis un montant",
+  "other": "Autre montant",
+  "give": "Donner",
+  "ph": "Montant",
+  "err": "La page de paiement n'a pas pu s'ouvrir. Choisis 1, 2 ou 5, ou réessaie.",
+  "min": "Indique un montant entre {min} et {max}.",
+  "thanks": "Merci beaucoup ! ♥ Ton soutien garde le site gratuit pour tous les collectionneurs.",
+  "why": [
+   "Alertes gratuites pour tous",
+   "Zéro pub",
+   "Boutiques vérifiées jour et nuit"
+  ],
+  "wait": "Ouverture…"
+ },
+ "de": {
+  "pick": "Wähle einen Betrag",
+  "other": "Anderer Betrag",
+  "give": "Spenden",
+  "ph": "Betrag",
+  "err": "Die Zahlungsseite konnte nicht geöffnet werden. Wähle 1, 2 oder 5 oder versuche es erneut.",
+  "min": "Gib einen Betrag zwischen {min} und {max} ein.",
+  "thanks": "Vielen Dank! ♥ Deine Unterstützung hält die Seite für alle Sammler kostenlos.",
+  "why": [
+   "Kostenlose Alerts für alle",
+   "Keine Werbung",
+   "Shops rund um die Uhr geprüft"
+  ],
+  "wait": "Wird geöffnet…"
+ },
+ "nl": {
+  "pick": "Kies een bedrag",
+  "other": "Ander bedrag",
+  "give": "Doneren",
+  "ph": "Bedrag",
+  "err": "De betaalpagina kon niet openen. Kies 1, 2 of 5, of probeer het opnieuw.",
+  "min": "Vul een bedrag in tussen {min} en {max}.",
+  "thanks": "Heel erg bedankt! ♥ Jouw steun houdt de site gratis voor alle verzamelaars.",
+  "why": [
+   "Gratis alerts voor iedereen",
+   "Geen advertenties",
+   "Winkels dag en nacht gecontroleerd"
+  ],
+  "wait": "Openen…"
+ },
+ "it": {
+  "pick": "Scegli un importo",
+  "other": "Altro importo",
+  "give": "Dona",
+  "ph": "Importo",
+  "err": "Non è stato possibile aprire la pagina di pagamento. Scegli 1, 2 o 5, oppure riprova.",
+  "min": "Inserisci un importo tra {min} e {max}.",
+  "thanks": "Grazie mille! ♥ Il tuo sostegno mantiene il sito gratuito per tutti i collezionisti.",
+  "why": [
+   "Avvisi gratuiti per tutti",
+   "Zero pubblicità",
+   "Negozi controllati giorno e notte"
+  ],
+  "wait": "Apertura…"
+ },
+ "es": {
+  "pick": "Elige un importe",
+  "other": "Otro importe",
+  "give": "Donar",
+  "ph": "Importe",
+  "err": "No se pudo abrir la página de pago. Elige 1, 2 o 5, o inténtalo de nuevo.",
+  "min": "Indica un importe entre {min} y {max}.",
+  "thanks": "¡Muchas gracias! ♥ Tu apoyo mantiene la web gratis para todos los coleccionistas.",
+  "why": [
+   "Alertas gratis para todos",
+   "Sin anuncios",
+   "Tiendas revisadas día y noche"
+  ],
+  "wait": "Abriendo…"
+ }
+};
+
+// Free amount ("Other"): limits in the page currency
+const MIN = 1; const MAX = 200;
+
+export async function supportPage(env, cc, url) {
   const T = t(cc);
   const C = COPY[T.cc.lang] ?? COPY.en;
   const cur = EURO.has(cc) ? 'eur' : 'usd';
   const fmt = (n) => new Intl.NumberFormat(T.cc.locale, { style: 'currency', currency: cur.toUpperCase(), maximumFractionDigits: 0 }).format(n);
   const para = (s) => e(s).replace('{1}', `<strong>${fmt(1)}</strong>`).replace('{2}', `<strong>${fmt(2)}</strong>`);
-  const btns = [1, 2, 5].map((n, i) => `<a class="btn${i === 1 ? '' : ' ghost'}" href="https://whop.com/checkout/${TIP_PLANS[cur][n]}" rel="noopener" data-ev="tip" data-amount="${n}" data-cur="${cur}">${e(fmt(n))}</a>`).join(' ');
-  const body = `<div class="prose support">
-  <h1>${e(C.h1)}</h1>
-  ${C.p.map((x) => `<p>${para(x)}</p>`).join('\n  ')}
-  <p class="tips">${btns}</p>
-  <p class="fine">${e(C.fine)}</p>
+  const U = UI[T.cc.lang] ?? UI.en;
+  const thanks = url?.searchParams?.get('thanks') === '1';
+  const cards = [1, 2, 5].map((n) => `<a class="tip-amt${n === 2 ? ' pick' : ''}" href="https://whop.com/checkout/${TIP_PLANS[cur][n]}" rel="noopener" data-ev="tip" data-amount="${n}" data-cur="${cur}">${e(fmt(n))}</a>`).join('');
+  const sym = new Intl.NumberFormat(T.cc.locale, { style: 'currency', currency: cur.toUpperCase() }).formatToParts(1).find((x) => x.type === 'currency')?.value ?? '';
+  const minMsg = U.min.replace('{min}', fmt(MIN)).replace('{max}', fmt(MAX));
+  const body = `<div class="support">
+  ${thanks ? `<p class="tip-thanks" role="status">${e(U.thanks)}</p>` : ''}
+  <div class="tip-hero"><span class="tip-heart" aria-hidden="true">♥</span><h1>${e(C.h1)}</h1></div>
+  <ul class="tip-why">${U.why.map((w) => `<li>${e(w)}</li>`).join('')}</ul>
+  <div class="prose">${C.p.map((x) => `<p>${para(x)}</p>`).join('\n  ')}</div>
+  <section class="tip-box" aria-label="${e(U.pick)}">
+    <h2>${e(U.pick)}</h2>
+    <div class="tip-amts">${cards}<button type="button" class="tip-amt other" data-ev="tip_other_open" aria-expanded="false" aria-controls="tip-other">${e(U.other)}</button></div>
+    <form id="tip-other" class="tip-other" hidden data-cur="${cur}" data-err="${e(U.err)}" data-min="${e(minMsg)}" data-wait="${e(U.wait)}">
+      <label class="tip-input"><span>${e(sym)}</span><input name="amount" type="number" inputmode="decimal" min="${MIN}" max="${MAX}" step="0.5" placeholder="${e(U.ph)}" aria-label="${e(U.ph)}" required></label>
+      <button class="btn tip-btn" type="submit" data-ev="tip" data-amount="other" data-cur="${cur}">${e(U.give)} ♥</button>
+      <p class="tip-msg" role="alert" hidden></p>
+    </form>
+    <p class="fine">${e(C.fine)}</p>
+  </section>
   <p><a href="${cc === 'us' ? '/' : `/${cc}`}">← ${e(C.back)}</a></p>
-</div>`;
+</div>
+<script>(function(){var b=document.querySelector('.tip-amt.other'),f=document.getElementById('tip-other');if(!b||!f)return;var i=f.querySelector('input'),m=f.querySelector('.tip-msg'),s=f.querySelector('button');
+b.addEventListener('click',function(){f.hidden=!f.hidden;b.setAttribute('aria-expanded',String(!f.hidden));b.classList.toggle('pick',!f.hidden);if(!f.hidden)i.focus();});
+function say(t){m.textContent=t;m.hidden=!t;}
+f.addEventListener('submit',function(ev){ev.preventDefault();var a=Math.round(parseFloat(String(i.value).replace(',','.'))*100)/100;
+if(!(a>=${MIN}&&a<=${MAX})){say(f.dataset.min);return;}say('');var old=s.textContent;s.disabled=true;s.textContent=f.dataset.wait;
+fetch('/api/tip',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({amount:a,cur:f.dataset.cur,cc:document.body.dataset.cc||'us'})}).then(function(r){return r.json()}).then(function(j){if(j&&j.url){location.href=j.url;}else{throw 0;}}).catch(function(){say(f.dataset.err);s.disabled=false;s.textContent=old;});});})();</script>`;
   return page(env, T, { title: `${C.title} | ${env.BRAND_NAME}`, description: C.h1, path: cc === 'us' ? '/support' : `/${cc}/support`, body, noindex: true });
+}
+
+// "Other amount": a Whop checkout created on the fly (API v1 checkout_configurations with an inline
+// one-time variant in the tip product). metadata.kind = 'tip' lets the webhook record it as a tip.
+let tipProduct = null;
+async function whop(env, path, init = {}) {
+  const r = await fetch(`https://api.whop.com/api/v1${path}`, { ...init, headers: { authorization: `Bearer ${env.WHOP_API_KEY}`, 'content-type': 'application/json', ...(init.headers ?? {}) } });
+  const j = await r.json().catch(() => null);
+  if (!r.ok) throw new Error(`whop ${path} ${r.status}: ${JSON.stringify(j).slice(0, 200)}`);
+  return j;
+}
+export async function tipCheckout(env, req) {
+  const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+  const b = await req.json().catch(() => ({}));
+  const cur = b.cur === 'eur' ? 'eur' : 'usd';
+  const amount = Math.round(Number(b.amount) * 100) / 100;
+  if (!(amount >= MIN && amount <= MAX)) return json({ error: 'amount' }, 400);
+  if (!env.WHOP_API_KEY) return json({ error: 'unavailable' }, 503);
+  try {
+    tipProduct ??= (await whop(env, `/plans/${TIP_PLANS[cur][1]}`))?.product?.id ?? null;
+    if (!tipProduct) throw new Error('tip product not found');
+    const cc = /^[a-z]{2}$/.test(String(b.cc ?? '')) ? b.cc : 'us';
+    const back = `${env.BASE_URL}${supportHref(cc)}?thanks=1`;
+    const ch = await whop(env, '/checkout_configurations', { method: 'POST', body: JSON.stringify({
+      variant: { product_id: tipProduct, initial_price: amount, currency: cur, billing_type: 'one_time', visibility: 'hidden', title: 'Tip' },
+      metadata: { kind: 'tip', amount: String(amount), currency: cur },
+      redirect_url: back,
+    }) });
+    if (!ch?.purchase_url) throw new Error('no purchase_url');
+    return json({ url: ch.purchase_url });
+  } catch (err) {
+    console.log('tip checkout failed', String(err?.message ?? err));
+    return json({ error: 'checkout' }, 502);
+  }
 }
