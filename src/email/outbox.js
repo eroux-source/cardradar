@@ -52,6 +52,8 @@ export async function flushOutbox(env, limit = 50) {
   }
   let sent = 0; let n = 0;
   for (const [key, msgs] of groups) {
+    // Resend allows 10 requests a second: stay well under it (2026-11-11, 14 alert emails were lost to 429)
+    if (n++) await new Promise((r) => setTimeout(r, 160));
     const first = msgs[0];
     if (n++) await sleep(SEND_GAP_MS); // stay under the provider's per-second limit
     const subject = msgs.length > 1 ? `${msgs.length} restocks you asked about` : first.subject;
@@ -77,7 +79,10 @@ export async function flushOutbox(env, limit = 50) {
       if (key.startsWith('alert:') && first.user_id) await run(env, 'UPDATE users SET last_email_alert_at = ? WHERE id = ?', now(), first.user_id);
       sent++;
     } else {
-      await run(env, `UPDATE email_outbox SET attempts = attempts + 1, last_error = ?, not_before = ? WHERE id IN (${placeholders})`, err ?? 'provider refused', now() + 5 * 60e3, ...ids);
+      // "too many requests" is our pace, not a bad message: retry next minute without using an attempt
+      const rate = /\b429\b|too many requests/i.test(err ?? '');
+      await run(env, `UPDATE email_outbox SET attempts = attempts + ?, last_error = ?, not_before = ? WHERE id IN (${placeholders})`, rate ? 0 : 1, err ?? 'provider refused', now() + (rate ? 60e3 : 5 * 60e3), ...ids);
+      if (rate) await new Promise((r) => setTimeout(r, 1000));
     }
   }
   return sent;
