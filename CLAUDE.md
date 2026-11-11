@@ -1,6 +1,6 @@
 # Card Restock Tracker (cardradar)
 
-Live site: https://cardrestocktracker.com. Pokémon TCG stock and restock tracker for 11 countries: us, uk, ca, au, de, fr, nl, it, es, mx, cl, plus a Japan lottery calendar. It reads about 195 independent online shops (list: `src/sources/shops.js`; pages only name shops that answered in the last 3 days).
+Live site: https://cardrestocktracker.com. Pokémon TCG stock and restock tracker for 11 countries: us, uk, ca, au, de, fr, nl, it, es, mx, cl, plus a Japan lottery calendar. It reads about 240 independent online shops (list: `src/sources/shops.js`, Shopify by default, `platform: 'woo'` = WooCommerce; pages only name shops that answered in the last 3 days).
 
 Owner: Eugène, eroux@kosmocgi.com. He writes in French. Reply in short, non-technical French and give results, not process.
 
@@ -27,6 +27,8 @@ Owner: Eugène, eroux@kosmocgi.com. He writes in French. Reply in short, non-tec
 - Cloudflare Worker (`src/index.js`) with D1, Queues and a container relay (`relay/`).
   - Shop requests go through a Node relay with undici and the Decodo ISP proxy.
   - Only `shop_*` sources use the proxy.
+  - Shop readers: `src/sources/shopify.js` (`/search/suggest.json`, `/products/<handle>.js`) and `src/sources/woo.js` (WooCommerce Store API `/wp-json/wc/store/v1/products`, `_fields` filter, no images: about 3 KB per 50 products). Many French shops are PrestaShop or answer 403: not readable.
+  - New shops run their first searches spread over about 12 hours (1 per minute per shop); then each query once a day. Rip & ship, breaks, event tickets are dropped (`notSealed` in `src/crawler/catalog.js`); listings of shops removed from the list are switched off by the hourly merge job.
   - Traffic is gzip-compressed and capped by the `proxy.daily_mb` setting.
 - Crawl plan (`src/crawler/plan.js`):
   - each shop does one search per hour, at most 1 call per minute per shop and 20 per minute in total;

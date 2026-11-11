@@ -18,6 +18,8 @@ export const SHOP_EVERY = { in: 24 * 3600e3, out: 3600e3, test: 10 * 60e3, watch
 // Hot products (the new expansion and the 30th Celebration ETB): sold out → every 10 min, in stock → every hour
 const HOT_SQL = `l.title LIKE '%delta%reign%' OR l.title LIKE '%delta%herrschaft%' OR l.title LIKE '%gne delta%' OR l.title LIKE '%dominio delta%' OR l.title LIKE '%ME06%'
   OR ((l.title LIKE '%30th%' OR l.title LIKE '%30 jahre%' OR l.title LIKE '%30 ans%' OR l.title LIKE '%30 anni%' OR l.title LIKE '%30 aniversario%') AND (l.title LIKE '%elite trainer%' OR l.title LIKE '%top%trainer%' OR l.title LIKE '%ETB%' OR l.title LIKE '%dresseur%'))`;
+// independent online shops (Shopify or WooCommerce): daily searches + per-product checks, shared budget
+const isShop = (x) => x.platform === 'shopify' || x.platform === 'woo';
 export const isTestLane = (listingId) => listingId % 10 === 0;
 
 export async function planMinute(env) {
@@ -54,15 +56,16 @@ export async function planMinute(env) {
     if (src.kind === 'lottery') {
       const every = src.everyMinutes ?? 10;
       if (Math.floor(t / 60e3) % every === 0) for (const q of src.queries) tasks.push({ t: 'lottery', source: src.id, q });
-    } else if (src.platform === 'shopify') {
+    } else if (isShop(src)) {
       // shops: each search query once a day (finds new products), queries an hour apart, shops spread over the day
       const day = 1440, minute = Math.floor(t / 60e3);
       const slot = [...src.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7) % day;
       src.queries.forEach((q, i) => { if (minute % day === (slot + i * 60) % day) tasks.push({ t: 'snapshot', source: src.id, q }); });
       // a new shop: run its searches once right away (spread by the queue), then daily
       if (!s[`firstsearch.${src.id}`]) {
-        // one search a minute (1 call per minute per shop), new shops spread over the hour
-        src.queries.forEach((q, i) => tasks.push({ t: 'snapshot', source: src.id, q, delay: ((slot % 60) + i) * 60 }));
+        // one search a minute (1 call per minute per shop); new shops spread over about 12 hours
+        // (queue delay limit) so a batch of new shops adds well under 1 call a minute to the shared budget
+        src.queries.forEach((q, i) => tasks.push({ t: 'snapshot', source: src.id, q, delay: ((slot % 700) + i) * 60 }));
         await env.DB.prepare('INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO NOTHING').bind(`firstsearch.${src.id}`, String(t), t).run();
         s[`firstsearch.${src.id}`] = String(t);
       }
@@ -106,7 +109,7 @@ export async function planMinute(env) {
   // `budget.shopcalls` calls a minute for all shops together (default 20) and 1 call per shop per
   // minute, searches included (Shopify answers 429 above that, and the proxy IPs are shared).
   // Order: HOT products first, then products that just restocked (to time the sell-out), then the rest.
-  const shopIds = new Set(enabled.filter((x) => x.platform === 'shopify').map((x) => x.id));
+  const shopIds = new Set(enabled.filter(isShop).map((x) => x.id));
   const resting = new Set((await all(env, "SELECT source FROM source_health WHERE status = 'blocked' AND last_block_at > ?", t - 10 * 60e3)).map((r) => r.source));
   const due = await all(env, `SELECT ln.listing_id, ln.source, (${HOT_SQL}) AS hot FROM lanes ln JOIN listings l ON l.id = ln.listing_id AND l.active = 1
     LEFT JOIN stock st ON st.listing_id = ln.listing_id AND st.store_id = ln.source || ':online'

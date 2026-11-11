@@ -13,6 +13,7 @@ import costco from './costco.js';
 import bestbuyCA from './bestbuy_ca.js';
 import kmartAU from './kmart_au.js';
 import { shopify } from './shopify.js';
+import { woo } from './woo.js';
 import { SHOPS } from './shops.js';
 
 /** Foreign sources run only once proxies for that country exist (retailers geo-block foreign IPs). */
@@ -26,7 +27,8 @@ export const SOURCES = Object.fromEntries([
   needsLocalProxy(kmartAU), needsLocalProxy(pokemonCenterAU),
   // independent Shopify card shops, every country (through the relay + proxy). Shared budget:
   // about 15 searches a minute in total, whatever the number of shops (proxy data is paid per GB).
-  ...SHOPS.map((x) => ({ ...shopify(x), everyMinutes: Math.max(3, Math.ceil(SHOPS.length / 15)) })),
+  // (platform: 'woo' = WooCommerce Store API, otherwise Shopify)
+  ...SHOPS.map((x) => ({ ...(x.platform === 'woo' ? woo(x) : shopify(x)), everyMinutes: Math.max(3, Math.ceil(SHOPS.length / 15)) })),
 ].map((s) => [s.id, s]));
 export const sourceList = Object.values(SOURCES);
 export const sourceName = (id) => SOURCES[id]?.name ?? id;
