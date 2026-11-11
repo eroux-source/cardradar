@@ -186,6 +186,8 @@ export async function supportPage(env, cc, url) {
   const para = (s) => e(s).replace('{1}', `<strong>${fmt(1)}</strong>`).replace('{2}', `<strong>${fmt(2)}</strong>`);
   const U = UI[T.cc.lang] ?? UI.en;
   const thanks = url?.searchParams?.get('thanks') === '1';
+  // "Other amount" needs a Whop API key with the checkout_configuration:create permission
+  const otherOn = env.TIP_OTHER === '1';
   const cards = [1, 2, 5].map((n) => `<a class="tip-amt${n === 2 ? ' pick' : ''}" href="https://whop.com/checkout/${TIP_PLANS[cur][n]}" rel="noopener" data-ev="tip" data-amount="${n}" data-cur="${cur}">${e(fmt(n))}</a>`).join('');
   const sym = new Intl.NumberFormat(T.cc.locale, { style: 'currency', currency: cur.toUpperCase() }).formatToParts(1).find((x) => x.type === 'currency')?.value ?? '';
   const minMsg = U.min.replace('{min}', fmt(MIN)).replace('{max}', fmt(MAX));
@@ -196,7 +198,7 @@ export async function supportPage(env, cc, url) {
   <div class="prose">${C.p.map((x) => `<p>${para(x)}</p>`).join('\n  ')}</div>
   <section class="tip-box" aria-label="${e(U.pick)}">
     <h2>${e(U.pick)}</h2>
-    <div class="tip-amts">${cards}<button type="button" class="tip-amt other" data-ev="tip_other_open" aria-expanded="false" aria-controls="tip-other">${e(U.other)}</button></div>
+    <div class="tip-amts${otherOn ? '' : ' three'}">${cards}${otherOn ? `<button type="button" class="tip-amt other" data-ev="tip_other_open" aria-expanded="false" aria-controls="tip-other">${e(U.other)}</button>` : ''}</div>
     <form id="tip-other" class="tip-other" hidden data-cur="${cur}" data-err="${e(U.err)}" data-min="${e(minMsg)}" data-wait="${e(U.wait)}">
       <label class="tip-input"><span>${e(sym)}</span><input name="amount" type="number" inputmode="decimal" min="${MIN}" max="${MAX}" step="0.5" placeholder="${e(U.ph)}" aria-label="${e(U.ph)}" required></label>
       <button class="btn tip-btn" type="submit" data-ev="tip" data-amount="other" data-cur="${cur}">${e(U.give)} ♥</button>
@@ -207,7 +209,7 @@ export async function supportPage(env, cc, url) {
   <p><a href="${cc === 'us' ? '/' : `/${cc}`}">← ${e(C.back)}</a></p>
 </div>
 <script>(function(){var b=document.querySelector('.tip-amt.other'),f=document.getElementById('tip-other');if(!b||!f)return;var i=f.querySelector('input'),m=f.querySelector('.tip-msg'),s=f.querySelector('button');
-b.addEventListener('click',function(){f.hidden=!f.hidden;b.setAttribute('aria-expanded',String(!f.hidden));b.classList.toggle('pick',!f.hidden);if(!f.hidden)i.focus();});
+b.addEventListener('click',function(){f.hidden=!f.hidden;b.setAttribute('aria-expanded',String(!f.hidden));b.classList.toggle('pick',!f.hidden);var two=document.querySelector('.tip-amt[data-amount="2"]');if(two)two.classList.toggle('pick',f.hidden);if(!f.hidden)i.focus();});
 function say(t){m.textContent=t;m.hidden=!t;}
 f.addEventListener('submit',function(ev){ev.preventDefault();var a=Math.round(parseFloat(String(i.value).replace(',','.'))*100)/100;
 if(!(a>=${MIN}&&a<=${MAX})){say(f.dataset.min);return;}say('');var old=s.textContent;s.disabled=true;s.textContent=f.dataset.wait;
@@ -230,7 +232,7 @@ export async function tipCheckout(env, req) {
   const cur = b.cur === 'eur' ? 'eur' : 'usd';
   const amount = Math.round(Number(b.amount) * 100) / 100;
   if (!(amount >= MIN && amount <= MAX)) return json({ error: 'amount' }, 400);
-  if (!env.WHOP_API_KEY) return json({ error: 'unavailable' }, 503);
+  if (!env.WHOP_API_KEY || env.TIP_OTHER !== '1') return json({ error: 'unavailable' }, 503);
   try {
     tipProduct ??= (await whop(env, `/plans/${TIP_PLANS[cur][1]}`))?.product?.id ?? null;
     if (!tipProduct) throw new Error('tip product not found');

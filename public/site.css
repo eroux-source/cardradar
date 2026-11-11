@@ -368,6 +368,7 @@ html, body { overflow-x: clip; }
 .tip-amt:hover { background: #ffe1ec; }
 .tip-amt.pick { background: #e0336f; color: #fff; box-shadow: 0 4px 14px rgba(224, 51, 111, .3); }
 .tip-amt.other { font-size: 15px; font-weight: 700; }
+.tip-amts.three { grid-template-columns: repeat(3, 1fr); }
 .tip-other { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
 .tip-other[hidden] { display: none; }
 .tip-input { flex: 1 1 160px; display: flex; align-items: center; gap: 6px; padding: 0 14px; border-radius: 12px; background: #fff; box-shadow: inset 0 0 0 1.5px #f3a6c3; }
@@ -376,7 +377,7 @@ html, body { overflow-x: clip; }
 .tip-msg { flex-basis: 100%; margin: 0; color: #b4235a; font-size: 15px; }
 .tip-box .fine { margin: 14px 0 0; font-size: 14px; color: var(--soft); }
 .tip-thanks { margin: 0 0 16px; padding: 14px 16px; border-radius: 12px; background: #e9f8ef; color: #155c34; font-weight: 700; text-align: center; }
-@media (max-width: 560px) { .tip-amts { grid-template-columns: repeat(2, 1fr); } .tip-other .btn { width: 100%; } }
+@media (max-width: 560px) { .tip-amts:not(.three) { grid-template-columns: repeat(2, 1fr); } .tip-other .btn { width: 100%; } }
 .site-foot .support-link { font-weight: 700; }
 
 /* support: header button + band (2026-11-07) */
