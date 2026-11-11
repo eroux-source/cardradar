@@ -35,6 +35,7 @@
   const post = async (url, body) => {
     const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body ?? {}) });
     let data = {}; try { data = await r.json(); } catch {}
+    if (r.headers.get('x-signup') === '1') ga('signup');
     if (!r.ok || data.ok === false) { const x = new Error(data.error || 'Something went wrong. Try again.'); x.data = data; throw x; }
     return data;
   };

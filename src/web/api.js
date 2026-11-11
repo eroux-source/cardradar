@@ -110,7 +110,7 @@ export async function api(env, req, url, ctx) {
       }
     }
     const res = await createAlert(env, b, actor, guest);
-    if (setCookie) res.headers.set('set-cookie', setCookie);
+    if (setCookie) { res.headers.set('set-cookie', setCookie); res.headers.set('x-signup', '1'); } // x-signup: the client tells GA4 a new account was made
     return res;
   }
 
