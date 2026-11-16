@@ -94,7 +94,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
   <section class="controls" aria-label="${e(S.products)}">
     <form class="find" action="${base(cc)}/search" method="get" role="search">
       <input name="q" list="sku-list" autocomplete="off" placeholder="${e(S.findPh)}" aria-label="${e(S.findPh)}" data-find>
-      <datalist id="sku-list">${[...inNow, ...out].slice(0, 200).map((x) => `<option value="${e(x.name)}" data-href="${base(cc)}/${e(x.slug)}"></option>`).join('')}</datalist>
+      <datalist id="sku-list">${skus.map((x) => `<option value="${e(x.name)}" data-href="${base(cc)}/${e(x.slug)}"></option>`).join('')}</datalist>
       <button class="btn small" type="submit">${e(S.findBtn)}</button></form>
     <div class="pills">${pills}</div>
     <div class="ctl-row"><span class="live"><span class="dot" aria-hidden="true"></span>${e(S.live)}</span>${citySel}<span class="fine">${e(S.sorted)}</span></div>
@@ -172,7 +172,7 @@ export async function homeList(env, T, cc, { live = null, alternates = null, ext
     ${cc === 'jp' ? '' : `<p class="quick-links"><a href="${dataPath(cc)}">${e(words(cc).data)}</a><a href="${thirtyPath(cc)}">${e(words(cc).thirty)}</a><a href="${guidePath(cc, 'delta-reign')}">Delta Reign</a><a href="${guidePath(cc, 'flowing-fists')}">Flowing Fists (ME07)</a><a href="${upcomingPath(cc)}">${e(UPCOMING_LINK[COUNTRIES[cc]?.lang] ?? UPCOMING_LINK.en)}</a></p>`}
     <form class="find" action="${base(cc)}/search" method="get" role="search">
       <input name="q" list="sku-list" autocomplete="off" placeholder="${e(S.findPh)}" aria-label="${e(S.findPh)}" data-find>
-      <datalist id="sku-list">${skus.map((x) => `<option value="${e(x.name)}" data-href="${base(cc)}/${e(x.slug)}"></option>`).join('')}</datalist>
+      <datalist id="sku-list">${[...inNow, ...out].slice(0, 200).map((x) => `<option value="${e(x.name)}" data-href="${base(cc)}/${e(x.slug)}"></option>`).join('')}</datalist>
       <button class="btn small" type="submit">${e(S.findBtn)}</button></form>
     ${types.length > 1 ? `<div class="pills" data-filter>${[`<button type="button" class="pill on" data-t="">${e(H.all)}</button>`, ...types.map((x) => `<button type="button" class="pill" data-t="${x}">${e(H.types[x])}</button>`)].join('')}</div>` : ''}
   </section>
