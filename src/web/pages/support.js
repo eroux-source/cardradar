@@ -92,7 +92,7 @@ const UI = {
   "min": "Enter an amount between {min} and {max}.",
   "thanks": "Thank you so much! ♥ Your support keeps the site free for every collector.",
   "why": [
-   "Free alerts for everyone",
+   "Free live stock for everyone",
    "No ads, ever",
    "Shops checked around the clock"
   ],
@@ -107,7 +107,7 @@ const UI = {
   "min": "Indique un montant entre {min} et {max}.",
   "thanks": "Merci beaucoup ! ♥ Ton soutien garde le site gratuit pour tous les collectionneurs.",
   "why": [
-   "Alertes gratuites pour tous",
+   "Stock en direct gratuit pour tous",
    "Zéro pub",
    "Boutiques vérifiées jour et nuit"
   ],
@@ -122,7 +122,7 @@ const UI = {
   "min": "Gib einen Betrag zwischen {min} und {max} ein.",
   "thanks": "Vielen Dank! ♥ Deine Unterstützung hält die Seite für alle Sammler kostenlos.",
   "why": [
-   "Kostenlose Alerts für alle",
+   "Live-Bestand kostenlos für alle",
    "Keine Werbung",
    "Shops rund um die Uhr geprüft"
   ],
@@ -137,7 +137,7 @@ const UI = {
   "min": "Vul een bedrag in tussen {min} en {max}.",
   "thanks": "Heel erg bedankt! ♥ Jouw steun houdt de site gratis voor alle verzamelaars.",
   "why": [
-   "Gratis alerts voor iedereen",
+   "Gratis live voorraad voor iedereen",
    "Geen advertenties",
    "Winkels dag en nacht gecontroleerd"
   ],
@@ -152,7 +152,7 @@ const UI = {
   "min": "Inserisci un importo tra {min} e {max}.",
   "thanks": "Grazie mille! ♥ Il tuo sostegno mantiene il sito gratuito per tutti i collezionisti.",
   "why": [
-   "Avvisi gratuiti per tutti",
+   "Disponibilità live gratis per tutti",
    "Zero pubblicità",
    "Negozi controllati giorno e notte"
   ],
@@ -167,7 +167,7 @@ const UI = {
   "min": "Indica un importe entre {min} y {max}.",
   "thanks": "¡Muchas gracias! ♥ Tu apoyo mantiene la web gratis para todos los coleccionistas.",
   "why": [
-   "Alertas gratis para todos",
+   "Stock en directo gratis para todos",
    "Sin anuncios",
    "Tiendas revisadas día y noche"
   ],

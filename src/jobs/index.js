@@ -37,6 +37,37 @@ async function relaunchOnce(env) {
 }
 
 /** One-off feedback ask (text approved by Eugène 2026-11-11): every account, once. French for France, English otherwise. */
+/** One-off "still free for you for a week" notice (2026-11-16): accounts with an active alert and no paid pass.
+ *  Sent only when GRACE_NOTICE = "1" (Eugène approves the text first). French for France, English otherwise. */
+async function graceNoticeOnce(env) {
+  const key = 'gracenotice.2026-11-16';
+  if (env.GRACE_NOTICE !== '1' || !env.RESEND_API_KEY || await one(env, 'SELECT 1 FROM settings WHERE key = ?', key)) return 'skip';
+  await run(env, "INSERT INTO settings (key, value, updated_at) VALUES (?, 'sending', ?)", key, now());
+  const { COUNTRIES } = await import('../data/countries.js');
+  const owners = String(env.OWNER_EMAILS ?? '').toLowerCase().split(',').map((x) => x.trim());
+  const rows = await all(env, `SELECT u.email, u.country FROM users u WHERE EXISTS (SELECT 1 FROM alerts a WHERE a.user_id = u.id AND a.status = 'active')
+    AND NOT EXISTS (SELECT 1 FROM passes p WHERE p.user_id = u.id AND p.status IN ('active','refunded_kept') AND p.ends_at > ?)`, now());
+  let n = 0;
+  for (const r of rows) {
+    const email = String(r.email ?? '').toLowerCase();
+    if (!email.includes('@') || owners.includes(email) || /@example\.(test|com)$/.test(email)) continue;
+    const cc = r.country && COUNTRIES[r.country] && r.country !== 'jp' ? r.country : 'us';
+    const C = COUNTRIES[cc];
+    const money = (v) => new Intl.NumberFormat(C.locale, { style: 'currency', currency: C.currency }).format(Number(v));
+    const link = `${env.BASE_URL}${cc === 'us' ? '' : `/${cc}`}/pricing`;
+    const fr = cc === 'fr';
+    const subject = fr ? 'Tes alertes restent gratuites jusqu\'au 23 novembre' : 'Your alerts stay free until 23 November';
+    const text = fr
+      ? `Salut,\n\nMerci d'utiliser Card Restock Tracker ! Petite info : à partir d'aujourd'hui, les alertes instantanées deviennent payantes pour les nouveaux inscrits. C'est ce qui paie la vérification des boutiques jour et nuit.\n\nToi, tu étais là dès le début, alors rien ne change pendant encore une semaine : tes alertes restent instantanées et gratuites jusqu'au lundi 23 novembre.\n\nEnsuite, tu as le choix :\n- Garder les alertes instantanées avec Solo à ${money(C.prices.solo)} pour 30 jours (1 produit) ou Multi à ${money(C.prices.multi)} (plusieurs produits). Résiliable en 2 clics.\n- Ou ne rien faire : tu recevras gratuitement un e-mail par jour avec les restocks de la veille pour tes produits.\n\nLes offres : ${link}\n\nMerci d'être là depuis le début,\nEugène, Card Restock Tracker`
+      : `Hi,\n\nThanks for using Card Restock Tracker! A quick heads-up: from today, instant restock alerts are a paid option for new sign-ups. That's what pays for checking the shops around the clock.\n\nYou joined early, so nothing changes for you for one more week: your alerts stay instant and free until Monday 23 November.\n\nAfter that, you choose:\n- Keep instant alerts with Solo at ${money(C.prices.solo)} for 30 days (1 product) or Multi at ${money(C.prices.multi)} (several products). Cancel in 2 clicks.\n- Or do nothing: you'll get a free daily email with yesterday's restocks for your products.\n\nPlans: ${link}\n\nThanks for being here early,\nEugène, Card Restock Tracker`;
+    // paced by the minute cron
+    await queueEmail(env, { to: email, kind: 'grace_notice', subject, text, notBefore: now() + 60e3 });
+    n++;
+  }
+  await run(env, 'UPDATE settings SET value = ?, updated_at = ? WHERE key = ?', `queued ${n}`, now(), key);
+  return n;
+}
+
 async function feedbackAskOnce(env) {
   const key = 'feedbackask.2026-11-11';
   if (await one(env, 'SELECT 1 FROM settings WHERE key = ?', key) || !env.RESEND_API_KEY) return 'skip';
@@ -126,6 +157,7 @@ export async function everyMinute(env) {
   out.test = await testAlertOnce(env).catch((e) => ({ error: e.message }));
   out.relaunch = await relaunchOnce(env).catch((e) => ({ error: e.message }));
   out.feedbackAsk = await feedbackAskOnce(env).catch((e) => ({ error: e.message }));
+  out.graceNotice = await graceNoticeOnce(env).catch((e) => ({ error: e.message }));
   out.pushDemo = await pushDemoOnce(env).catch((e) => ({ error: e.message }));
   out.emails = await flushOutbox(env).catch((e) => ({ error: e.message }));
   out.lotteries = await announce(env).then(() => 'ok').catch((e) => ({ error: e.message })); // Japan: opening / closing-soon notices

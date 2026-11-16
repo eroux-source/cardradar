@@ -43,7 +43,7 @@ Owner: Eugène, eroux@kosmocgi.com. He writes in French. Reply in short, non-tec
   - public GET pages are edge-cached for 10 min, with a day-old stale copy as fallback;
   - DB reads are retried once when D1 is busy;
   - heavy queries (`allSkus`, `liveCountries`, `popularity`, `latestRestocks`) are memoized for a short time per isolate.
-- Free again since 2026-11-06 (Eugène): launch mode `FREE_ALERTS="1"`, alerts free and instant by email (Resend), up to 20 products. Paid mode was live 2026-11-05 → 06 with 0 sales; traffic first.
+- Paid since 2026-11-16 (Eugène): `FREE_ALERTS="0"` = Whop Solo / Multi for instant alerts, free plan = one daily email. Grace week: alerts created before `FREE_GRACE_BEFORE` stay instant and free until `FREE_GRACE_UNTIL` (2026-11-23 14:00 UTC); one-off notice to those accounts behind `GRACE_NOTICE="1"` (`graceNoticeOnce` in `src/jobs/index.js`). Earlier: free launch mode 2026-10-27 → 11-05 and 11-06 → 11-16, paid 11-05 → 06 with 0 sales.
   - Paid mode stays ready: `FREE_ALERTS="0"` = Whop Solo / Multi. Whop plans per currency: `WHOP_PLAN_<SOLO|MULTI>_<EUR|GBP|CAD|AUD>` in `wrangler.toml`; MX, CL and JP pay the USD plan.
   - Alert funnel order: 1 product → 2 plan → 3 email. Solo / free alerts can be limited to chosen shops (plan step, `/api/funnel/shops`, `alerts.store_ids`, empty = every shop).
   - Telegram was removed. Phone notifications are back as free Web Push (2026-11-11), see below.

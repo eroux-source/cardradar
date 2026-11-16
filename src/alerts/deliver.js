@@ -32,7 +32,9 @@ export async function deliver(env, { alertId, restockId }) {
     FROM restocks r JOIN skus k ON k.id = r.sku_id JOIN listings l ON l.id = r.listing_id JOIN stores s ON s.id = r.store_id WHERE r.id = ?`, restockId);
   if (!a || !r) return;
   // Free alert (no pass): kept for tomorrow's daily email, never sent live
-  if (a.free && !freeMode(env) && !(await one(env, "SELECT 1 FROM passes WHERE user_id = ? AND status IN ('active','refunded_kept') AND ends_at > ?", a.user_id, now()))) {
+  // Grace week (2026-11-16): alerts created before the paid switch stay instant until FREE_GRACE_UNTIL
+  const graced = Number(env.FREE_GRACE_UNTIL) > now() && a.created_at < Number(env.FREE_GRACE_BEFORE);
+  if (a.free && !freeMode(env) && !graced && !(await one(env, "SELECT 1 FROM passes WHERE user_id = ? AND status IN ('active','refunded_kept') AND ends_at > ?", a.user_id, now()))) {
     await run(env, "UPDATE alert_sent SET status = 'daily' WHERE alert_id = ? AND restock_id = ?", alertId, restockId);
     return;
   }
