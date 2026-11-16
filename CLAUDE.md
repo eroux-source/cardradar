@@ -57,7 +57,7 @@ Owner: Eugène, eroux@kosmocgi.com. He writes in French. Reply in short, non-tec
   - Visible to the owner only until the setting `push_public` is `on` (switch on `/owner/monitor`).
   - Alert texts (email, push, hourly digest) are in the language of the alert's country: `src/alerts/words.js` (en, fr, de, es for es/mx/cl, it, nl).
   - Numbers: `/api/health` → `push` (devices, `funnel_7d`: pwa_hint, pwa_prompt, pwa_install, push_optin, push_sent, push_click; `alerts_7d`: tried, delivered, dead_removed).
-- Support page (2026-11-07): `/support` and `/<cc>/support` (`src/web/pages/support.js`, fan tone, 6 languages), linked in every footer and after an alert is set. One-time Whop tips 1/2/5 in EUR (Europe, UK) or USD (elsewhere), product Support Card Restock Tracker (`TIP_PLANS`). The webhook records tips (event `tip_paid`) and never grants a pass; clicks are the event `tip`.
+- Tips removed 2026-11-16 (alerts paid again): no header button, band or footer link; `/support` and `/<cc>/support` 301 to the home page. `src/web/pages/support.js` stays only for `isTipPlan` (the webhook still records any late tip as `tip_paid`, never a pass).
 - Visitor feedback (2026-11-11): block at the bottom of every public page plus a floating 💬 button (`src/web/feedback.js`, 6 languages): missing country, next card game to track, free comment, optional email. Saved in D1 `feedback` (max 5 per network per hour). Counts in `/api/health` → `feedback_30d` (never texts or emails); every answer on `/owner/feedback`.
 - Affiliate-ready links live in `src/web/affiliate.js`.
   - Worker variables: `AFF_AMAZON_<CC>`, `AFF_EBAY_CAMPID`, `AFF_TCGPLAYER`, `AFF_CARDMARKET`.
