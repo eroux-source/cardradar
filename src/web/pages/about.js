@@ -23,10 +23,11 @@ export async function aboutPage(env) {
     one(env, 'SELECT COUNT(*) AS restocks FROM restocks WHERE started_at > ?', since).catch(() => null),
   ]);
   const launched = new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(LAUNCHED));
-  const countries = T.f.list(ccs.map((c) => c.name));
+  const en = new Intl.DisplayNames(['en'], { type: 'region' });
+  const countries = T.f.list(ccs.map((c) => en.of(c.code === 'uk' ? 'GB' : c.code.toUpperCase())));
   const facts = [
     `${shops} online card shops checked right now, in ${ccs.length} countries: ${countries}.`,
-    n?.products ? `${n.products.toLocaleString('en-US')} sealed Pokémon products followed.` : '',
+    n?.products ? `${n.products.toLocaleString('en-US')} Pokémon products followed (boxes, bundles, packs, tins and more).` : '',
     r?.restocks != null ? `${r.restocks.toLocaleString('en-US')} restocks logged in the last 30 days, each with its time and how long it lasted.` : '',
     'A Japanese lottery and pre-order calendar (抽選・予約), with reminders before entries close.',
   ].filter(Boolean);
