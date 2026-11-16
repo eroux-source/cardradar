@@ -31,6 +31,7 @@ const AFF_NOTE = {
 };
 export function page(env, T, { title, description, path, body, jsonLd = [], noindex = false, nav = '', alternates = null, xDefault = '/', live = null }) {
   const cc = T.cc.code;
+  if (description && description.length > 160) description = description.slice(0, 157).replace(/[\s,;:–—-]+\S*$/, '') + '…';
   const canonical = `${env.BASE_URL}${path}`;
   const cur = (k) => (k === nav ? ' aria-current="page"' : '');
   const b = base(cc);

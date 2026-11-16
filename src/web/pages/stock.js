@@ -94,7 +94,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
   <section class="controls" aria-label="${e(S.products)}">
     <form class="find" action="${base(cc)}/search" method="get" role="search">
       <input name="q" list="sku-list" autocomplete="off" placeholder="${e(S.findPh)}" aria-label="${e(S.findPh)}" data-find>
-      <datalist id="sku-list">${skus.map((x) => `<option value="${e(x.name)}" data-href="${base(cc)}/${e(x.slug)}"></option>`).join('')}</datalist>
+      <datalist id="sku-list">${[...inNow, ...out].slice(0, 200).map((x) => `<option value="${e(x.name)}" data-href="${base(cc)}/${e(x.slug)}"></option>`).join('')}</datalist>
       <button class="btn small" type="submit">${e(S.findBtn)}</button></form>
     <div class="pills">${pills}</div>
     <div class="ctl-row"><span class="live"><span class="dot" aria-hidden="true"></span>${e(S.live)}</span>${citySel}<span class="fine">${e(S.sorted)}</span></div>
@@ -136,7 +136,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
   const onIn = [...new Set(inNow.filter((r) => r.online).map((r) => sourceName(r.source)))];
   const onAll = new Set(rows.filter((r) => r.online).map((r) => r.source)).size;
   const description = isHome ? T.home.desc(shops) : T.sku.desc(k.name, onIn.length, Math.max(onAll, onIn.length), metro?.name ?? T.cc.name, onIn.length ? T.f.list(onIn.length > 4 ? [...onIn.slice(0, 4), T.nav.moreShops(onIn.length - 4)] : onIn) : null);
-  return page(env, T, { title, description, path, body, live, alternates, xDefault, jsonLd: [c.ld, faq.ld, productLd, ...extraLd], noindex: !isHome && !rows.length && !rs.length });
+  return page(env, T, { title, description, path, body, live, alternates, xDefault, jsonLd: [c.ld, faq.ld, productLd, ...extraLd], noindex: !isHome && !rs.length && new Set(rows.map((r) => r.source)).size < 2 });
 }
 
 /**
@@ -155,7 +155,7 @@ export async function homeList(env, T, cc, { live = null, alternates = null, ext
   const inNow = skus.filter((k) => k.places_in > 0).sort((a, b) => p(b) - p(a) || b.places_in - a.places_in || (b.last_restock ?? 0) - (a.last_restock ?? 0));
   // sold out: the most wanted first, then the most watched (checked in most places, restocked most recently)
   const out = skus.filter((k) => !(k.places_in > 0) && k.places > 0).sort((a, b) => p(b) - p(a) || (b.places ?? 0) - (a.places ?? 0) || (b.last_restock ?? 0) - (a.last_restock ?? 0));
-  const OUT_SHOWN = 12;
+  const OUT_SHOWN = 12; const OUT_MAX = 48; const IN_MAX = 200; // page weight: the rest is one search away (find box)
   const types = [...new Set(skus.map((k) => k.type ?? 'other'))].filter((x) => H.types[x]);
   const order = Object.keys(H.types);
   types.sort((a, b) => order.indexOf(a) - order.indexOf(b));
@@ -178,11 +178,11 @@ export async function homeList(env, T, cc, { live = null, alternates = null, ext
   </section>
   <section aria-labelledby="in-h"><h2 id="in-h"><span class="live"><span class="dot" aria-hidden="true"></span></span> ${e(H.inH)} <span class="count">${inNow.length}</span></h2>
     ${inNow.length ? `<ul class="products" data-grid>${inNow.slice(0, 24).map((k) => card(k, true)).join('')}</ul>
-      ${inNow.length > 24 ? `<details class="out-list"><summary>${e(H.showIn(inNow.length - 24))}</summary><ul class="products" data-grid>${inNow.slice(24).map((k) => card(k, true)).join('')}</ul></details>` : ''}
+      ${inNow.length > 24 ? `<details class="out-list"><summary>${e(H.showIn(Math.min(inNow.length, IN_MAX) - 24))}</summary><ul class="products" data-grid>${inNow.slice(24, IN_MAX).map((k) => card(k, true)).join('')}</ul></details>` : ''}
       <p class="empty" data-none hidden>${e(H.none)}</p>` : `<p class="empty">${e(H.ledeNone(shopsN))}</p>`}</section>
   ${out.length ? `<section class="out-section" aria-labelledby="out-h"><h2 id="out-h">${e(H.outH)} <span class="count out">${out.length}</span></h2><p class="sub">${e(H.outSub)}</p>
     <ul class="products small" data-grid>${out.slice(0, OUT_SHOWN).map((k) => card(k, false)).join('')}</ul>
-    ${out.length > OUT_SHOWN ? `<details class="out-list"><summary>${e(H.showOut(out.length - OUT_SHOWN))}</summary><ul class="products small" data-grid>${out.slice(OUT_SHOWN).map((k) => card(k, false)).join('')}</ul></details>` : ''}</section>` : ''}
+    ${out.length > OUT_SHOWN ? `<details class="out-list"><summary>${e(H.showOut(Math.min(out.length, OUT_MAX) - OUT_SHOWN))}</summary><ul class="products small" data-grid>${out.slice(OUT_SHOWN, OUT_MAX).map((k) => card(k, false)).join('')}</ul></details>` : ''}</section>` : ''}
   ${alertCta(env, T)}
   ${await factsBlock(env, T)}`;
   const ld = { '@context': 'https://schema.org', '@type': 'ItemList', name: H.inH, itemListElement: inNow.slice(0, 50).map((k, i) => ({ '@type': 'ListItem', position: i + 1, name: k.name, url: `${env.BASE_URL}${base(cc)}/${k.slug}` })) };

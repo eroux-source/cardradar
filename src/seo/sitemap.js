@@ -28,7 +28,9 @@ export async function sitemap(env) {
     if (cc !== 'us') urls.push(dataPath(cc));
     urls.push(thirtyPath(cc), upcomingPath(cc), ...Object.keys(GUIDES).map((id) => guidePath(cc, id)));
     const [skus, stores, skuR, storeR, cityR, srcR] = await Promise.all([
-      all(env, 'SELECT DISTINCT k.slug FROM skus k JOIN listings l ON l.sku_id = k.id AND l.country = ? AND l.active = 1 WHERE k.active = 1', cc),
+      // only products with matter (2+ shops, or a restock in 30 days): one-shop pages stay out (thin pages hurt the whole site in core updates)
+      all(env, `SELECT k.slug FROM skus k JOIN listings l ON l.sku_id = k.id AND l.country = ?1 AND l.active = 1 WHERE k.active = 1 GROUP BY k.id
+        HAVING COUNT(DISTINCT l.source) >= 2 OR k.id IN (SELECT r.sku_id FROM restocks r JOIN stores s ON s.id = r.store_id WHERE s.country = ?1 AND r.started_at > ?2)`, cc, since),
       all(env, 'SELECT slug FROM stores WHERE online = 0 AND country = ?', cc),
       all(env, 'SELECT k.slug, COUNT(*) n, MAX(r.started_at) - MIN(r.started_at) span FROM restocks r JOIN skus k ON k.id = r.sku_id JOIN stores s ON s.id = r.store_id WHERE r.started_at > ? AND s.country = ? GROUP BY k.id', since, cc),
       all(env, 'SELECT s.slug, COUNT(*) n, MAX(r.started_at) - MIN(r.started_at) span FROM restocks r JOIN stores s ON s.id = r.store_id WHERE r.started_at > ? AND s.online = 0 AND s.country = ? GROUP BY s.id', since, cc),
