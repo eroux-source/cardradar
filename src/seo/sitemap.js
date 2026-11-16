@@ -21,7 +21,7 @@ export async function sitemap(env) {
   const B = env.BASE_URL;
   const since = now() - 30 * 864e5;
   const live = await liveCountries(env);
-  const urls = [...Object.values(GUIDES).map((g) => `/${g.slug.en}`), '/pokemon-restock-data', '/press', '/best-pokemon-restock-trackers', '/how-it-works', ...Object.keys(COMPETITORS).map((id) => `/vs/${id}`)];
+  const urls = [...Object.values(GUIDES).map((g) => `/${g.slug.en}`), '/pokemon-restock-data', '/press', '/best-pokemon-restock-trackers', '/how-it-works', '/about', ...Object.keys(COMPETITORS).map((id) => `/vs/${id}`)];
   for (const cc of live) {
     if (cc === 'jp') continue;
     const P = `/${cc}`; const home = cc === 'us' ? '/' : P;
