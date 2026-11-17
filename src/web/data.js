@@ -72,13 +72,15 @@ export const storeStock = (env, storeId) => all(env, `
   WHERE st.store_id = ? ORDER BY st.in_stock DESC, last_restock DESC NULLS LAST, k2.name`, storeId);
 
 // Small per-isolate memo: the same heavy query is reused by every page for a short while (D1 CPU limit).
+// Only finished values are shared: a pending promise must never cross requests (Workers drops it
+// when the request that started it ends: "This promise was created by a request that has since ended").
 const MEMO = new Map();
-const memo = (key, ttl, fn) => {
+const memo = async (key, ttl, fn) => {
   const hit = MEMO.get(key); const t = Date.now();
-  if (hit && t - hit.t < ttl) return hit.p;
-  const p = fn().catch((err) => { MEMO.delete(key); throw err; });
-  MEMO.set(key, { t, p }); if (MEMO.size > 200) MEMO.delete(MEMO.keys().next().value);
-  return p;
+  if (hit && t - hit.t < ttl) return hit.v;
+  const v = await fn();
+  MEMO.set(key, { t, v }); if (MEMO.size > 200) MEMO.delete(MEMO.keys().next().value);
+  return v;
 };
 
 /** Every product sold in a country, hardest to find first, with its photo. */
