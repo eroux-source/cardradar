@@ -16,6 +16,8 @@ import { all } from '../../lib/db.js';
 import { page, home as homePath, base, chip, crumbs, answers, hourChart, placeRows, latestTable, cityGrid, retailerGrid, alertCta, placeLabel, shopsText, productGrid } from '../html.js';
 import { factsBlock } from '../facts.js';
 import { stockPage, homeList } from './stock.js';
+import { PLAN_UI } from './funnel.js';
+import { fun } from '../../i18n/funnel.js';
 
 const asOf = (T, ts) => (ts ? T.asOf(T.f.when(ts)) : T.waiting);
 
@@ -142,17 +144,25 @@ export async function retailers(env, cc) {
     body: `<div class="answer"><h1>${e(T.idx.retH1)}</h1><p class="lede">${e(T.idx.retLede(stores, online))}</p></div>${retailerGrid(T)}` });
 }
 
+/** Pricing as cards (2026-11-18): Solo highlighted, free daily email next to it, Multi below; each card leads to the alert form. */
+function pricingCards(T, cc) {
+  const PU = PLAN_UI[T.cc.lang] ?? PLAN_UI.en; const F = fun(T.cc.lang); const href = `/alerts?c=${cc}`;
+  return `<p class="plan-why">${e(PU.why)}</p><div class="plans price-cards">
+    <div class="plan plan-rec"><span class="plan-badge">${e(PU.badge)}</span><strong>Solo</strong><span class="plan-price">${e(T.f.planMoney(T.cc.prices.solo))} <span class="fine">${e(F.per30)}</span></span><span class="fine">${e(PU.solo)}</span><a class="btn go" href="${href}" data-ev="sheet_open" data-from="pricing_solo">${e(T.cta.btn)}</a></div>
+    <div class="plan"><strong>${e(F.freeName)}</strong><span class="plan-price">${e(T.f.money(0))}</span><span class="fine">${e(PU.free)}</span><a class="btn ghost" href="${href}" data-ev="sheet_open" data-from="pricing_free">${e(F.freeBtn ?? T.cta.btn)}</a></div>
+    <div class="plan plan-wide"><strong>Multi · ${e(T.f.planMoney(T.cc.prices.multi))}</strong> <span class="fine">${e(F.per30)}</span><span class="fine">${e(T.pricing.multi)}</span><a class="btn ghost" href="${href}" data-ev="sheet_open" data-from="pricing_multi">${e(T.cta.btn)}</a></div></div>`;
+}
+
 export async function pricing(env, cc) {
   const T = t(cc);
   return page(env, T, { title: T.pricing.title(env.BRAND_NAME), description: T.pricing.lede, path: '/pricing', noindex: cc !== 'us',
     body: freeMode(env) ? `<div class="answer"><h1>${e(T.pricing.h1)}</h1><p class="lede">${e(freeWords(T).pricing)}</p></div>
     <p><a class="btn" href="/alerts?c=${cc}">${e(freeWords(T).btn)}</a></p>` : `<div class="answer"><h1>${e(T.pricing.h1)}</h1><p class="lede">${e(T.pricing.lede)}</p></div>
-    <table><thead><tr><th>${e(T.th.plan)}</th><th>${e(T.th.watch)}</th><th>${e(T.th.days30)}</th></tr></thead><tbody>
-    ${T.pricing.free && cc !== 'jp' ? `<tr><td>Free</td><td>${e(T.pricing.free)}</td><td>${e(T.f.money(0))}</td></tr>` : ''}
+    ${cc === 'jp' ? `<table><thead><tr><th>${e(T.th.plan)}</th><th>${e(T.th.watch)}</th><th>${e(T.th.days30)}</th></tr></thead><tbody>
     <tr><td>Solo</td><td>${e(T.pricing.solo)}</td><td>${e(T.f.planMoney(T.cc.prices.solo))}</td></tr>
-    <tr><td>Multi</td><td>${e(T.pricing.multi)}</td><td>${e(T.f.planMoney(T.cc.prices.multi))}</td></tr></tbody></table>
+    <tr><td>Multi</td><td>${e(T.pricing.multi)}</td><td>${e(T.f.planMoney(T.cc.prices.multi))}</td></tr></tbody></table>` : pricingCards(T, cc)}
     <p class="sub">${e(T.pricing.tax)}</p>
-    <p><a class="btn" href="/alerts?c=${cc}">${e(T.cta.btn)}</a></p>` });
+    ${cc === 'jp' ? `<p><a class="btn" href="/alerts?c=${cc}">${e(T.cta.btn)}</a></p>` : ''}` });
 }
 
 /** Press kit from real restock data (§7): every live country, one-paragraph boilerplate, story angles, how to cite. */

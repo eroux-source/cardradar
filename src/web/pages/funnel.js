@@ -32,7 +32,7 @@ const PLAN_NEEDED = {
 };
 
 // Plan step (2026-11-18): Solo highlighted next to the free daily email, one line on what "instant" buys you.
-const PLAN_UI = {
+export const PLAN_UI = {
   en: { badge: 'Recommended', why: 'Solo warns you as soon as we spot the restock, so you can buy before it sells out again. Free: one email the next morning.', solo: 'Instant alert · 1 product', free: '1 email a day, the morning after · 1 product' },
   fr: { badge: 'Recommandé', why: 'Solo vous prévient dès que nous repérons le réassort : vous achetez avant la rupture. Gratuit : un e-mail le lendemain matin.', solo: 'Alerte instantanée · 1 produit', free: '1 e-mail par jour, le lendemain matin · 1 produit' },
   de: { badge: 'Empfohlen', why: 'Solo meldet sich, sobald wir den Restock sehen: So kaufst du, bevor er wieder ausverkauft ist. Gratis: eine E-Mail am nächsten Morgen.', solo: 'Sofort-Alarm · 1 Produkt', free: '1 E-Mail pro Tag, am Morgen danach · 1 Produkt' },

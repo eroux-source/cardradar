@@ -517,6 +517,15 @@ label.plan.plan-rec:has(input:checked) { border-color: var(--navy); }
   body.has-sticky main { padding-bottom: 72px; }
 }
 
+/* pricing page as cards (2026-11-18) */
+.price-cards { max-width: 640px; }
+.price-cards .plan { display: flex; flex-direction: column; gap: 4px; padding: 16px; border: 1.5px solid var(--rule); border-radius: var(--r); background: #fff; }
+.price-cards .plan-rec { border: 2px solid var(--navy); background: #f7f8fc; }
+.price-cards .plan .btn { margin-top: auto; padding: 11px 14px; font-size: 16px; }
+.price-cards .plan .fine { margin-bottom: 8px; }
+.price-cards .plan-wide .fine:first-of-type { margin: 0; }
+@media (max-width: 400px) { .price-cards .plan { padding: 12px; } .price-cards .plan .btn { font-size: 15px; padding: 10px; } }
+
 /* header: bell on the Alerts button */
 .site-nav a.cta::before { content: "🔔"; margin-right: 6px; font-size: .95em; }
 @media (max-width: 380px) { .site-nav a.cta::before { margin-right: 3px; } }
