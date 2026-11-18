@@ -45,7 +45,7 @@ export default {
     statsNote: 'Registramos cada reposición. Los patrones mejoran cada día.',
     whenLink: (name) => `¿Cuándo vuelve ${name}?`,
     alertH: 'Avísame cuando vuelva',
-    alertP: (price, typ) => `Alertas al instante desde ${price} por 30 días.${typ ? ` Aquí el stock suele durar ${typ}:` : ''} revisamos día y noche y te avisamos al momento.`,
+    alertP: (price, typ) => `Recibe un email en cuanto lo veamos otra vez en stock, con el enlace directo a la tienda. Desde ${price} por 30 días, sin permanencia.${typ ? ` Aquí el stock suele durar ${typ}.` : ''}`,
     alertBtn: 'Avísame', buy: 'Comprar', reserve: 'Reservar', directions: 'Cómo llegar', online: 'Online', ships: 'Envío a casa',
     since: (t) => `En stock desde ${t}`, checking: 'Revisión en breve',
     howH: (name) => `Cómo conseguir ${name} hoy`,
@@ -127,15 +127,15 @@ export default {
     retLede: (stores, online) => [stores && `Tienda por tienda en ${stores}`, online && `online en ${online}`].filter(Boolean).join('; ') + '.',
   },
   pricing: {
-    title: (b) => `Precios — ${b}`, h1: 'Precios', lede: 'Las páginas de stock son gratis. Las alertas son de pago, por 30 días, cancelables en 2 clics.',
+    title: (b) => `Precios — ${b}`, h1: 'Precios', lede: 'Mirar el stock es gratis, sin cuenta. Solo pagas si quieres enterarte en cuanto detectamos una reposición: 30 días, cancelable en 2 clics, reembolso en 7 días si cambias de idea.',
     solo: '1 producto, en las tiendas que elijas', multi: 'Varios productos o todos los productos sellados de una expansión',
     tax: 'Según tu país puede añadirse el IVA al pagar. Te avisamos, tú compras en la tienda: nunca compramos por ti.',
   },
   cta: {
     kicker: 'Carta de Objeto · Alerta de reposición', item: 'Objeto', name: 'Alerta de reposición', flavor: 'Juégala cuando el stock escasea. No vuelvas a perder una reposición.',
-    h2: (name) => `Entérate en el segundo en que ${name || 'vuelva'} llegue`,
-    effect: '<strong>Efecto:</strong> el stock suele durar minutos. Revisamos cada tienda física y online día y noche y te avisamos email, con un enlace directo para comprar.',
-    btn: 'Crear mi alerta', fine: (price) => `Desde ${price} por 30 días. Cancelable en 2 clics.`,
+    h2: (name) => `Sé de los primeros en saber cuándo vuelve ${name || 'el producto'}`,
+    effect: '<strong>Efecto:</strong> revisamos las tiendas día y noche y te enviamos un email en cuanto vuelve a haber stock, con el enlace directo para comprar.',
+    btn: 'Crear mi alerta', fine: (price) => `Desde ${price} por 30 días. Sin permanencia, cancelable en 2 clics.`,
   },
   facts: {
     h: 'Sobre este rastreador',

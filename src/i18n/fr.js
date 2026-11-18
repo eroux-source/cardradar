@@ -45,7 +45,7 @@ export default {
     statsNote: 'Nous notons chaque réassort. Les tendances s\'affinent chaque jour.',
     whenLink: (name) => `Quand ${name} revient-il ?`,
     alertH: 'Prévenez-moi dès qu\'il revient',
-    alertP: (price, typ) => `Alertes instantanées dès ${price} pour 30 jours.${typ ? ` Ici le stock dure en général ${typ} :` : ''} nous vérifions jour et nuit et vous prévenons tout de suite.`,
+    alertP: (price, typ) => `Recevez un e-mail dès que nous le repérons en stock, avec le lien direct vers la boutique. Dès ${price} pour 30 jours, sans engagement.${typ ? ` Ici, le stock dure en général ${typ}.` : ''}`,
     alertBtn: 'M\'alerter', buy: 'Acheter', reserve: 'Réserver', directions: 'Itinéraire', online: 'En ligne', ships: 'Livré chez vous',
     since: (t) => `En stock depuis ${t}`, checking: 'Vérification imminente',
     howH: (name) => `Comment avoir ${name} aujourd'hui`,
@@ -127,15 +127,15 @@ export default {
     retLede: (stores, online) => [stores && `Magasin par magasin chez ${stores}`, online && `en ligne chez ${online}`].filter(Boolean).join(' ; ') + '.',
   },
   pricing: {
-    title: (b) => `Tarifs — ${b}`, h1: 'Tarifs', lede: 'Les pages de stock sont gratuites. Les alertes sont payantes, pour 30 jours, résiliables en 2 clics.',
+    title: (b) => `Tarifs — ${b}`, h1: 'Tarifs', lede: 'Consulter le stock est gratuit, sans compte. Vous ne payez que pour être prévenu dès que nous repérons un réassort : 30 jours, résiliable en 2 clics, remboursé sous 7 jours si vous changez d\'avis.',
     solo: '1 produit, dans les boutiques de votre choix', multi: 'Plusieurs produits, ou tous les produits scellés d\'une extension',
     tax: 'Paiement sécurisé : carte, Apple Pay ou Google Pay. Garantie 7 jours : écrivez-nous dans les 7 jours suivant le premier paiement et on vous rembourse, sans discussion. La TVA peut s\'ajouter au paiement selon votre pays. Nous alertons, vous achetez chez l\'enseigne : nous n\'achetons jamais à votre place.',
   },
   cta: {
     kicker: 'Carte Objet · Alerte réassort', item: 'Objet', name: 'Alerte réassort', flavor: 'À jouer quand le stock est rare. Ne ratez plus aucun réassort.',
-    h2: (name) => `Soyez prévenu à la seconde où ${name || 'il'} revient`,
-    effect: '<strong>Effet :</strong> le stock part souvent en quelques minutes. Nous vérifions chaque magasin et boutique en ligne jour et nuit, et vous prévenons par e-mail, avec un lien direct pour acheter.',
-    btn: 'Créer mon alerte', fine: (price) => `Dès ${price} pour 30 jours. Résiliable en 2 clics.`,
+    h2: (name) => `Soyez parmi les premiers prévenus quand ${name || 'il'} revient`,
+    effect: '<strong>Effet :</strong> nous vérifions les boutiques jour et nuit et vous envoyons un e-mail dès qu\'il revient en stock, avec le lien direct pour l\'acheter.',
+    btn: 'Créer mon alerte', fine: (price) => `Dès ${price} pour 30 jours. Sans engagement, résiliable en 2 clics.`,
   },
   facts: {
     h: 'À propos de ce suivi',

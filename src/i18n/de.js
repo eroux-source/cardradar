@@ -45,7 +45,7 @@ export default {
     statsNote: 'Wir erfassen jeden Restock. Die Muster werden täglich genauer.',
     whenLink: (name) => `Wann kommt ${name} wieder?`,
     alertH: 'Benachrichtige mich',
-    alertP: (price, typ) => `Sofort-Alarme ab ${price} für 30 Tage.${typ ? ` Hier ist es meist ${typ} verfügbar:` : ''} wir prüfen rund um die Uhr und melden uns sofort.`,
+    alertP: (price, typ) => `Du bekommst eine E-Mail, sobald wir es wieder auf Lager sehen, mit direktem Link zum Shop. Ab ${price} für 30 Tage, ohne Bindung.${typ ? ` Hier ist es meist ${typ} verfügbar.` : ''}`,
     alertBtn: 'Alarm', buy: 'Kaufen', reserve: 'Reservieren', directions: 'Route', online: 'Online', ships: 'Versand',
     since: (t) => `Lieferbar seit ${t}`, checking: 'Wird gleich geprüft',
     howH: (name) => `So bekommst du ${name} heute`,
@@ -127,15 +127,15 @@ export default {
     retLede: (stores, online) => [stores && `Pro Filiale bei ${stores}`, online && `online bei ${online}`].filter(Boolean).join('; ') + '.',
   },
   pricing: {
-    title: (b) => `Preise — ${b}`, h1: 'Preise', lede: 'Die Bestandsseiten sind kostenlos. Alarme kosten etwas, für 30 Tage, mit 2 Klicks kündbar.',
+    title: (b) => `Preise — ${b}`, h1: 'Preise', lede: 'Den Bestand anzusehen ist kostenlos, ohne Konto. Du zahlst nur, wenn du sofort Bescheid wissen willst, sobald wir einen Restock sehen: 30 Tage, mit 2 Klicks kündbar, Geld zurück innerhalb von 7 Tagen.',
     solo: '1 Produkt, in den Shops deiner Wahl', multi: 'Mehrere Produkte oder alle versiegelten Produkte eines Sets',
     tax: 'Je nach Land kommt beim Bezahlen MwSt. dazu. Wir benachrichtigen, du kaufst beim Händler: Wir kaufen nie für dich.',
   },
   cta: {
     kicker: 'Itemkarte · Restock-Alarm', item: 'Item', name: 'Restock-Alarm', flavor: 'Spielen, wenn der Bestand knapp ist. Nie wieder einen Restock verpassen.',
-    h2: (name) => `Sofort wissen, wenn ${name || 'es'} wieder da ist`,
-    effect: '<strong>Effekt:</strong> Der Bestand ist oft in Minuten weg. Wir prüfen jede Filiale und jeden Shop rund um die Uhr und benachrichtigen dich per E-Mail, mit direktem Kauflink.',
-    btn: 'Alarm einrichten', fine: (price) => `Ab ${price} für 30 Tage. Mit 2 Klicks kündbar.`,
+    h2: (name) => `Erfahre als einer der Ersten, wenn ${name || 'es'} wieder da ist`,
+    effect: '<strong>Effekt:</strong> Wir prüfen die Shops rund um die Uhr und schicken dir eine E-Mail, sobald es wieder auf Lager ist, mit direktem Kauflink.',
+    btn: 'Alarm einrichten', fine: (price) => `Ab ${price} für 30 Tage. Ohne Bindung, mit 2 Klicks kündbar.`,
   },
   facts: {
     h: 'Über diesen Tracker',

@@ -60,7 +60,7 @@ export default {
     statsNote: 'We log every restock. Patterns get sharper every day.',
     whenLink: (name) => `When does ${name} restock?`,
     alertH: 'Alert me when it lands',
-    alertP: (price, typ) => `Instant alerts from ${price} for 30 days.${typ ? ` Here stock usually lasts about ${typ}:` : ''} we check around the clock and ping you instantly.`,
+    alertP: (price, typ) => `Get an email the moment we spot it back in stock, with a direct link to the shop. From ${price} for 30 days, no commitment.${typ ? ` Here, stock usually lasts about ${typ}.` : ''}`,
     alertBtn: 'Alert me', buy: 'Buy', reserve: 'Reserve', directions: 'Directions', online: 'Online', ships: 'Ships to you',
     since: (t) => `In stock since ${t}`, checking: 'Checking soon',
     howH: (name) => `How to get ${name} today`,
@@ -148,15 +148,15 @@ export default {
     retLede: (stores, online) => [stores && `Store by store at ${stores}`, online && `online at ${online}`].filter(Boolean).join('; ') + '.',
   },
   pricing: {
-    title: (b) => `Pricing — ${b}`, h1: 'Pricing', lede: 'Live stock pages are free. The free plan emails you once a day about one product. Instant alerts are paid, for 30 days, cancel in 2 clicks.', free: '1 product, one email a day with yesterday\'s restocks',
+    title: (b) => `Pricing — ${b}`, h1: 'Pricing', lede: 'Checking stock is free, with no account. Pay only if you want the alert the moment we spot a restock: 30 days, cancel in 2 clicks, refunded within 7 days if you change your mind.', free: '1 product, one email a day with yesterday\'s restocks',
     solo: '1 product, in the shops you choose', multi: 'Several products, or any sealed product of a set',
     tax: 'Secure checkout: card, Apple Pay or Google Pay. 7-day guarantee: write within 7 days of your first payment and we refund it, no back-and-forth. Taxes may be added at checkout depending on your country. We alert, you buy from the retailer: we never buy for you.',
   },
   cta: {
     kicker: 'Item card · Restock Alert', item: 'Item', name: 'Restock Alert', flavor: 'Play when stock is scarce. Never miss a restock again.',
-    h2: (name) => `Get pinged the second ${name || 'it'} lands`,
-    effect: '<strong>Effect:</strong> stock usually lasts minutes. We check every tracked store and shop around the clock and alert you by email, with a direct link to buy.',
-    btn: 'Set up my alert', fine: (price) => `From ${price} for 30 days. Cancel in 2 clicks.`,
+    h2: (name) => `Be among the first to know when ${name || 'it'} is back`,
+    effect: '<strong>Effect:</strong> we check the shops around the clock and email you as soon as it is back in stock, with a direct link to buy.',
+    btn: 'Set up my alert', fine: (price) => `From ${price} for 30 days. No commitment, cancel in 2 clicks.`,
   },
   facts: {
     h: 'About this tracker',

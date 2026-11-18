@@ -45,7 +45,7 @@ export default {
     statsNote: 'Registriamo ogni restock. Le tendenze migliorano ogni giorno.',
     whenLink: (name) => `Quando torna ${name}?`,
     alertH: 'Avvisami quando torna',
-    alertP: (price, typ) => `Avvisi istantanei da ${price} per 30 giorni.${typ ? ` Qui di solito resta disponibile ${typ}:` : ''} controlliamo giorno e notte e ti avvisiamo subito.`,
+    alertP: (price, typ) => `Ricevi un'email appena lo vediamo di nuovo disponibile, con il link diretto al negozio. Da ${price} per 30 giorni, senza vincoli.${typ ? ` Qui di solito resta disponibile ${typ}.` : ''}`,
     alertBtn: 'Avvisami', buy: 'Compra', reserve: 'Prenota', directions: 'Indicazioni', online: 'Online', ships: 'Spedito a te',
     since: (t) => `Disponibile da ${t}`, checking: 'Controllo a breve',
     howH: (name) => `Come avere ${name} oggi`,
@@ -127,15 +127,15 @@ export default {
     retLede: (stores, online) => [stores && `Negozio per negozio da ${stores}`, online && `online da ${online}`].filter(Boolean).join('; ') + '.',
   },
   pricing: {
-    title: (b) => `Prezzi — ${b}`, h1: 'Prezzi', lede: 'Le pagine di disponibilità sono gratuite. Gli avvisi sono a pagamento, per 30 giorni, disdici in 2 clic.',
+    title: (b) => `Prezzi — ${b}`, h1: 'Prezzi', lede: 'Guardare la disponibilità è gratis, senza account. Paghi solo se vuoi saperlo appena vediamo un restock: 30 giorni, disdici in 2 clic, rimborso entro 7 giorni se cambi idea.',
     solo: '1 prodotto, nei negozi che scegli', multi: 'Più prodotti o tutti i prodotti sigillati di un set',
     tax: 'Al pagamento può aggiungersi l\'IVA in base al paese. Ti avvisiamo, tu compri dal negozio: non compriamo mai al posto tuo.',
   },
   cta: {
     kicker: 'Carta Strumento · Avviso restock', item: 'Strumento', name: 'Avviso restock', flavor: 'Da giocare quando lo stock scarseggia. Non perdere più un restock.',
-    h2: (name) => `Avvisato nell'istante in cui ${name || 'torna'} arriva`,
-    effect: '<strong>Effetto:</strong> lo stock spesso finisce in pochi minuti. Controlliamo ogni negozio e shop online giorno e notte e ti avvisiamo via email, con un link diretto per comprare.',
-    btn: 'Crea il mio avviso', fine: (price) => `Da ${price} per 30 giorni. Disdici in 2 clic.`,
+    h2: (name) => `Sii tra i primi a sapere quando ${name || 'il prodotto'} torna`,
+    effect: '<strong>Effetto:</strong> controlliamo i negozi giorno e notte e ti mandiamo un\'email appena torna disponibile, con il link diretto per comprarlo.',
+    btn: 'Crea il mio avviso', fine: (price) => `Da ${price} per 30 giorni. Senza vincoli, disdici in 2 clic.`,
   },
   facts: {
     h: 'Su questo tracker',

@@ -33,12 +33,12 @@ const PLAN_NEEDED = {
 
 // Plan step (2026-11-18): Solo highlighted, Multi below; the free card shows only if FREE_PLAN != "0".
 export const PLAN_UI = {
-  en: { badge: 'Recommended', why: 'Solo warns you as soon as we spot the restock, so you can buy before it sells out again.', solo: 'Instant alert · 1 product', free: '1 email a day, the morning after · 1 product' },
-  fr: { badge: 'Recommandé', why: 'Solo vous prévient dès que nous repérons le réassort : vous achetez avant la rupture.', solo: 'Alerte instantanée · 1 produit', free: '1 e-mail par jour, le lendemain matin · 1 produit' },
-  de: { badge: 'Empfohlen', why: 'Solo meldet sich, sobald wir den Restock sehen: So kaufst du, bevor er wieder ausverkauft ist.', solo: 'Sofort-Alarm · 1 Produkt', free: '1 E-Mail pro Tag, am Morgen danach · 1 Produkt' },
-  nl: { badge: 'Aanbevolen', why: 'Solo meldt zich zodra we de restock zien, zodat je koopt voordat hij weer uitverkocht is.', solo: 'Directe melding · 1 product', free: '1 e-mail per dag, de ochtend erna · 1 product' },
-  it: { badge: 'Consigliato', why: 'Solo ti avvisa appena vediamo il restock, così compri prima che si esaurisca di nuovo.', solo: 'Avviso istantaneo · 1 prodotto', free: '1 email al giorno, la mattina dopo · 1 prodotto' },
-  es: { badge: 'Recomendado', why: 'Solo te avisa en cuanto detectamos la reposición, para que compres antes de que se agote otra vez.', solo: 'Alerta al instante · 1 producto', free: '1 email al día, a la mañana siguiente · 1 producto' },
+  en: { badge: 'Recommended', why: 'With Solo, the email leaves the moment we spot the restock, with a direct link to the shop, so you can buy before it sells out again. No commitment, and refunded within 7 days if you change your mind.', solo: 'Instant email alert · 1 product · the shops you choose', free: 'Recap email the next morning · 1 product' },
+  fr: { badge: 'Recommandé', why: 'Avec Solo, l\'e-mail part dès que nous repérons le réassort, avec le lien direct vers la boutique : vous achetez avant la rupture. Sans engagement, et remboursé sous 7 jours si vous changez d\'avis.', solo: 'Alerte e-mail immédiate · 1 produit · boutiques au choix', free: 'Récapitulatif le lendemain matin · 1 produit' },
+  de: { badge: 'Empfohlen', why: 'Mit Solo geht die E-Mail raus, sobald wir den Restock sehen, mit direktem Link zum Shop: So kaufst du, bevor wieder alles weg ist. Ohne Bindung, und Geld zurück innerhalb von 7 Tagen, wenn es nicht passt.', solo: 'Sofort-Alarm per E-Mail · 1 Produkt · Shops deiner Wahl', free: 'Übersicht am nächsten Morgen · 1 Produkt' },
+  nl: { badge: 'Aanbevolen', why: 'Met Solo gaat de e-mail de deur uit zodra we de restock zien, met een directe link naar de winkel: zo koop je voordat het weer uitverkocht is. Je zit nergens aan vast, en je krijgt je geld terug binnen 7 dagen als het niet bevalt.', solo: 'Directe e-mailmelding · 1 product · winkels naar keuze', free: 'Overzicht de volgende ochtend · 1 product' },
+  it: { badge: 'Consigliato', why: 'Con Solo l\'email parte appena vediamo il restock, con il link diretto al negozio: così compri prima che si esaurisca di nuovo. Nessun vincolo, e rimborso entro 7 giorni se cambi idea.', solo: 'Avviso email immediato · 1 prodotto · negozi a scelta', free: 'Riepilogo la mattina dopo · 1 prodotto' },
+  es: { badge: 'Recomendado', why: 'Con Solo, el email sale en cuanto detectamos la reposición, con el enlace directo a la tienda: así compras antes de que se agote otra vez. Sin permanencia, y con reembolso en 7 días si cambias de idea.', solo: 'Alerta por email al instante · 1 producto · tiendas a elegir', free: 'Resumen a la mañana siguiente · 1 producto' },
 };
 
 const EMAIL_OK = {

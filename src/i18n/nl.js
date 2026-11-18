@@ -45,7 +45,7 @@ export default {
     statsNote: 'We loggen elke restock. De patronen worden elke dag scherper.',
     whenLink: (name) => `Wanneer komt ${name} terug?`,
     alertH: 'Meld het me',
-    alertP: (price, typ) => `Directe meldingen vanaf ${price} voor 30 dagen.${typ ? ` Hier is het meestal ${typ} op voorraad:` : ''} we controleren dag en nacht en melden het meteen.`,
+    alertP: (price, typ) => `Je krijgt een e-mail zodra we het weer op voorraad zien, met een directe link naar de winkel. Vanaf ${price} voor 30 dagen, zonder verplichting.${typ ? ` Hier is het meestal ${typ} op voorraad.` : ''}`,
     alertBtn: 'Meld me', buy: 'Kopen', reserve: 'Reserveren', directions: 'Route', online: 'Online', ships: 'Bezorgd',
     since: (t) => `Op voorraad sinds ${t}`, checking: 'Wordt zo gecontroleerd',
     howH: (name) => `Zo krijg je ${name} vandaag`,
@@ -127,15 +127,15 @@ export default {
     retLede: (stores, online) => [stores && `Per winkel bij ${stores}`, online && `online bij ${online}`].filter(Boolean).join('; ') + '.',
   },
   pricing: {
-    title: (b) => `Prijzen — ${b}`, h1: 'Prijzen', lede: 'De voorraadpagina\'s zijn gratis. Meldingen zijn betaald, voor 30 dagen, opzegbaar in 2 klikken.',
+    title: (b) => `Prijzen — ${b}`, h1: 'Prijzen', lede: 'De voorraad bekijken is gratis, zonder account. Je betaalt alleen als je het meteen wilt weten zodra we een restock zien: 30 dagen, opzegbaar in 2 klikken, geld terug binnen 7 dagen.',
     solo: '1 product, in de winkels die je kiest', multi: 'Meerdere producten of alle verzegelde producten van een set',
     tax: 'Afhankelijk van je land komt er btw bij. Wij melden, jij koopt bij de winkel: wij kopen nooit voor je.',
   },
   cta: {
     kicker: 'Itemkaart · Restock-melding', item: 'Item', name: 'Restock-melding', flavor: 'Speel als de voorraad schaars is. Mis nooit meer een restock.',
-    h2: (name) => `Direct een seintje als ${name || 'het'} terug is`,
-    effect: '<strong>Effect:</strong> de voorraad is vaak binnen minuten weg. We controleren elke winkel en webshop dag en nacht en melden het e-mail, met een directe kooplink.',
-    btn: 'Melding instellen', fine: (price) => `Vanaf ${price} voor 30 dagen. Opzegbaar in 2 klikken.`,
+    h2: (name) => `Weet het als een van de eersten wanneer ${name || 'het'} terug is`,
+    effect: '<strong>Effect:</strong> we controleren de winkels dag en nacht en mailen je zodra het weer op voorraad is, met een directe kooplink.',
+    btn: 'Melding instellen', fine: (price) => `Vanaf ${price} voor 30 dagen. Zonder verplichting, opzegbaar in 2 klikken.`,
   },
   facts: {
     h: 'Over deze tracker',
