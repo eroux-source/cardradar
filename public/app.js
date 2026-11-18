@@ -183,6 +183,7 @@
         const r = await post('/api/funnel/alert', { ...state, plan, visit, via: source, country: f.dataset.country, ...extra });
         if (r.state === 'code') { busy(form, false); form.hidden = true; $('[data-form=code]', f).hidden = false; $('#f-code').focus(); return; }
         if (pendingSub) { try { await savePush(pendingSub, 'funnel'); } catch {} }
+        if (/whop\.com/.test(r.next)) { try { sessionStorage.setItem('crt_checkout', String(Date.now())); sessionStorage.setItem('crt_plan', plan); } catch {} }
         ga(/[?&]free=1/.test(r.next) ? 'free_alert' : 'checkout_start', () => { location.href = r.next; });
       } catch (x) {
         busy(form, false);
@@ -227,6 +228,48 @@
       } else state.stores = [];
       chosenPlan = f.dataset.pass || ($('input[name=plan]:checked', f) || $('input[name=plan]', f)).value;
       if (signed) submitAlert(chosenPlan, t, 2); else show(3);
+    });
+  }
+
+  /* ---------- exit survey on the plan step: why people leave without paying ---------- */
+  const xs = $('#exit-survey');
+  if (xs && f) {
+    const ss = (k, v) => { try { if (v === undefined) return sessionStorage.getItem(k); sessionStorage.setItem(k, v); } catch { return null; } return null; };
+    const xform = $('[data-form=exit]', xs);
+    const open = (from) => {
+      if (xs.open) return;
+      if (from !== 'link' && ss('crt_xs_shown')) return;
+      ss('crt_xs_shown', '1'); xs.dataset.from = from;
+      if (from === 'back') { const r = $('input[name=reason][value=payment_failed]', xs); if (r) r.closest('label').parentNode.prepend(r.closest('label')); }
+      try { xs.showModal(); } catch { xs.setAttribute('open', ''); }
+      ev('exit_survey_open', { from });
+    };
+    const planVisible = () => !$('.step[data-step="2"]', f).hidden;
+    // desktop: the mouse leaves the window through the top while the plans are on screen
+    document.addEventListener('mouseout', (e) => { if (!e.relatedTarget && e.clientY <= 0 && planVisible()) open('exit'); });
+    // back from the Whop checkout without paying (also when the page comes back from the browser cache)
+    const back = () => { const t = Number(ss('crt_checkout') || 0); if (t && Date.now() - t < 6 * 3600e3) { ss('crt_checkout', ''); open('back'); } };
+    window.addEventListener('pageshow', back); back();
+    [...f.querySelectorAll('[data-xs-open]')].forEach((b) => b.addEventListener('click', () => open('link')));
+    $('[data-xs-close]', xs).addEventListener('click', () => { if (xs.close) xs.close(); xs.removeAttribute('open'); ev('exit_survey_skip'); });
+    // follow-up questions: the price one for "too expensive", the payment one for "card"
+    xform.addEventListener('change', () => {
+      const r = $('input[name=reason]:checked', xs)?.value;
+      [...xs.querySelectorAll('.xs-more')].forEach((m) => { m.hidden = m.dataset.for !== r; });
+    });
+    xform.addEventListener('submit', async (e) => {
+      e.preventDefault(); $('.err', xs).textContent = '';
+      const d = Object.fromEntries(new FormData(xform));
+      if (!d.reason) { $('.err', xs).textContent = xs.dataset.pick; return; }
+      const price = d.price_other ? d.price_other : d.price;
+      busy(xform, true);
+      try {
+        await post('/api/feedback', { kind: 'exit', reason: d.reason, price: d.reason === 'price' ? price : undefined, currency: xs.dataset.cur, pay: d.reason === 'card' ? d.pay : undefined,
+          plan: ss('crt_plan') || ($('input[name=plan]:checked', f)?.value ?? ''), text: d.text, email: d.email, cc: document.body.dataset.cc, page: `${location.pathname}#${xs.dataset.from || ''}`, visit });
+        ev('exit_survey_sent', { reason: d.reason });
+        xform.innerHTML = `<p class="ok fb-thanks" role="status">${xs.dataset.thanks}</p>`;
+        setTimeout(() => { if (xs.close) xs.close(); xs.removeAttribute('open'); }, 1800);
+      } catch (x) { $('.err', xs).textContent = x.message; busy(xform, false); }
     });
   }
 

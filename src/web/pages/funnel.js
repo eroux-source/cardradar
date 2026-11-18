@@ -53,6 +53,7 @@ import { sealed } from './local_data.js';
 import { t } from '../../i18n/index.js';
 import { fun } from '../../i18n/funnel.js';
 import { sourcesOf } from '../../sources/index.js';
+import { exitSurvey } from '../exitsurvey.js';
 
 /** Country of the visit: ?c=, else the person's, else US. */
 export const visitCountry = (url, user) => (COUNTRIES[url.searchParams.get('c')] ? url.searchParams.get('c') : COUNTRIES[user?.country] ? user.country : 'us');
@@ -121,6 +122,7 @@ export async function alertsPage(env, url, user) {
       <p class="sub">${e(EMAIL_OK[T.cc.lang] ?? EMAIL_OK.en)}</p>
       <button class="btn" type="submit">${e(freeMode(env) ? freeWords(T).btn : user ? F.checkout : F.cont)}</button></form>
     <p class="err" role="alert"></p>
+    ${freeMode(env) || pass ? '' : exitSurvey(T, (n) => T.f.planMoney(n).replace(/[.,]00(?=\D|$)/, ''), T.cc.prices.currency ?? T.cc.currency, T.cc.prices.solo)}
   </section>
   </div>`;
   return page(env, T, { title: `${F.title} — ${env.BRAND_NAME}`, description: F.title, path: '/alerts', body, noindex: true, nav: 'alerts' });

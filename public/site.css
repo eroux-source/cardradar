@@ -456,3 +456,20 @@ html, body { overflow-x: clip; }
 /* stock chip inside a narrow product card wraps instead of being cut off */
 .product .chip { white-space: normal; line-height: 1.2; max-width: 100%; }
 .product .chip::before { flex: none; }
+
+/* exit survey on the plan step (2026-11-18) */
+.xs-link { margin: 14px 0 0; }
+.exit-survey { max-width: 520px; width: calc(100% - 32px); }
+.exit-survey h2 { margin: 0 0 6px; font-size: 21px; }
+.exit-survey .xs-reasons, .exit-survey .xs-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 14px; }
+.exit-survey fieldset { border: 0; padding: 0; margin: 0; }
+.exit-survey legend, .exit-survey .xs-label { display: block; font-weight: 700; margin: 4px 0 4px; }
+.xs-chip { display: inline-block; margin: 0; cursor: pointer; font-weight: 600; }
+.xs-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.xs-chip span { display: inline-block; padding: 8px 12px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1.5px #c9d6ff; }
+.xs-chip input:checked + span { background: var(--navy); color: #fff; box-shadow: none; }
+.xs-chip input:focus-visible + span { outline: 2px solid var(--navy); outline-offset: 2px; }
+.xs-other input { width: 140px; padding: 8px 10px; border-radius: 10px; border: 1.5px solid #c9d6ff; font: inherit; }
+.exit-survey textarea, .exit-survey input[type=email] { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1.5px solid #c9d6ff; margin-bottom: 10px; }
+.xs-actions { display: flex; align-items: center; gap: 16px; }
+.exit-survey::backdrop { background: rgba(10, 20, 50, .45); }

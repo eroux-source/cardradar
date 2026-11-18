@@ -47,12 +47,21 @@ export async function saveFeedback(env, b, ip) {
   const game = GAMES.includes(b.game) || b.game === 'other' ? b.game : null;
   const text = String(b.text ?? '').trim().slice(0, 1000) || null;
   const email = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,24}$/.test(String(b.email ?? '').trim()) ? String(b.email).trim().toLowerCase() : null;
-  if (!country && !game && !text) return { ok: false, error: 'empty' };
+  // exit survey on the plan step
+  const { REASONS, PAYS } = await import('./exitsurvey.js');
+  const kind = b.kind === 'exit' ? 'exit' : null;
+  const reason = kind && REASONS.includes(b.reason) ? b.reason : null;
+  const priceN = Number(b.price);
+  const price = kind && Number.isFinite(priceN) && priceN >= 0 && priceN < 100000 ? priceN : null;
+  const currency = kind && /^[A-Z]{3}$/.test(String(b.currency ?? '')) ? b.currency : null;
+  const pay = kind && PAYS.includes(b.pay) ? b.pay : null;
+  const plan = kind ? String(b.plan ?? '').slice(0, 20) || null : null;
+  if (!country && !game && !text && !reason) return { ok: false, error: 'empty' };
   const ipHash = await sha(`${ip}:${env.SESSION_SECRET ?? 'fb'}`);
   const recent = await one(env, 'SELECT COUNT(*) n FROM feedback WHERE ip_hash = ? AND at > ?', ipHash, now() - 3600e3);
   if (recent?.n >= 5) return { ok: false, error: 'Too many answers from this network, try again later.' };
-  await run(env, 'INSERT INTO feedback (at, cc, page, visit, ip_hash, country, game, text, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    now(), COUNTRIES[b.cc] ? b.cc : null, String(b.page ?? '').slice(0, 200), String(b.visit ?? '').slice(0, 40) || null, ipHash, country, game, text, email);
+  await run(env, 'INSERT INTO feedback (at, cc, page, visit, ip_hash, country, game, text, email, kind, reason, price, currency, pay, plan) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    now(), COUNTRIES[b.cc] ? b.cc : null, String(b.page ?? '').slice(0, 200), String(b.visit ?? '').slice(0, 40) || null, ipHash, country, game, text, email, kind, reason, price, currency, pay, plan);
   return { ok: true };
 }
 
@@ -64,18 +73,20 @@ export async function feedbackCounts(env, days = 30) {
     all(env, 'SELECT game k, COUNT(*) n FROM feedback WHERE at > ? AND game IS NOT NULL GROUP BY 1 ORDER BY 2 DESC', since),
     one(env, 'SELECT COUNT(*) total, COUNT(text) texts, COUNT(email) emails FROM feedback WHERE at > ?', since),
   ]);
-  return { countries: c.map((r) => `${r.k} ${r.n}`), games: g.map((r) => `${r.k} ${r.n}`), ...n };
+  const x = await all(env, "SELECT reason k, COUNT(*) n, ROUND(AVG(price), 2) avg_price FROM feedback WHERE at > ? AND kind = 'exit' AND reason IS NOT NULL GROUP BY 1 ORDER BY 2 DESC", since).catch(() => []);
+  return { countries: c.map((r) => `${r.k} ${r.n}`), games: g.map((r) => `${r.k} ${r.n}`), exit_reasons: x.map((r) => `${r.k} ${r.n}${r.avg_price != null ? ` (avg price ${r.avg_price})` : ''}`), ...n };
 }
 
 /** Owner page: every answer, newest first. */
 export async function ownerFeedback(env) {
-  const rows = await all(env, 'SELECT at, cc, page, country, game, text, email FROM feedback ORDER BY at DESC LIMIT 500');
+  const rows = await all(env, 'SELECT at, cc, page, country, game, text, email, kind, reason, price, currency, pay, plan FROM feedback ORDER BY at DESC LIMIT 500');
   const c = await feedbackCounts(env, 90);
   const body = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Retours visiteurs</title>
 <style>body{font:15px system-ui;margin:24px;max-width:1100px}table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #ddd;padding:6px;text-align:left;vertical-align:top}small{color:#666}</style>
 <h1>Retours visiteurs</h1><p><b>${c.total ?? 0}</b> réponses sur 90 jours · ${c.texts ?? 0} commentaires · ${c.emails ?? 0} e-mails</p>
+<p><b>Pourquoi pas payé (questionnaire de sortie) :</b> ${e((c.exit_reasons ?? []).join(' · ') || '—')}</p>
 <p><b>Pays demandés :</b> ${e(c.countries.join(' · ') || '—')}<br><b>Jeux demandés :</b> ${e(c.games.join(' · ') || '—')}</p>
-<table><tr><th>Quand (UTC)</th><th>Site</th><th>Pays</th><th>Jeu</th><th>Commentaire</th><th>E-mail</th></tr>
-${rows.map((r) => `<tr><td>${new Date(r.at).toISOString().slice(0, 16).replace('T', ' ')}<br><small>${e(r.page ?? '')}</small></td><td>${e(r.cc ?? '')}</td><td>${e(r.country ?? '')}</td><td>${e(r.game ?? '')}</td><td>${e(r.text ?? '')}</td><td>${e(r.email ?? '')}</td></tr>`).join('')}</table>`;
+<table><tr><th>Quand (UTC)</th><th>Site</th><th>Sortie : raison</th><th>Prix voulu</th><th>Paiement</th><th>Pays</th><th>Jeu</th><th>Commentaire</th><th>E-mail</th></tr>
+${rows.map((r) => `<tr><td>${new Date(r.at).toISOString().slice(0, 16).replace('T', ' ')}<br><small>${e(r.page ?? '')}</small></td><td>${e(r.cc ?? '')}</td><td>${e(r.reason ?? '')}${r.plan ? `<br><small>${e(r.plan)}</small>` : ''}</td><td>${r.price != null ? e(`${r.price} ${r.currency ?? ''}`) : ''}</td><td>${e(r.pay ?? '')}</td><td>${e(r.country ?? '')}</td><td>${e(r.game ?? '')}</td><td>${e(r.text ?? '')}</td><td>${e(r.email ?? '')}</td></tr>`).join('')}</table>`;
   return new Response(body, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'private, no-store' } });
 }
