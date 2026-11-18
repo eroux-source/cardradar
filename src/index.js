@@ -187,6 +187,7 @@ async function route(req, env, ctx) {
   if (p === '/best-pokemon-restock-trackers') return bestTrackers(env);
   if (p === '/how-it-works') return howItWorks(env);
   if (p === '/about') return (await import('./web/pages/about.js')).aboutPage(env);
+  if (p === '/for-shops') return (await import('./web/pages/for_shops.js')).forShops(env);
   if (p === '/pokemon-restock-data') return restockData(env);
   { const g = Object.keys(GUIDES).find((id) => p === `/${GUIDES[id].slug.en}`); if (g) return guideOverview(env, g); }
   if (p.startsWith('/vs/')) return (await versus(env, p.slice(4))) ?? notFound(env);

@@ -12,6 +12,7 @@ import { COUNTRIES, countryList, metroInCountry, metroById } from '../../data/co
 import { SOURCES, sourcesOf, sourceName } from '../../sources/index.js';
 import { t } from '../../i18n/index.js';
 import * as d from '../data.js';
+import { all } from '../../lib/db.js';
 import { page, home as homePath, base, chip, crumbs, answers, hourChart, placeRows, latestTable, cityGrid, retailerGrid, alertCta, placeLabel, shopsText, productGrid } from '../html.js';
 import { factsBlock } from '../facts.js';
 import { stockPage, homeList } from './stock.js';
@@ -154,16 +155,42 @@ export async function pricing(env, cc) {
     <p><a class="btn" href="/alerts?c=${cc}">${e(T.cta.btn)}</a></p>` });
 }
 
-/** Press kit from real restock data (§7), US numbers. */
+/** Press kit from real restock data (§7): every live country, one-paragraph boilerplate, story angles, how to cite. */
 export async function press(env) {
   const T = t('us');
-  const rows = await d.restocks(env, 'us');
-  const sum = d.summarize(rows);
-  const bySource = sourcesOf('us').map((s) => ({ s, sum: d.summarize(rows.filter((r) => r.source === s.id)) })).filter((x) => x.sum.count);
-  return page(env, T, { title: T.press.title(env.BRAND_NAME), description: T.press.h1, path: '/press',
-    body: `<div class="answer"><h1>${e(T.press.h1)}</h1><p class="lede">${e(T.press.lede(sum.count, T.f.hour(sum.peakHour), T.f.dur(sum.typical), T.f.dur(sum.shortest)))}</p></div>
-    <table><thead><tr><th>${e(T.th.retailer)}</th><th>${e(T.th.restocks)}</th><th>${e(T.th.usualHour)}</th><th>${e(T.th.typical)}</th></tr></thead><tbody>${bySource.map(({ s, sum: x }) => `<tr><td>${e(s.name)}</td><td>${x.count}</td><td>${e(T.f.hour(x.peakHour))}</td><td>${e(T.f.dur(x.typical))}</td></tr>`).join('')}</tbody></table>
-    <p class="sub">${e(T.press.data)} <a href="mailto:${e(env.SUPPORT_EMAIL)}">${e(env.SUPPORT_EMAIL)}</a>.</p>` });
+  const since = Date.now() - 30 * 864e5;
+  const live = await d.liveCountries(env);
+  const ccs = countryList.filter((c) => c.code !== 'jp' && live.has(c.code));
+  const EN = new Intl.DisplayNames(['en'], { type: 'region' });
+  const cname = (cc) => EN.of(cc === 'uk' ? 'GB' : cc.toUpperCase());
+  const shopsIn = (cc) => new Set(sourcesOf(cc).map((s) => s.id)).size;
+  const shops = new Set(ccs.flatMap((c) => sourcesOf(c.code).map((s) => s.id))).size;
+  const rows = await all(env, `SELECT s.country, r.started_at, r.ended_at, k.name, k.slug, s.name AS store FROM restocks r JOIN stores s ON s.id = r.store_id JOIN skus k ON k.id = r.sku_id WHERE r.started_at > ?`, since).catch(() => []);
+  const med = (a) => { const x = a.filter((v) => v > 0).sort((p, q) => p - q); return x.length ? x[Math.floor(x.length / 2)] : null; };
+  const dur = (r) => (r.ended_at ? r.ended_at - r.started_at : null);
+  const byCc = ccs.map((c) => { const rs = rows.filter((r) => r.country === c.code); return { cc: c.code, shops: shopsIn(c.code), count: rs.length, median: med(rs.map(dur).filter((v) => v != null)) }; });
+  const allMed = med(rows.map(dur).filter((v) => v != null));
+  const fastest = rows.filter((r) => dur(r) > 0).sort((p, q) => dur(p) - dur(q)).slice(0, 8);
+  const shopName = (n) => String(n ?? '').replace(/ online$/, '');
+  const when = T.f.when(Date.now());
+  const lede = `${rows.length} Pokémon card restocks logged in the last 30 days at ${shops} online card shops in ${ccs.length} countries${allMed ? `; half of them sold out again within ${T.f.dur(allMed)}` : ''}. Numbers as of ${when}, computed live from our own readings.`;
+  const boiler = `${env.BRAND_NAME} (cardrestocktracker.com) is an independent Pokémon TCG stock tracker launched in October 2026. It checks the public stock of ${shops} online card shops in ${ccs.length} countries around the clock, shows which shop has a sealed product in stock right now and logs every restock with its time and how long it lasted. It is not affiliated with The Pokémon Company, Nintendo or any retailer.`;
+  const cite = `<a href="${env.BASE_URL}/pokemon-restock-data">Card Restock Tracker restock data</a>`;
+  const body = `<div class="answer"><h1>${e(T.press.h1)}</h1><p class="lede">${e(lede)}</p></div>
+  <section><h2>Restocks by country, last 30 days</h2><div class="table-scroll"><table><thead><tr><th>Country</th><th>Shops checked</th><th>Restocks</th><th>Half sold out within</th></tr></thead><tbody>
+  ${byCc.map((x) => `<tr><td><a href="${homePath(x.cc)}">${e(cname(x.cc))}</a></td><td>${x.shops}</td><td>${x.count}</td><td>${x.median ? e(T.f.dur(x.median)) : '—'}</td></tr>`).join('')}
+  </tbody></table></div></section>
+  ${fastest.length ? `<section><h2>Fastest sell-outs this month</h2><div class="table-scroll"><table><thead><tr><th>Product</th><th>Shop</th><th>Country</th><th>In stock for</th></tr></thead><tbody>
+  ${fastest.map((r) => `<tr><td><a href="/${r.country}/${e(r.slug)}">${e(r.name)}</a></td><td>${e(shopName(r.store))}</td><td>${e(cname(r.country))}</td><td>${e(T.f.dur(dur(r)))}</td></tr>`).join('')}
+  </tbody></table></div><p class="sub">Each restock is re-checked about every 10 minutes until it sells out, so short durations are rounded up to our check interval.</p></section>` : ''}
+  <section><h2>About ${e(env.BRAND_NAME)}, in one paragraph</h2><p>${e(boiler)}</p>
+  <p class="sub">Founder: Eugène, independent developer. <a href="/about">About us</a> · <a href="/how-it-works">How the data is collected</a> · Logo: <a href="/icon.svg">icon.svg</a> · <a href="/icon-512.png">PNG 512 px</a></p></section>
+  <section><h2>Use our numbers</h2><p>Free to quote, with a link to the source. Live tables for every country: <a href="/pokemon-restock-data">Pokémon restock data</a>. Copy this link:</p>
+  <textarea readonly rows="2" style="width:100%;font:13px/1.4 ui-monospace,Menlo,monospace" onclick="this.select()">${e(cite)}</textarea>
+  <p>Need a number we do not show (a set, a shop, a country, a date range)? Write to <a href="mailto:${e(env.SUPPORT_EMAIL)}">${e(env.SUPPORT_EMAIL)}</a> and we will pull it for you.</p></section>`;
+  const ld = { '@context': 'https://schema.org', '@type': 'WebPage', name: T.press.h1, url: `${env.BASE_URL}/press`, dateModified: new Date().toISOString().slice(0, 10),
+    about: { '@type': 'Organization', name: env.BRAND_NAME, url: env.BASE_URL, logo: `${env.BASE_URL}/icon.svg`, email: env.SUPPORT_EMAIL, foundingDate: '2026-10-27' } };
+  return page(env, T, { title: `Press kit: Pokémon card restocks in numbers | ${env.BRAND_NAME}`, description: lede, path: '/press', body, jsonLd: [ld] });
 }
 
 export const legal = (env, kind) => page(env, t('us'), { title: kind === 'terms' ? 'Terms' : 'Privacy', description: kind, path: `/${kind}`,
