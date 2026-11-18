@@ -173,8 +173,8 @@ export async function press(env) {
   const fastest = rows.filter((r) => dur(r) > 0).sort((p, q) => dur(p) - dur(q)).slice(0, 8);
   const shopName = (n) => String(n ?? '').replace(/ online$/, '');
   const when = T.f.when(Date.now());
-  const lede = `${rows.length} Pokémon card restocks logged in the last 30 days at ${shops} online card shops in ${ccs.length} countries${allMed ? `; half of them sold out again within ${T.f.dur(allMed)}` : ''}. Numbers as of ${when}, computed live from our own readings.`;
-  const boiler = `${env.BRAND_NAME} (cardrestocktracker.com) is an independent Pokémon TCG stock tracker launched in October 2026. It checks the public stock of ${shops} online card shops in ${ccs.length} countries around the clock, shows which shop has a sealed product in stock right now and logs every restock with its time and how long it lasted. It is not affiliated with The Pokémon Company, Nintendo or any retailer.`;
+  const lede = `${rows.length} Pokémon card restocks logged in the last 30 days at ${shops} online shops (card shops and big retailers) in ${ccs.length} countries${allMed ? `; half of them sold out again within ${T.f.dur(allMed)}` : ''}. Numbers as of ${when}, computed live from our own readings.`;
+  const boiler = `${env.BRAND_NAME} (cardrestocktracker.com) is an independent Pokémon TCG stock tracker launched in October 2026. It checks the public stock of ${shops} online shops (independent card shops and big retailers) in ${ccs.length} countries around the clock, shows which shop has a sealed product in stock right now and logs every restock with its time and how long it lasted. It is not affiliated with The Pokémon Company, Nintendo or any retailer.`;
   const cite = `<a href="${env.BASE_URL}/pokemon-restock-data">Card Restock Tracker restock data</a>`;
   const body = `<div class="answer"><h1>${e(T.press.h1)}</h1><p class="lede">${e(lede)}</p></div>
   <section><h2>Restocks by country, last 30 days</h2><div class="table-scroll"><table><thead><tr><th>Country</th><th>Shops checked</th><th>Restocks</th><th>Half sold out within</th></tr></thead><tbody>
@@ -182,7 +182,7 @@ export async function press(env) {
   </tbody></table></div></section>
   ${fastest.length ? `<section><h2>Fastest sell-outs this month</h2><div class="table-scroll"><table><thead><tr><th>Product</th><th>Shop</th><th>Country</th><th>In stock for</th></tr></thead><tbody>
   ${fastest.map((r) => `<tr><td><a href="/${r.country}/${e(r.slug)}">${e(r.name)}</a></td><td>${e(shopName(r.store))}</td><td>${e(cname(r.country))}</td><td>${e(T.f.dur(dur(r)))}</td></tr>`).join('')}
-  </tbody></table></div><p class="sub">Each restock is re-checked about every 10 minutes until it sells out, so short durations are rounded up to our check interval.</p></section>` : ''}
+  </tbody></table></div><p class="sub">Durations are measured between two of our checks, so they are accurate to within a few minutes.</p></section>` : ''}
   <section><h2>About ${e(env.BRAND_NAME)}, in one paragraph</h2><p>${e(boiler)}</p>
   <p class="sub">Founder: Eugène, independent developer. <a href="/about">About us</a> · <a href="/how-it-works">How the data is collected</a> · Logo: <a href="/icon.svg">icon.svg</a> · <a href="/icon-512.png">PNG 512 px</a></p></section>
   <section><h2>Use our numbers</h2><p>Free to quote, with a link to the source. Live tables for every country: <a href="/pokemon-restock-data">Pokémon restock data</a>. Copy this link:</p>

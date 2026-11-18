@@ -35,7 +35,7 @@ export async function forShops(env) {
     { q: 'Will the badge slow my site down?', a: 'No. It is one small image (about 2 KB) with a plain link, no script and no cookie.' },
   ], 'Questions from shops');
   const body = `<div class="answer"><h1>For card shops: get a free "Stock tracked live" badge</h1>
-  <p class="lede">Card Restock Tracker shows Pokémon collectors which independent card shops have a product in stock right now, and sends them straight to the shop's own page. We check ${total} online card shops in ${ccs.length} countries. If your shop is one of them, you can show it on your site with the badge below: copy the code for your country and paste it in your footer or on your "About" page.</p></div>
+  <p class="lede">Card Restock Tracker shows Pokémon collectors which independent card shops have a product in stock right now, and sends them straight to the shop's own page. We check ${total} online shops (mostly independent card shops) in ${ccs.length} countries. If your shop is one of them, you can show it on your site with the badge below: copy the code for your country and paste it in your footer or on your "About" page.</p></div>
   <section><h2>Your badge</h2>
   ${ccs.map((c) => { const code = badgeCode(env, c.code, c.lang); return `<div style="margin:0 0 18px;padding:14px 16px;border:1px solid var(--rule);border-radius:12px"><h3>${e(cname(c.code))}</h3>
     <p><img src="/badge/${BADGES.has(c.lang) ? c.lang : 'en'}.svg" width="240" height="48" alt="${e(ALT[c.lang] ?? ALT.en)}" loading="lazy"></p>
@@ -47,6 +47,6 @@ export async function forShops(env) {
   ${ccs.map((c) => { const n = online(c.code); return n.length ? `<h3>${e(cname(c.code))} (${n.length})</h3><p class="sub">${e(n.join(', '))}</p>` : ''; }).join('')}
   <p class="sub">Not on the list? Write to <a href="mailto:${e(env.SUPPORT_EMAIL)}">${e(env.SUPPORT_EMAIL)}</a> with your shop's address: we add independent shops that sell sealed Pokémon products online. <a href="/how-it-works">How we check stock</a> · <a href="/about">About us</a></p></section>`;
   return page(env, T, { title: `For card shops: free "Stock tracked live" badge | ${env.BRAND_NAME}`,
-    description: `We check ${total} online card shops in ${ccs.length} countries. What we read from your shop, how to be removed, and a free badge for your site.`,
+    description: `We check ${total} online shops (mostly independent card shops) in ${ccs.length} countries. What we read from your shop, how to be removed, and a free badge for your site.`,
     path: '/for-shops', body, jsonLd: [a.ld] });
 }

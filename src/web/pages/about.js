@@ -26,7 +26,7 @@ export async function aboutPage(env) {
   const en = new Intl.DisplayNames(['en'], { type: 'region' });
   const countries = T.f.list(ccs.map((c) => en.of(c.code === 'uk' ? 'GB' : c.code.toUpperCase())));
   const facts = [
-    `${shops} online card shops checked right now, in ${ccs.length} countries: ${countries}.`,
+    `${shops} online shops checked right now (independent card shops and big retailers), in ${ccs.length} countries: ${countries}.`,
     n?.products ? `${n.products.toLocaleString('en-US')} Pokémon products followed (boxes, bundles, packs, tins and more).` : '',
     r?.restocks != null ? `${r.restocks.toLocaleString('en-US')} restocks logged in the last 30 days, each with its time and how long it lasted.` : '',
     'A Japanese lottery and pre-order calendar (抽選・予約), with reminders before entries close.',
@@ -46,5 +46,5 @@ export async function aboutPage(env) {
   const ld = { '@context': 'https://schema.org', '@type': 'AboutPage', url: `${env.BASE_URL}/about`, name: 'About Card Restock Tracker', dateModified: new Date(now()).toISOString().slice(0, 10),
     mainEntity: { '@type': 'Organization', name: env.BRAND_NAME, url: env.BASE_URL, email: env.SUPPORT_EMAIL, foundingDate: LAUNCHED, logo: `${env.BASE_URL}/icon.svg`,
       founder: { '@type': 'Person', name: FOUNDER.name, jobTitle: FOUNDER.role, ...(FOUNDER.sameAs.length ? { sameAs: FOUNDER.sameAs } : {}) } } };
-  return page(env, T, { title: `About Card Restock Tracker: who runs it and how | ${env.BRAND_NAME}`, description: `Who runs Card Restock Tracker, why it exists and live numbers: ${shops} online card shops checked in ${ccs.length} countries.`, path: '/about', body, jsonLd: [ld, a.ld] });
+  return page(env, T, { title: `About Card Restock Tracker: who runs it and how | ${env.BRAND_NAME}`, description: `Who runs Card Restock Tracker, why it exists and live numbers: ${shops} online shops checked in ${ccs.length} countries.`, path: '/about', body, jsonLd: [ld, a.ld] });
 }
