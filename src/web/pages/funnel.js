@@ -31,6 +31,16 @@ const PLAN_NEEDED = {
   it: 'Gli avvisi richiedono un piano: scegli Solo o Multi.', es: 'Las alertas necesitan un plan: elige Solo o Multi.', ja: 'プランを選んでください（Solo または Multi）。',
 };
 
+// Plan step (2026-11-18): Solo highlighted next to the free daily email, one line on what "instant" buys you.
+const PLAN_UI = {
+  en: { badge: 'Recommended', why: 'Solo warns you as soon as we spot the restock, so you can buy before it sells out again. Free: one email the next morning.', solo: 'Instant alert · 1 product', free: '1 email a day, the morning after · 1 product' },
+  fr: { badge: 'Recommandé', why: 'Solo vous prévient dès que nous repérons le réassort : vous achetez avant la rupture. Gratuit : un e-mail le lendemain matin.', solo: 'Alerte instantanée · 1 produit', free: '1 e-mail par jour, le lendemain matin · 1 produit' },
+  de: { badge: 'Empfohlen', why: 'Solo meldet sich, sobald wir den Restock sehen: So kaufst du, bevor er wieder ausverkauft ist. Gratis: eine E-Mail am nächsten Morgen.', solo: 'Sofort-Alarm · 1 Produkt', free: '1 E-Mail pro Tag, am Morgen danach · 1 Produkt' },
+  nl: { badge: 'Aanbevolen', why: 'Solo meldt zich zodra we de restock zien, zodat je koopt voordat hij weer uitverkocht is. Gratis: één e-mail de volgende ochtend.', solo: 'Directe melding · 1 product', free: '1 e-mail per dag, de ochtend erna · 1 product' },
+  it: { badge: 'Consigliato', why: 'Solo ti avvisa appena vediamo il restock, così compri prima che si esaurisca di nuovo. Gratis: un\'email la mattina dopo.', solo: 'Avviso istantaneo · 1 prodotto', free: '1 email al giorno, la mattina dopo · 1 prodotto' },
+  es: { badge: 'Recomendado', why: 'Solo te avisa en cuanto detectamos la reposición, para que compres antes de que se agote otra vez. Gratis: un email a la mañana siguiente.', solo: 'Alerta al instante · 1 producto', free: '1 email al día, a la mañana siguiente · 1 producto' },
+};
+
 const EMAIL_OK = {
   en: 'Alerts come by email. That is fast enough: at the shops we track, a restock usually stays in stock for several hours before it sells out.',
   fr: 'Les alertes arrivent par e-mail. C\'est assez rapide : dans les boutiques suivies, un réassort reste généralement en stock plusieurs heures avant la rupture.',
@@ -89,6 +99,7 @@ export async function alertsPage(env, url, user) {
       body: `<div class="funnel"><h1>${e(F.h1)}</h1><p class="lede">${T.home.soon(T.cc.name)}</p><p><a href="/">United States</a> · <a href="/jp">日本</a></p></div>` });
   }
   const showPush = await pushVisible(env, user);
+  const PU = PLAN_UI[T.cc.lang] ?? PLAN_UI.en;
   const body = `<div class="funnel" id="funnel" data-country="${cc}" data-sku="${skus.some((k) => k.slug === sku) || sku.startsWith('jpset:') ? e(sku) : ''}" data-signed="${user ? 1 : 0}" data-pass="${pass ? e(pass.plan) : ''}" data-vapid="${e(env.VAPID_PUBLIC_KEY ?? '')}">
   <h1>${e(F.h1)}</h1>
   <ol class="steps" aria-label="Progress">${[F.steps[1], F.steps[3], F.steps[0]].map((x, i) => `<li data-s="${i + 1}">${e(x)}</li>`).join('')}</ol>
@@ -114,14 +125,15 @@ export async function alertsPage(env, url, user) {
     <h2>${e(freeMode(env) ? F.s3h : F.s4h)}</h2>
     <form data-form="plan">
       ${(() => { const S = SHOPS_UI[T.cc.lang] ?? SHOPS_UI.en; return `<div class="shops-pick" hidden data-all="${e(S.all)}" data-none="${e(S.none)}" data-in="${e(S.in)}"><p class="sub"><strong>${e(S.h)}</strong> · <span class="shops-sum"></span> · <button type="button" class="link shops-toggle">${e(S.pick)}</button></p><div class="shop-list" hidden></div></div>`; })()}
-      ${freeMode(env) ? `<input type="hidden" name="plan" value="launch"><p class="lede"><strong>${e(freeWords(T).plan)}</strong> · ${e(freeWords(T).planDesc)}</p>` : `<label class="plan"><input type="radio" name="plan" value="solo" checked><span><strong>Solo · ${e(T.f.planMoney(T.cc.prices.solo))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.solo)}</span></span></label>
-      <label class="plan"><input type="radio" name="plan" value="multi"><span><strong>Multi · ${e(T.f.planMoney(T.cc.prices.multi))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.multi)}</span></span></label>
-      ${!lottery && F.free ? `<label class="plan"><input type="radio" name="plan" value="free"><span><strong>${e(F.freeName)} · ${e(T.f.money(0))}</strong><br><span class="fine">${e(F.free)}</span></span></label>` : ''}
-      <p class="fine">${e(F.renew)}</p>`}
+      ${freeMode(env) ? `<input type="hidden" name="plan" value="launch"><p class="lede"><strong>${e(freeWords(T).plan)}</strong> · ${e(freeWords(T).planDesc)}</p>` : `${lottery ? '' : `<p class="plan-why">${e(PU.why)}</p>`}<div class="plans${lottery ? ' plans-jp' : ''}">
+      <label class="plan plan-rec"><input type="radio" name="plan" value="solo" checked><span>${lottery ? '' : `<span class="plan-badge">${e(PU.badge)}</span>`}<strong>Solo</strong><span class="plan-price">${e(T.f.planMoney(T.cc.prices.solo))} <span class="fine">${e(F.per30)}</span></span><span class="fine">${e(lottery ? F.solo : PU.solo)}</span></span></label>
+      ${!lottery && F.free ? `<label class="plan"><input type="radio" name="plan" value="free"><span><strong>${e(F.freeName)}</strong><span class="plan-price">${e(T.f.money(0))}</span><span class="fine">${e(PU.free)}</span></span></label>` : ''}
+      <label class="plan plan-wide"><input type="radio" name="plan" value="multi"><span><strong>Multi · ${e(T.f.planMoney(T.cc.prices.multi))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.multi)}</span></span></label></div>`}
       ${cc === 'jp' ? `<fieldset class="channels"><label class="radio"><input type="checkbox" name="line" value="1" checked> ${e(F.line)} <span class="fine">${e(F.lineFine)}</span></label></fieldset>` : ''}
       ${showPush ? pushOption(T) : ''}
-      <p class="sub">${e(EMAIL_OK[T.cc.lang] ?? EMAIL_OK.en)}</p>
-      <button class="btn" type="submit">${e(freeMode(env) ? freeWords(T).btn : user ? F.checkout : F.cont)}</button></form>
+      ${cc === 'jp' ? `<p class="sub">${e(EMAIL_OK.ja)}</p>` : ''}
+      <button class="btn plan-go" type="submit">${e(freeMode(env) ? freeWords(T).btn : user ? F.checkout : F.cont)}</button>
+      ${freeMode(env) ? '' : `<p class="fine plan-fine">${e(F.renew)}</p>`}</form>
     <p class="err" role="alert"></p>
     ${freeMode(env) || pass ? '' : exitSurvey(T, (n) => T.f.planMoney(n).replace(/[.,]00(?=\D|$)/, ''), T.cc.prices.currency ?? T.cc.currency, T.cc.prices.solo)}
   </section>

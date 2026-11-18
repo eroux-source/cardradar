@@ -473,3 +473,33 @@ html, body { overflow-x: clip; }
 .exit-survey textarea, .exit-survey input[type=email] { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1.5px solid #c9d6ff; margin-bottom: 10px; }
 .xs-actions { display: flex; align-items: center; gap: 16px; }
 .exit-survey::backdrop { background: rgba(10, 20, 50, .45); }
+
+/* plan step (2026-11-18): Solo highlighted next to Free, Multi below, fine print under the button */
+.plan-why { margin: -4px 0 14px; font-size: 15px; line-height: 1.45; }
+.plans { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.plans .plan-wide, .plans-jp .plan { grid-column: 1 / -1; }
+.plans label.plan { position: relative; margin: 0; padding: 12px 12px 12px 14px; gap: 8px; cursor: pointer; }
+.plans label.plan > input { position: absolute; top: 12px; right: 12px; margin: 0; width: 20px; height: 20px; accent-color: var(--navy); }
+.plans .plan-wide > span { padding-right: 28px; }
+.plans label.plan > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.plans .plan-wide > span { display: block; }
+.plan-price { font: 800 22px/1.15 var(--head); }
+.plan-price .fine { font: 400 13px/1.3 var(--body); }
+.plan-badge { align-self: flex-start; font-size: 12px; font-weight: 700; color: var(--yellow-ink); background: var(--yellow); border-radius: 999px; padding: 2px 8px; margin-bottom: 4px; }
+label.plan.plan-rec { border-color: #e9c23c; }
+label.plan.plan-rec:has(input:checked) { border-color: var(--navy); }
+.plan-go { width: 100%; margin-top: 4px; }
+.plan-fine { margin-top: 10px; }
+@media (max-width: 330px) { .plans { grid-template-columns: 1fr; } }
+
+/* alert block high on product pages and country homes (2026-11-18) */
+.cta-alert { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 16px 0 0; padding: 14px 16px; border-radius: var(--r); background: #fff; border: 1.5px solid #f3dc8a; }
+.cta-alert.is-out { background: #fff8dc; }
+.cta-alert-text { display: flex; flex-direction: column; gap: 2px; flex: 1 1 260px; min-width: 0; }
+.cta-alert-text strong { font: 800 19px/1.2 var(--head); }
+.cta-alert-text span { font-size: 15px; color: var(--soft); }
+.cta-alert-go { display: flex; flex-wrap: wrap; gap: 8px; }
+.cta-alert-go .btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.cta-alert-go [hidden], .cta-ios[hidden] { display: none; }
+.cta-ios { flex-basis: 100%; margin: 0; }
+@media (max-width: 560px) { .cta-alert-go { flex: 1 1 100%; } .cta-alert-go .btn { flex: 1 1 auto; } }

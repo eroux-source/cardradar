@@ -69,6 +69,8 @@
   const ua = navigator.userAgent;
   const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const isIOSSafari = isIOS && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\//.test(ua);
+  // "Add to Home Screen" line under the alert block on product pages and country homes (iPhone, not already in the app)
+  if (isIOS && !standalone) $$('[data-ios-hint]').forEach((x) => { x.hidden = false; });
   const canPush = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
   const pushUI = !!document.querySelector('[data-push-opt], #push-box');
   const swReady = canPush && (pushUI || standalone) ? navigator.serviceWorker.register('/sw.js').catch(() => null) : null;

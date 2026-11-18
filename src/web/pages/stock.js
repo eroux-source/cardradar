@@ -15,6 +15,7 @@ import * as d from '../data.js';
 import { affiliateBlock } from '../affiliate.js';
 import { page, home as homePath, base, crumbs, answers, hourChart, latestTable, shopsText, productGrid, placeLabel, alertCta } from '../html.js';
 import { factsBlock } from '../facts.js';
+import { alertBlock } from '../alert_cta.js';
 
 const maps = (s) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([sourceName(s.source), s.address, s.city, s.state, s.zip].filter(Boolean).join(' '))}`;
 
@@ -90,7 +91,8 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
       <p class="lede">${e(S.lede(shops))}</p>
       <p class="answer-line">${e(answer)}</p>
       ${!isHome && cc !== 'jp' && GUIDES['30th-etb'].match(k.name) ? `<p class="quick-links"><a href="${guidePath(cc, '30th-etb')}">${e(words(cc).guide30)}</a></p>` : ''}</div>
-      ${k.image ? `<figure class="hero2-photo"><img src="${e(thumb(k.image, 500))}" alt="${e(k.name)}" referrerpolicy="no-referrer"></figure>` : ''}</div></section>
+      ${k.image ? `<figure class="hero2-photo"><img src="${e(thumb(k.image, 500))}" alt="${e(k.name)}" referrerpolicy="no-referrer"></figure>` : ''}</div>
+    ${!isHome && cc !== 'jp' && !freeMode(env) ? alertBlock(T, alertHref, { title: S.alertH, out: !inNow.length, from: 'product_top' }) : ''}</section>
   <section class="controls" aria-label="${e(S.products)}">
     <form class="find" action="${base(cc)}/search" method="get" role="search">
       <input name="q" list="sku-list" autocomplete="off" placeholder="${e(S.findPh)}" aria-label="${e(S.findPh)}" data-find>
@@ -170,6 +172,7 @@ export async function homeList(env, T, cc, { live = null, alternates = null, ext
     <p class="lede">${e(inNow.length ? H.lede(inNow.length, shopsN) : H.ledeNone(shopsN))}</p>
     ${checked ? `<p class="asof"><time datetime="${new Date(checked).toISOString()}">${e(T.asOf(T.f.when(checked)))}</time></p>` : ''}
     ${cc === 'jp' ? '' : `<p class="quick-links"><a href="${dataPath(cc)}">${e(words(cc).data)}</a><a href="${thirtyPath(cc)}">${e(words(cc).thirty)}</a><a href="${guidePath(cc, 'delta-reign')}">Delta Reign</a><a href="${guidePath(cc, 'flowing-fists')}">Flowing Fists (ME07)</a><a href="${upcomingPath(cc)}">${e(UPCOMING_LINK[COUNTRIES[cc]?.lang] ?? UPCOMING_LINK.en)}</a></p>`}
+    ${cc === 'jp' || freeMode(env) ? '' : alertBlock(T, `/alerts?c=${cc}`, { out: !inNow.length, from: 'home_top' })}
     <form class="find" action="${base(cc)}/search" method="get" role="search">
       <input name="q" list="sku-list" autocomplete="off" placeholder="${e(S.findPh)}" aria-label="${e(S.findPh)}" data-find>
       <datalist id="sku-list">${[...inNow, ...out].slice(0, 200).map((x) => `<option value="${e(x.name)}" data-href="${base(cc)}/${e(x.slug)}"></option>`).join('')}</datalist>
