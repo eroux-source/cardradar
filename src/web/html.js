@@ -3,7 +3,7 @@
 // "in stock / sold out" status, the price. No metaphors.
 import { feedbackBlock, feedbackFab } from './feedback.js';
 import { freeMode, freeWords } from './free.js';
-import { escapeHtml as e } from '../lib/util.js';
+import { escapeHtml as e, thumb } from '../lib/util.js';
 import { COUNTRIES, countryList } from '../data/countries.js';
 import { sourcesOf, sourceName } from '../sources/index.js';
 import { dataPath, thirtyPath, words } from './pages/local_data.js';
@@ -145,7 +145,7 @@ export function productGrid(T, skus) {
       : online.length ? `<span class="chip in">${e(T.chip.in)}</span><span class="where">${e(`${T.card.online}: ${online.slice(0, 3).join(', ')}${online.length > 3 ? ` +${online.length - 3}` : ''}`)}</span>`
         : k.places || k.stores || k.last_restock ? `<span class="chip out">${e(T.chip.out)}</span>` : `<span class="chip unknown">${e(T.chip.unknown)}</span>`;
     return `<li><a class="product" href="${base(cc)}/${e(k.slug)}">
-      <span class="ph">${k.image ? `<img src="${e(k.image)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '<span class="ph-empty" aria-hidden="true"></span>'}</span>
+      <span class="ph">${k.image ? `<img src="${e(thumb(k.image))}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '<span class="ph-empty" aria-hidden="true"></span>'}</span>
       <span class="pname">${e(k.name)}</span>
       <span class="pstatus">${status}</span>
       <span class="pmeta">${(k.price_in ?? k.min_price) ? `<strong>${e(T.f.money(k.price_in ?? k.min_price))}</strong>` : ''}${k.last_restock ? ` · ${e(T.lastRestockAgo(T.f.ago(k.last_restock)))}` : ''}</span>

@@ -117,3 +117,15 @@ export function hourLabel(h) {
   const hh = h % 12 === 0 ? 12 : h % 12;
   return `${hh} ${suffix}`;
 }
+
+/** Smaller copy of a shop photo for cards and thumbnails (Shopify serves resized images with ?width=).
+ *  Other hosts are returned unchanged. Product schema keeps the original URL. */
+export function thumb(url, width = 400) {
+  if (!url) return url;
+  try {
+    const u = new URL(url);
+    if (u.hostname !== 'cdn.shopify.com' && !u.pathname.startsWith('/cdn/shop/')) return url;
+    u.searchParams.set('width', String(width));
+    return u.toString();
+  } catch { return url; }
+}

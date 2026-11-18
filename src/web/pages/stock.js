@@ -9,7 +9,7 @@ import { dataPath, thirtyPath, words } from './local_data.js';
 import { GUIDES, guidePath } from './where_buy.js';
 import { upcomingPath, UPCOMING_LINK } from './upcoming.js';
 import { COUNTRIES } from '../../data/countries.js';
-import { escapeHtml as e } from '../../lib/util.js';
+import { escapeHtml as e, thumb } from '../../lib/util.js';
 import { sourceName, sourcesOf, sourceList } from '../../sources/index.js';
 import * as d from '../data.js';
 import { affiliateBlock } from '../affiliate.js';
@@ -74,7 +74,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
   const placesRestocked = new Set(rs.map((r) => r.store_id)).size;
 
   const c = crumbs(env, [{ name: T.nav.live, path: homePath(cc) }, ...(isHome ? [{ name: T.cc.name, path }] : [{ name: k.name, path: `${base(cc)}/${k.slug}` }, ...(metro ? [{ name: metro.name, path }] : [])])]);
-  const pills = skus.slice(0, 10).map((x) => `<a class="pill${x.id === k.id ? ' on' : ''}" href="${base(cc)}/${e(x.slug)}${metro ? `/${e(metro.slug)}` : ''}"${x.id === k.id ? ' aria-current="page"' : ''}>${x.image ? `<img src="${e(x.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}${e(x.name)}</a>`).join('');
+  const pills = skus.slice(0, 10).map((x) => `<a class="pill${x.id === k.id ? ' on' : ''}" href="${base(cc)}/${e(x.slug)}${metro ? `/${e(metro.slug)}` : ''}"${x.id === k.id ? ' aria-current="page"' : ''}>${x.image ? `<img src="${e(thumb(x.image, 80))}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}${e(x.name)}</a>`).join('');
   const citySel = hasStores ? `<label class="ctl-label" for="city-pick">${e(S.city)}</label><select id="city-pick" data-nav>
       <option value="${base(cc)}/${e(k.slug)}">${e(S.allCities)}</option>${T.cc.metros.map((m) => `<option value="${base(cc)}/${e(k.slug)}/${e(m.slug)}"${metro?.id === m.id ? ' selected' : ''}>${e(m.name)}</option>`).join('')}</select>` : '';
 
@@ -90,7 +90,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
       <p class="lede">${e(S.lede(shops))}</p>
       <p class="answer-line">${e(answer)}</p>
       ${!isHome && cc !== 'jp' && GUIDES['30th-etb'].match(k.name) ? `<p class="quick-links"><a href="${guidePath(cc, '30th-etb')}">${e(words(cc).guide30)}</a></p>` : ''}</div>
-      ${k.image ? `<figure class="hero2-photo"><img src="${e(k.image)}" alt="${e(k.name)}" referrerpolicy="no-referrer"></figure>` : ''}</div></section>
+      ${k.image ? `<figure class="hero2-photo"><img src="${e(thumb(k.image, 500))}" alt="${e(k.name)}" referrerpolicy="no-referrer"></figure>` : ''}</div></section>
   <section class="controls" aria-label="${e(S.products)}">
     <form class="find" action="${base(cc)}/search" method="get" role="search">
       <input name="q" list="sku-list" autocomplete="off" placeholder="${e(S.findPh)}" aria-label="${e(S.findPh)}" data-find>
@@ -160,7 +160,7 @@ export async function homeList(env, T, cc, { live = null, alternates = null, ext
   const order = Object.keys(H.types);
   types.sort((a, b) => order.indexOf(a) - order.indexOf(b));
   const card = (k, isIn) => `<li data-type="${e(k.type ?? 'other')}"><a class="product${isIn ? ' is-in' : ''}" href="${base(cc)}/${e(k.slug)}">
-      <span class="ph">${k.image ? `<img src="${e(k.image)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '<span class="ph-empty" aria-hidden="true"></span>'}</span>
+      <span class="ph">${k.image ? `<img src="${e(thumb(k.image))}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '<span class="ph-empty" aria-hidden="true"></span>'}</span>
       <span class="pname">${e(k.name)}</span>
       <span class="pstatus">${isIn ? `<span class="chip in">${e(H.at(k.places_in))}</span>` : `<span class="chip out">${e(T.chip.out)}</span>`}</span>
       <span class="pmeta">${isIn && k.price_in ? `<strong>${e(H.from(T.f.money(k.price_in)))}</strong>` : k.min_price ? e(T.f.money(k.min_price)) : ''}${!isIn && k.last_restock ? ` · ${e(T.lastRestockAgo(T.f.ago(k.last_restock)))}` : ''}</span>
