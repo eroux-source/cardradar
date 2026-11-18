@@ -246,14 +246,22 @@
       try { xs.showModal(); } catch { xs.setAttribute('open', ''); }
       ev('exit_survey_open', { from });
     };
-    const planVisible = () => !$('.step[data-step="2"]', f).hidden;
-    // desktop: the mouse leaves the window through the top while the plans are on screen
-    document.addEventListener('mouseout', (e) => { if (!e.relatedTarget && e.clientY <= 0 && planVisible()) open('exit'); });
+    // Pop-up when people leave the alerts page (Eugène, 2026-11-18), never as a link.
+    // Desktop: the mouse leaves the window through the top.
+    document.addEventListener('mouseout', (e) => { if (!e.relatedTarget && e.clientY <= 0) open('exit'); });
+    // Phones: the back button. One extra history entry is added; pressing back shows the survey,
+    // and closing or sending it finishes leaving the page.
+    let leaving = false;
+    if (!ss('crt_xs_shown') && window.history && history.pushState) {
+      try { history.pushState({ crtXs: 1 }, '', location.href); } catch {}
+      window.addEventListener('popstate', () => { if (!ss('crt_xs_shown')) { leaving = true; open('back_button'); } else history.back(); });
+    }
+    const done = () => { if (xs.close) xs.close(); xs.removeAttribute('open'); if (leaving) { leaving = false; history.back(); } };
     // back from the Whop checkout without paying (also when the page comes back from the browser cache)
     const back = () => { const t = Number(ss('crt_checkout') || 0); if (t && Date.now() - t < 6 * 3600e3) { ss('crt_checkout', ''); open('back'); } };
     window.addEventListener('pageshow', back); back();
-    [...f.querySelectorAll('[data-xs-open]')].forEach((b) => b.addEventListener('click', () => open('link')));
-    $('[data-xs-close]', xs).addEventListener('click', () => { if (xs.close) xs.close(); xs.removeAttribute('open'); ev('exit_survey_skip'); });
+    $('[data-xs-close]', xs).addEventListener('click', () => { ev('exit_survey_skip'); done(); });
+    xs.addEventListener('cancel', () => { ev('exit_survey_skip'); setTimeout(done, 0); });
     // follow-up questions: the price one for "too expensive", the payment one for "card"
     xform.addEventListener('change', () => {
       const r = $('input[name=reason]:checked', xs)?.value;
@@ -270,7 +278,7 @@
           plan: ss('crt_plan') || ($('input[name=plan]:checked', f)?.value ?? ''), text: d.text, email: d.email, cc: document.body.dataset.cc, page: `${location.pathname}#${xs.dataset.from || ''}`, visit });
         ev('exit_survey_sent', { reason: d.reason });
         xform.innerHTML = `<p class="ok fb-thanks" role="status">${xs.dataset.thanks}</p>`;
-        setTimeout(() => { if (xs.close) xs.close(); xs.removeAttribute('open'); }, 1800);
+        setTimeout(done, 1800);
       } catch (x) { $('.err', xs).textContent = x.message; busy(xform, false); }
     });
   }
