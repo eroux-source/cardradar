@@ -526,6 +526,9 @@ label.plan.plan-rec:has(input:checked) { border-color: var(--navy); }
 .price-cards .plan-wide .fine:first-of-type { margin: 0; }
 @media (max-width: 400px) { .price-cards .plan { padding: 12px; } .price-cards .plan .btn { font-size: 15px; padding: 10px; } }
 
+/* shop cards: status line starts with a capital in every language */
+.place-meta::first-letter { text-transform: uppercase; }
+
 /* header: bell on the Alerts button */
 .site-nav a.cta::before { content: "🔔"; margin-right: 6px; font-size: .95em; }
 @media (max-width: 380px) { .site-nav a.cta::before { margin-right: 3px; } }
