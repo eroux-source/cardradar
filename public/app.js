@@ -246,10 +246,13 @@
       try { xs.showModal(); } catch { xs.setAttribute('open', ''); }
       ev('exit_survey_open', { from });
     };
+    const planVisible = () => !$('.step[data-step="2"]', f).hidden;
+    // desktop: the mouse leaves the window through the top while the plans are on screen
+    document.addEventListener('mouseout', (e) => { if (!e.relatedTarget && e.clientY <= 0 && planVisible()) open('exit'); });
     // back from the Whop checkout without paying (also when the page comes back from the browser cache)
     const back = () => { const t = Number(ss('crt_checkout') || 0); if (t && Date.now() - t < 6 * 3600e3) { ss('crt_checkout', ''); open('back'); } };
     window.addEventListener('pageshow', back); back();
-    if (/[?&]survey=1/.test(location.search)) open('link');
+    [...f.querySelectorAll('[data-xs-open]')].forEach((b) => b.addEventListener('click', () => open('link')));
     $('[data-xs-close]', xs).addEventListener('click', () => { if (xs.close) xs.close(); xs.removeAttribute('open'); ev('exit_survey_skip'); });
     // follow-up questions: the price one for "too expensive", the payment one for "card"
     xform.addEventListener('change', () => {
