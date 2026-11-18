@@ -93,6 +93,8 @@ async function route(req, env, ctx) {
       })(),
       wanted_channels: Object.entries((await env.DB.prepare("SELECT props FROM events WHERE name = 'wants_channel' AND bot = 0").all()).results.reduce((m, r) => { for (const c of String(JSON.parse(r.props || '{}').ch ?? '').split(',').filter(Boolean)) m[c] = (m[c] ?? 0) + 1; return m; }, {})),
       funnel_7d: (await env.DB.prepare("SELECT name, COUNT(*) AS n, COUNT(DISTINCT visit) AS v FROM events WHERE name != 'view' AND bot = 0 AND at > ? GROUP BY name ORDER BY n DESC LIMIT 20").bind(now() - 7 * 864e5).all()).results,
+      // today (UTC): alert funnel and payment page, unique visits
+      funnel_today: (await env.DB.prepare("SELECT CASE WHEN name = 'view' THEN 'view ' || path ELSE name END AS name, COUNT(DISTINCT visit) AS v FROM events WHERE bot = 0 AND at > ? AND (name IN ('step_1','step_2','step_3','free_alert','buy_out','checkout_start','paid','signup','sheet_open','exit_survey') OR (name = 'view' AND (path IN ('/alerts','/pricing') OR path LIKE '/%/pricing'))) GROUP BY 1 ORDER BY v DESC").bind(new Date().setUTCHours(0, 0, 0, 0)).all().catch(() => ({ results: [] }))).results,
       top_pages_7d: (await env.DB.prepare("SELECT path, COUNT(DISTINCT visit) AS v FROM events WHERE name = 'view' AND bot = 0 AND at > ? GROUP BY path ORDER BY v DESC LIMIT 15").bind(now() - 7 * 864e5).all()).results.map((r) => `${r.path} ${r.v}`),
       sources_7d: conv7.by_source.map((g) => `${g.source} ${g.visits}`),
       conversion_7d: { by_source: conv7.by_source.map(convLine), by_landing: conv7.by_landing.slice(0, 12).map(convLine) },
