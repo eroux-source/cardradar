@@ -238,26 +238,48 @@
   if (xs && f) {
     const ss = (k, v) => { try { if (v === undefined) return sessionStorage.getItem(k); sessionStorage.setItem(k, v); } catch { return null; } return null; };
     const xform = $('[data-form=exit]', xs);
+    // once per page view (not per visit: people come back to compare), never again once answered
+    let shown = false;
+    const answered = () => { try { return Number(localStorage.getItem('crt_xs_sent') || 0) > Date.now() - 30 * 864e5; } catch { return false; } };
     const open = (from) => {
-      if (xs.open) return;
-      if (from !== 'link' && ss('crt_xs_shown')) return;
-      ss('crt_xs_shown', '1'); xs.dataset.from = from;
+      if (xs.open || shown || answered()) return false;
+      shown = true; xs.dataset.from = from;
       if (from === 'back') { const r = $('input[name=reason][value=payment_failed]', xs); if (r) r.closest('label').parentNode.prepend(r.closest('label')); }
       try { xs.showModal(); } catch { xs.setAttribute('open', ''); }
       ev('exit_survey_open', { from });
+      return true;
     };
     // Pop-up when people leave the alerts page while the plans (prices) are on screen (Eugène, 2026-11-18), never as a link.
     const plansOnScreen = () => { const s = $('.step[data-step="2"]', f); return !!s && !s.hidden; };
     // Desktop: the mouse leaves the window through the top.
     document.addEventListener('mouseout', (e) => { if (!e.relatedTarget && e.clientY <= 0 && plansOnScreen()) open('exit'); });
-    // Phones: the back button. One extra history entry is added; pressing back shows the survey,
-    // and closing or sending it finishes leaving the page.
-    let leaving = false;
-    if (!ss('crt_xs_shown') && window.history && history.pushState) {
+    // Phones: the back button. One extra history entry is added after the first tap (Chrome skips entries
+    // added without a user gesture); pressing back shows the survey, closing or sending it finishes leaving.
+    let leaving = null; let armed = false;
+    const arm = () => {
+      if (armed || answered() || !window.history || !history.pushState) return;
+      armed = true;
       try { history.pushState({ crtXs: 1 }, '', location.href); } catch {}
-      window.addEventListener('popstate', () => { if (!ss('crt_xs_shown') && plansOnScreen()) { leaving = true; open('back_button'); } else history.back(); });
-    }
-    const done = () => { if (xs.close) xs.close(); xs.removeAttribute('open'); if (leaving) { leaving = false; history.back(); } };
+    };
+    ['pointerdown', 'keydown', 'touchstart'].forEach((t) => document.addEventListener(t, arm, { once: true, passive: true }));
+    window.addEventListener('popstate', () => {
+      if (!armed) return;
+      if (plansOnScreen() && open('back_button')) { leaving = 'back'; return; }
+      history.back();
+    });
+    // Leaving through a link of the site (logo, menu, footer) while the prices are shown
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest && e.target.closest('a[href]');
+      if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || a.target === '_blank' || xs.contains(a)) return;
+      const to = new URL(a.href, location.href);
+      if (to.pathname === location.pathname || !plansOnScreen()) return;
+      if (open('link_out')) { e.preventDefault(); leaving = to.href; }
+    }, true);
+    const done = () => {
+      if (xs.close) xs.close(); xs.removeAttribute('open');
+      const l = leaving; leaving = null;
+      if (l === 'back') history.back(); else if (l) location.href = l;
+    };
     // back from the Whop checkout without paying (also when the page comes back from the browser cache)
     const back = () => { const t = Number(ss('crt_checkout') || 0); if (t && Date.now() - t < 6 * 3600e3) { ss('crt_checkout', ''); open('back'); } };
     window.addEventListener('pageshow', back); back();
@@ -278,6 +300,7 @@
         await post('/api/feedback', { kind: 'exit', reason: d.reason, price: d.reason === 'price' ? price : undefined, currency: xs.dataset.cur, pay: d.reason === 'card' ? d.pay : undefined,
           plan: ss('crt_plan') || ($('input[name=plan]:checked', f)?.value ?? ''), text: d.text, email: d.email, cc: document.body.dataset.cc, page: `${location.pathname}#${xs.dataset.from || ''}`, visit });
         ev('exit_survey_sent', { reason: d.reason });
+        try { localStorage.setItem('crt_xs_sent', String(Date.now())); } catch {}
         xform.innerHTML = `<p class="ok fb-thanks" role="status">${xs.dataset.thanks}</p>`;
         setTimeout(done, 1800);
       } catch (x) { $('.err', xs).textContent = x.message; busy(xform, false); }
