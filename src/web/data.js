@@ -1,6 +1,6 @@
 // Read-side queries for pages. Pages read small, indexed slices of data;
 // owner analytics read mk_stats, never raw events (playbook §0.4).
-import { all, one, now } from '../lib/db.js';
+import { all, one, run, now } from '../lib/db.js';
 import { median } from '../lib/util.js';
 import { COUNTRIES } from '../data/countries.js';
 
@@ -51,7 +51,7 @@ export const skuBySlug = (env, slug) => one(env, `SELECT k.*, st.name AS set_nam
   FROM skus k LEFT JOIN sets st ON st.id = k.set_id WHERE k.slug = ?`, slug);
 export const skuInCountry = (env, skuId, cc) => one(env, 'SELECT 1 AS ok FROM listings WHERE sku_id = ? AND country = ? AND active = 1 LIMIT 1', skuId, cc);
 /** Countries where a product has a live page (active listings), for hreflang: one map for all products, shared for 10 min. */
-const skuCountryMap = (env) => memo('skucc', 600e3, async () => new Map((await all(env, 'SELECT sku_id, GROUP_CONCAT(DISTINCT country) AS ccs FROM listings WHERE active = 1 GROUP BY sku_id')).map((r) => [r.sku_id, String(r.ccs ?? '').split(',').filter((c) => COUNTRIES[c])])));
+const skuCountryMap = (env) => shared(env, 'skucc', 600e3, async () => new Map((await all(env, 'SELECT sku_id, GROUP_CONCAT(DISTINCT country) AS ccs FROM listings WHERE active = 1 GROUP BY sku_id')).map((r) => [r.sku_id, String(r.ccs ?? '').split(',').filter((c) => COUNTRIES[c])])), { enc: (m) => [...m], dec: (a) => new Map(a) });
 export const skuCountries = async (env, skuId) => (await skuCountryMap(env)).get(skuId) ?? [];
 /** Time of the latest stock reading in a country (shown on the country home). Shared for a minute. */
 export const lastCheck = (env, cc) => memo(`lastcheck:${cc}`, 60e3, async () => (await one(env, 'SELECT MAX(x.seen_at) AS t FROM stock x JOIN stores s ON s.id = x.store_id WHERE s.country = ?', cc))?.t ?? null);
@@ -83,8 +83,18 @@ const memo = async (key, ttl, fn) => {
   return v;
 };
 
+// Shared across isolates: per-isolate memo first, then the shared_cache row in D1, then the real query.
+// Cuts the heavy aggregations to about one per key per TTL for the whole site (D1 "overloaded" errors).
+const shared = (env, key, ttl, fn, { enc = (v) => v, dec = (v) => v } = {}) => memo(key, Math.min(ttl, 60e3), async () => {
+  const row = await one(env, 'SELECT value, at FROM shared_cache WHERE key = ?', key).catch(() => null);
+  if (row && Date.now() - row.at < ttl) { try { return dec(JSON.parse(row.value)); } catch {} }
+  const v = await fn();
+  await run(env, 'INSERT INTO shared_cache (key, value, at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, at = excluded.at', key, JSON.stringify(enc(v)), Date.now()).catch(() => {});
+  return v;
+});
+
 /** Every product sold in a country, hardest to find first, with its photo. */
-export const allSkus = (env, cc) => memo(`skus:${cc}`, 60e3, () => all(env, `
+export const allSkus = (env, cc) => shared(env, `skus:${cc}`, 120e3, () => all(env, `
   WITH agg AS (
     SELECT l.sku_id, SUM(s.online = 0) AS stores, SUM(s.online = 0 AND x.in_stock = 1) AS stores_in,
       GROUP_CONCAT(DISTINCT CASE WHEN s.online = 1 AND x.in_stock = 1 THEN s.source END) AS online_in,
@@ -140,7 +150,7 @@ export const liveCountries = (env) => memo('live', 300e3, async () => new Set((a
   .concat((await all(env, "SELECT 'jp' AS country FROM lotteries LIMIT 1")).map((r) => r.country))));
 
 /** Popularity of each product in a country over 14 days: page views + 5 × clicks (buy, compare, alert). slug → score. */
-export const popularity = (env, cc) => memo(`pop:${cc}`, 600e3, () => popularityQ(env, cc));
+export const popularity = (env, cc) => shared(env, `pop:${cc}`, 1800e3, () => popularityQ(env, cc), { enc: (m) => [...m], dec: (a) => new Map(a) });
 async function popularityQ(env, cc) {
   const since = now() - 14 * DAY;
   const pre = `/${cc}/`;
