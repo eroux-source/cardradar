@@ -10,6 +10,7 @@ import { JP_SETS } from '../../data/sets_jp.js';
 import { all } from '../../lib/db.js';
 import { activePass, PLANS } from '../../billing/pass.js';
 import { page } from '../html.js';
+import { accountWords } from '../account_words.js';
 
 // Email only for now: restocks at independent shops usually last hours, so an email is fast enough.
 // The checkbox counts who would like phone notifications (event "wants_phone"), to decide whether to build them.
@@ -130,55 +131,57 @@ export async function alertsPage(env, url, user) {
 
 export async function signinPage(env, url) {
   const next = url.searchParams.get('next') ?? '/account';
-  const body = `<div class="funnel" id="signin" data-next="${e(next)}"><h1>Sign in</h1>
-  ${env.GOOGLE_CLIENT_ID ? `<a class="btn ghost" href="/auth/google?next=${encodeURIComponent(next)}">Continue with Google</a>` : ''}
-  <form data-form="email"><label for="s-email">Email</label><input id="s-email" name="email" type="email" autocomplete="email" required><button class="btn" type="submit">Email me a code</button></form>
-  <form data-form="code" hidden><label for="s-code">6-digit code (works for 1 hour)</label><input id="s-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required><button class="btn" type="submit">Sign in</button></form>
+  const T = t(visitCountry(url, null)); const W = accountWords(T.cc.lang).signin;
+  const body = `<div class="funnel" id="signin" data-next="${e(next)}"><h1>${e(W.h1)}</h1>
+  ${env.GOOGLE_CLIENT_ID ? `<a class="btn ghost" href="/auth/google?next=${encodeURIComponent(next)}">${e(W.google)}</a>` : ''}
+  <form data-form="email"><label for="s-email">${e(W.email)}</label><input id="s-email" name="email" type="email" autocomplete="email" required><button class="btn" type="submit">${e(W.send)}</button></form>
+  <form data-form="code" hidden><label for="s-code">${e(W.code)}</label><input id="s-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required><button class="btn" type="submit">${e(W.btn)}</button></form>
   <p class="err" role="alert"></p></div>`;
-  return page(env, t(visitCountry(url, null)), { title: `Sign in — ${env.BRAND_NAME}`, description: 'Sign in', path: '/signin', body, noindex: true, nav: 'account' });
+  return page(env, T, { title: `${W.h1} — ${env.BRAND_NAME}`, description: W.h1, path: '/signin', body, noindex: true, nav: 'account' });
 }
 
 export async function accountPage(env, url, user) {
-  if (!user) return Response.redirect(`${env.BASE_URL}/signin?next=/account`, 302);
+  if (!user) { const c = url.searchParams.get('c'); return Response.redirect(`${env.BASE_URL}/signin?next=/account${COUNTRIES[c] ? `&c=${c}` : ''}`, 302); }
   const pass = await activePass(env, user.id);
   const alerts = await all(env, `SELECT a.*, k.name AS sku_name, st.name AS set_name FROM alerts a LEFT JOIN skus k ON k.id = a.sku_id LEFT JOIN sets st ON st.id = a.set_id
     WHERE a.user_id = ? AND a.status != 'deleted' ORDER BY a.created_at DESC`, user.id);
   const recent = await all(env, `SELECT s.claimed_at, s.status, s.channels_ok, k.name, st.name AS store, st.online, st.source FROM alert_sent s JOIN alerts a ON a.id = s.alert_id
     JOIN restocks r ON r.id = s.restock_id JOIN skus k ON k.id = r.sku_id JOIN stores st ON st.id = r.store_id WHERE a.user_id = ? ORDER BY s.claimed_at DESC LIMIT 10`, user.id);
   const metroName = (id) => metroById[id]?.name ?? id;
-  const T = t(visitCountry(url, user));
+  const T = t(visitCountry(url, user)); const W = accountWords(T.cc.lang);
+  const alertsHref = `/alerts?c=${T.cc.code}`;
   const paid = url.searchParams.get('paid');
   const showPush = await pushVisible(env, user);
   const body = `<div class="account" id="account" data-vapid="${e(env.VAPID_PUBLIC_KEY ?? '')}">
-  <h1>Your alerts</h1>
-  ${paid ? '<p class="ok" role="status">Payment received. Your alerts are live: we email you the moment a restock is detected.</p>' : ''}
-  ${url.searchParams.get('free') ? (freeMode(env) ? '<p class="ok" role="status">Your alert is on. We email you as soon as it is back in stock.</p>' : '<p class="ok" role="status">Your free alert is on. Every morning you get one email with the restocks it caught the day before.</p>') : ''}
-  <p class="lede">${e(user.email)} · ${pass ? `<strong>${e(PLANS[pass.plan]?.name ?? pass.plan)}</strong> until ${formatUtc(pass.ends_at)}${pass.renews ? ' (renews)' : ' (will not renew)'}` : alerts.some((a) => a.free) ? '<strong>Free plan</strong>: one email a day with yesterday\'s restocks. Paid alerts arrive within seconds of a restock.' : '<strong>No active plan</strong>: alerts are paused until you pick one.'}</p>
-  ${pass ? (pass.renews ? '<p><button class="btn ghost" data-act="cancel">Cancel renewal</button></p>' : '') : `<p><a class="btn" href="/alerts">${alerts.some((a) => a.free) ? 'Get instant alerts' : 'Pick a plan'}</a></p>`}
+  <h1>${e(W.h1)}</h1>
+  ${paid ? `<p class="ok" role="status">${e(W.paid)}</p>` : ''}
+  ${url.searchParams.get('free') ? `<p class="ok" role="status">${e(freeMode(env) ? W.freeOn : W.freeDaily)}</p>` : ''}
+  <p class="lede">${e(user.email)} · ${pass ? W.until(e(PLANS[pass.plan]?.name ?? pass.plan), e(T.f.when(pass.ends_at)), pass.renews) : alerts.some((a) => a.free) ? W.freePlan : W.noPlan}</p>
+  ${pass ? (pass.renews ? `<p><button class="btn ghost" data-act="cancel">${e(W.cancel)}</button></p>` : '') : `<p><a class="btn" href="${alertsHref}">${e(alerts.some((a) => a.free) ? W.getInstant : W.pickPlan)}</a></p>`}
 
-  <section><h2>What we watch for you</h2>${alerts.length ? `<ul class="rows">${alerts.map((a) => `<li class="row" data-alert="${a.id}">
-    <span class="name">${e(a.kind === 'lottery' ? (a.set_slug ? (JP_SETS.find((x) => x.slug === a.set_slug)?.name ?? a.set_slug) : '抽選・再販（すべて）') : (a.sku_name ?? `Anything from ${a.set_name}`))}</span>
-    <span class="meta">${COUNTRIES[a.country]?.name ?? ''} · ${a.kind === 'online' ? `Online${JSON.parse(a.store_ids || '[]').length ? ` (${JSON.parse(a.store_ids).length} shops)` : ''}` : a.kind === 'lottery' ? '抽選' : `Stores in ${e(metroName(a.metro))}`} · ${e(JSON.parse(a.channels).join(', '))}${a.status === 'paused' ? ' · paused' : ''}</span>
-    <span class="side"><button class="link" data-act="${a.status === 'paused' ? 'resume' : 'pause'}">${a.status === 'paused' ? 'Resume' : 'Pause'}</button>
-      <button class="link" data-act="delete">Delete</button></span></li>`).join('')}</ul>` : '<p class="empty">No alert yet. <a href="/alerts">Set one up</a>.</p>'}
-    ${pass ? '<p><a href="/alerts">Add an alert</a></p>' : ''}
-    <dialog id="del-dialog"><form method="dialog"><p>Why are you deleting this alert?</p>
-      <label class="radio"><input type="radio" name="reason" value="bought" checked> I bought it</label>
-      <label class="radio"><input type="radio" name="reason" value="too_many"> Too many alerts</label>
-      <label class="radio"><input type="radio" name="reason" value="too_slow"> Alerts came too late</label>
-      <label class="radio"><input type="radio" name="reason" value="other"> Something else</label>
-      <button class="btn" value="ok">Delete alert</button> <button class="link" value="cancel">Keep it</button></form></dialog></section>
+  <section><h2>${e(W.watchH)}</h2>${alerts.length ? `<ul class="rows">${alerts.map((a) => `<li class="row" data-alert="${a.id}">
+    <span class="name">${e(a.kind === 'lottery' ? (a.set_slug ? (JP_SETS.find((x) => x.slug === a.set_slug)?.name ?? a.set_slug) : '抽選・再販（すべて）') : (a.sku_name ?? W.anything(a.set_name)))}</span>
+    <span class="meta">${COUNTRIES[a.country]?.name ?? ''} · ${a.kind === 'online' ? `${e(W.online)}${JSON.parse(a.store_ids || '[]').length ? ` (${e(W.shops(JSON.parse(a.store_ids).length))})` : ''}` : a.kind === 'lottery' ? '抽選' : e(W.stores(metroName(a.metro)))} · ${e(JSON.parse(a.channels).join(', '))}${a.status === 'paused' ? ` · ${e(W.paused)}` : ''}</span>
+    <span class="side"><button class="link" data-act="${a.status === 'paused' ? 'resume' : 'pause'}">${e(a.status === 'paused' ? W.resume : W.pause)}</button>
+      <button class="link" data-act="delete">${e(W.del)}</button></span></li>`).join('')}</ul>` : `<p class="empty">${e(W.none)} <a href="${alertsHref}">${e(W.setOne)}</a>.</p>`}
+    ${pass ? `<p><a href="${alertsHref}">${e(W.add)}</a></p>` : ''}
+    <dialog id="del-dialog"><form method="dialog"><p>${e(W.why)}</p>
+      <label class="radio"><input type="radio" name="reason" value="bought" checked> ${e(W.bought)}</label>
+      <label class="radio"><input type="radio" name="reason" value="too_many"> ${e(W.tooMany)}</label>
+      <label class="radio"><input type="radio" name="reason" value="too_slow"> ${e(W.tooSlow)}</label>
+      <label class="radio"><input type="radio" name="reason" value="other"> ${e(W.other)}</label>
+      <button class="btn" value="ok">${e(W.delBtn)}</button> <button class="link" value="cancel">${e(W.keep)}</button></form></dialog></section>
 
   ${showPush ? pushAccountBlock(T) : ''}
-  <section><h2>How we reach you</h2><ul class="rows">
-    ${user.country === 'jp' || alerts.some((a) => a.country === 'jp') ? `<li class="row"><span class="name">LINE</span><span class="meta">${user.line_user_id ? 'Connected' : 'Not connected'}</span><span class="side">${env.LINE_BOT_ID ? `<button class="link" data-act="line">${user.line_user_id ? 'Reconnect' : 'Connect'}</button>` : ''}</span></li>` : ''}
-    <li class="row"><span class="name">Email</span><span class="meta">${e(user.email)}</span><span class="side"></span></li></ul>
+  <section><h2>${e(W.reachH)}</h2><ul class="rows">
+    ${user.country === 'jp' || alerts.some((a) => a.country === 'jp') ? `<li class="row"><span class="name">LINE</span><span class="meta">${e(user.line_user_id ? W.connected : W.notConnected)}</span><span class="side">${env.LINE_BOT_ID ? `<button class="link" data-act="line">${e(user.line_user_id ? W.reconnect : W.connect)}</button>` : ''}</span></li>` : ''}
+    <li class="row"><span class="name">${e(W.email)}</span><span class="meta">${e(user.email)}</span><span class="side"></span></li></ul>
     <form class="survey" data-form="channels-survey"${url.searchParams.get('free') || paid ? ' data-open="1"' : ''}>
-      <p><strong>Which other ways would you like to get your alerts?</strong> <span class="fine">Tick all that apply: we build the most requested first.</span></p>
-      ${[['push', 'Phone notification'], ['whatsapp', 'WhatsApp'], ['telegram', 'Telegram'], ['discord', 'Discord'], ['sms', 'Text message (SMS)']].map(([v, l]) => `<label class="radio"><input type="checkbox" name="ch" value="${v}"> ${l}</label>`).join('')}
-      <button class="btn small" type="submit">Send</button><p class="ok" role="status" hidden>Thanks, noted.</p></form></section>
+      <p><strong>${e(W.surveyQ)}</strong> <span class="fine">${e(W.surveyFine)}</span></p>
+      ${['push', 'whatsapp', 'telegram', 'discord', 'sms'].map((v) => `<label class="radio"><input type="checkbox" name="ch" value="${v}"> ${e(W.ch[v])}</label>`).join('')}
+      <button class="btn small" type="submit">${e(W.send)}</button><p class="ok" role="status" hidden>${e(W.thanks)}</p></form></section>
 
-  <section><h2>Latest alerts sent</h2>${recent.length ? `<table><thead><tr><th>Product</th><th>Where</th><th>When</th><th>Via</th></tr></thead><tbody>${recent.map((r) => `<tr><td>${e(r.name)}</td><td>${e(r.online ? 'online' : r.store)}</td><td>${timeAgo(r.claimed_at)}</td><td>${e(r.status === 'held' ? 'email (next digest)' : r.channels_ok ?? '')}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">Nothing yet. You will see each alert here.</p>'}</section>
-  <p><button class="link" data-act="signout">Sign out</button></p></div>`;
-  return page(env, T, { title: `Account — ${env.BRAND_NAME}`, description: 'Your alerts', path: '/account', body, noindex: true, nav: 'account' });
+  <section><h2>${e(W.latestH)}</h2>${recent.length ? `<table><thead><tr>${W.th.map((x) => `<th>${e(x)}</th>`).join('')}</tr></thead><tbody>${recent.map((r) => `<tr><td>${e(r.name)}</td><td>${e(r.online ? W.onlineShop : r.store)}</td><td>${e(T.f.ago(r.claimed_at))}</td><td>${e(r.status === 'held' ? W.digest : r.channels_ok ?? '')}</td></tr>`).join('')}</tbody></table>` : `<p class="empty">${e(W.nothing)}</p>`}</section>
+  <p><button class="link" data-act="signout">${e(W.signout)}</button></p></div>`;
+  return page(env, T, { title: `${W.title} — ${env.BRAND_NAME}`, description: W.desc, path: '/account', body, noindex: true, nav: 'account' });
 }
