@@ -246,15 +246,16 @@
       try { xs.showModal(); } catch { xs.setAttribute('open', ''); }
       ev('exit_survey_open', { from });
     };
-    // Pop-up when people leave the alerts page (Eugène, 2026-11-18), never as a link.
+    // Pop-up when people leave the alerts page while the plans (prices) are on screen (Eugène, 2026-11-18), never as a link.
+    const plansOnScreen = () => { const s = $('.step[data-step="2"]', f); return !!s && !s.hidden; };
     // Desktop: the mouse leaves the window through the top.
-    document.addEventListener('mouseout', (e) => { if (!e.relatedTarget && e.clientY <= 0) open('exit'); });
+    document.addEventListener('mouseout', (e) => { if (!e.relatedTarget && e.clientY <= 0 && plansOnScreen()) open('exit'); });
     // Phones: the back button. One extra history entry is added; pressing back shows the survey,
     // and closing or sending it finishes leaving the page.
     let leaving = false;
     if (!ss('crt_xs_shown') && window.history && history.pushState) {
       try { history.pushState({ crtXs: 1 }, '', location.href); } catch {}
-      window.addEventListener('popstate', () => { if (!ss('crt_xs_shown')) { leaving = true; open('back_button'); } else history.back(); });
+      window.addEventListener('popstate', () => { if (!ss('crt_xs_shown') && plansOnScreen()) { leaving = true; open('back_button'); } else history.back(); });
     }
     const done = () => { if (xs.close) xs.close(); xs.removeAttribute('open'); if (leaving) { leaving = false; history.back(); } };
     // back from the Whop checkout without paying (also when the page comes back from the browser cache)
