@@ -149,7 +149,7 @@ function pricingCards(T, cc) {
   const PU = PLAN_UI[T.cc.lang] ?? PLAN_UI.en; const F = fun(T.cc.lang); const href = `/alerts?c=${cc}`;
   return `<p class="plan-why">${e(PU.why)}</p><div class="plans price-cards">
     <div class="plan plan-rec"><span class="plan-badge">${e(PU.badge)}</span><strong>Solo</strong><span class="plan-price">${e(T.f.planMoney(T.cc.prices.solo))} <span class="fine">${e(F.per30)}</span></span><span class="fine">${e(PU.solo)}</span><a class="btn go" href="${href}" data-ev="sheet_open" data-from="pricing_solo">${e(T.cta.btn)}</a></div>
-    <div class="plan plan-wide"><strong>Multi · ${e(T.f.planMoney(T.cc.prices.multi))}</strong> <span class="fine">${e(F.per30)}</span><span class="fine">${e(T.pricing.multi)}</span><a class="btn ghost" href="${href}" data-ev="sheet_open" data-from="pricing_multi">${e(T.cta.btn)}</a></div></div>`;
+    <div class="plan"><strong>Multi · ${e(T.f.planMoney(T.cc.prices.multi))}</strong> <span class="fine">${e(F.per30)}</span><span class="fine">${e(T.pricing.multi)}</span><a class="btn ghost" href="${href}" data-ev="sheet_open" data-from="pricing_multi">${e(T.cta.btn)}</a></div></div>`;
 }
 
 export async function pricing(env, cc) {
