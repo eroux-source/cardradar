@@ -71,6 +71,15 @@
   const isIOSSafari = isIOS && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\//.test(ua);
   // "Add to Home Screen" line under the alert block on product pages and country homes (iPhone, not already in the app)
   if (isIOS && !standalone) $$('[data-ios-hint]').forEach((x) => { x.hidden = false; });
+  // Product pages on phones: once the alert block has scrolled away, a bar at the bottom keeps "Alert me" one tap away.
+  // Hidden again while the side alert card or the footer is on screen (no double button).
+  const sticky = $('[data-sticky-alert]'); const topBlock = $('.cta-alert');
+  if (sticky && topBlock && 'IntersectionObserver' in window) {
+    const seen = new Map(); const others = [$('#alerts'), $('.site-foot')].filter(Boolean);
+    const update = () => { const topGone = seen.get(topBlock) === false && topBlock.getBoundingClientRect().bottom < 0; const show = topGone && !others.some((x) => seen.get(x)); sticky.hidden = !show; document.body.classList.toggle('has-sticky', show); };
+    const io = new IntersectionObserver((es) => { es.forEach((x) => seen.set(x.target, x.isIntersecting)); update(); });
+    [topBlock, ...others].forEach((x) => io.observe(x));
+  }
   const canPush = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
   const pushUI = !!document.querySelector('[data-push-opt], #push-box');
   const swReady = canPush && (pushUI || standalone) ? navigator.serviceWorker.register('/sw.js').catch(() => null) : null;

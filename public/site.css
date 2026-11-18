@@ -503,3 +503,20 @@ label.plan.plan-rec:has(input:checked) { border-color: var(--navy); }
 .cta-alert-go [hidden], .cta-ios[hidden] { display: none; }
 .cta-ios { flex-basis: 100%; margin: 0; }
 @media (max-width: 560px) { .cta-alert-go { flex: 1 1 100%; } .cta-alert-go .btn { flex: 1 1 auto; } }
+
+/* alert bar pinned to the bottom on phones (product pages, 2026-11-18) */
+.sticky-alert { display: none; }
+@media (max-width: 720px) {
+  .sticky-alert:not([hidden]) { display: flex; align-items: center; gap: 12px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid var(--rule); box-shadow: 0 -6px 18px rgba(21, 25, 43, .1); }
+  .sticky-alert-text { display: flex; flex-direction: column; flex: 1; min-width: 0; line-height: 1.25; }
+  .sticky-alert-text strong { font-size: 15px; }
+  .sticky-alert-text span { font-size: 13px; color: var(--soft); }
+  .sticky-alert .btn { flex: none; min-height: 44px; padding: 10px 18px; }
+  body.has-sticky .fb-fab { bottom: calc(80px + env(safe-area-inset-bottom)); }
+  body.has-sticky main { padding-bottom: 72px; }
+}
+
+/* header: bell on the Alerts button */
+.site-nav a.cta::before { content: "🔔"; margin-right: 6px; font-size: .95em; }
+@media (max-width: 380px) { .site-nav a.cta::before { margin-right: 3px; } }

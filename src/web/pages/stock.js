@@ -15,7 +15,7 @@ import * as d from '../data.js';
 import { affiliateBlock } from '../affiliate.js';
 import { page, home as homePath, base, crumbs, answers, hourChart, latestTable, shopsText, productGrid, placeLabel, alertCta } from '../html.js';
 import { factsBlock } from '../facts.js';
-import { alertBlock } from '../alert_cta.js';
+import { alertBlock, stickyAlert } from '../alert_cta.js';
 
 const maps = (s) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([sourceName(s.source), s.address, s.city, s.state, s.zip].filter(Boolean).join(' '))}`;
 
@@ -92,7 +92,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
       <p class="answer-line">${e(answer)}</p>
       ${!isHome && cc !== 'jp' && GUIDES['30th-etb'].match(k.name) ? `<p class="quick-links"><a href="${guidePath(cc, '30th-etb')}">${e(words(cc).guide30)}</a></p>` : ''}</div>
       ${k.image ? `<figure class="hero2-photo"><img src="${e(thumb(k.image, 500))}" alt="${e(k.name)}" referrerpolicy="no-referrer"></figure>` : ''}</div>
-    ${!isHome && cc !== 'jp' && !freeMode(env) ? alertBlock(T, alertHref, { title: S.alertH, out: !inNow.length, from: 'product_top' }) : ''}</section>
+    ${!isHome && cc !== 'jp' && !freeMode(env) ? alertBlock(T, alertHref, { title: S.alertH, out: !inNow.length, from: 'product_top' }) + stickyAlert(T, alertHref) : ''}</section>
   <section class="controls" aria-label="${e(S.products)}">
     <form class="find" action="${base(cc)}/search" method="get" role="search">
       <input name="q" list="sku-list" autocomplete="off" placeholder="${e(S.findPh)}" aria-label="${e(S.findPh)}" data-find>
@@ -111,7 +111,7 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
         <div><dt>${e(S.stats.most)}</dt><dd>${e(top ? top[0] : '—')}</dd></div>
         <div><dt>${e(S.stats.last)}</dt><dd>${e(rs[0] ? T.f.ago(rs[0].started_at) : '—')}</dd></div></dl>
         <p class="fine">${e(S.statsNote)}</p><p><a href="${base(cc)}/${e(k.slug)}/restocks">${e(S.whenLink(k.name))} →</a></p></div>
-      <div class="side-card alert-card" id="alerts"><h2>${e(S.alertH)}</h2><p>${e(freeMode(env) ? freeWords(T).side : S.alertP(T.f.planMoney(T.cc.prices.solo), sum.typical ? T.f.dur(sum.typical) : null))}</p>
+      <div class="side-card alert-card" id="alerts"><h2>${e(S.alertH)}</h2><p>${e(freeMode(env) ? freeWords(T).side : S.alertP(T.f.planMoney(T.cc.prices.solo), sum.typical ? T.f.dur(sum.typical) : null).replace(/\.\s+(\p{Ll})/u, (m, c) => `. ${c.toUpperCase()}`))}</p>
         <a class="btn go" href="${e(alertHref)}" data-ev="sheet_open">🔔 ${e(S.alertBtn)}</a></div>
     </aside>
     <section class="main" aria-labelledby="now-h">
