@@ -45,7 +45,7 @@ export default {
     statsNote: 'We loggen elke restock. De patronen worden elke dag scherper.',
     whenLink: (name) => `Wanneer komt ${name} terug?`,
     alertH: 'Meld het me',
-    alertP: (price, typ) => `Gratis als dagelijkse e-mail, of direct vanaf ${price} voor 30 dagen.${typ ? ` Hier is het meestal ${typ} op voorraad:` : ''} we controleren dag en nacht en melden het meteen.`,
+    alertP: (price, typ) => `Directe meldingen vanaf ${price} voor 30 dagen.${typ ? ` Hier is het meestal ${typ} op voorraad:` : ''} we controleren dag en nacht en melden het meteen.`,
     alertBtn: 'Meld me', buy: 'Kopen', reserve: 'Reserveren', directions: 'Route', online: 'Online', ships: 'Bezorgd',
     since: (t) => `Op voorraad sinds ${t}`, checking: 'Wordt zo gecontroleerd',
     howH: (name) => `Zo krijg je ${name} vandaag`,
@@ -64,7 +64,7 @@ export default {
     faqH: 'Vragen',
     faq: (shops, solo) => [
       { q: 'Wat is Card Restock Tracker?', a: `Een gratis website die ${shops} dag en nacht controleert en toont waar verzegelde Pokémon-kaarten op voorraad zijn.` },
-      { q: 'Is het gratis?', a: `Ja. Kijken is gratis en zonder account, en het gratis abonnement mailt je één keer per dag over één product. Directe meldingen kosten ${solo} voor 30 dagen, opzegbaar in 2 klikken.` },
+      { q: 'Is het gratis?', a: `Kijken is gratis en zonder account. Restockmeldingen (e-mail en pushbericht op je telefoon, zodra we de restock zien) kosten ${solo} voor 30 dagen, opzegbaar in 2 klikken.` },
       { q: 'Verkopen jullie kaarten?', a: 'Nee. We vertellen je alleen waar ze zijn; je koopt bij de winkel, tegen hun prijs.' },
     ],
   },

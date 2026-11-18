@@ -34,7 +34,7 @@ export async function home(env, cc) {
     { '@context': 'https://schema.org', '@type': 'Organization', name: env.BRAND_NAME, url: env.BASE_URL, logo: `${env.BASE_URL}/icon.svg`, email: env.SUPPORT_EMAIL },
     { '@context': 'https://schema.org', '@type': 'WebApplication', name: env.BRAND_NAME, url: `${env.BASE_URL}${homePath(cc)}`, applicationCategory: 'ShoppingApplication', operatingSystem: 'Any (web browser)',
       description: T.home.desc(shops), inLanguage: T.cc.locale,
-      offers: freeMode(env) ? [{ '@type': 'Offer', name: 'Live stock pages + instant alerts (free during launch)', price: '0', priceCurrency: T.cc.currency }] : [{ '@type': 'Offer', name: 'Live stock pages + daily email alert', price: '0', priceCurrency: T.cc.currency },
+      offers: freeMode(env) ? [{ '@type': 'Offer', name: 'Live stock pages + instant alerts (free during launch)', price: '0', priceCurrency: T.cc.currency }] : [{ '@type': 'Offer', name: 'Live stock pages', price: '0', priceCurrency: T.cc.currency },
         { '@type': 'Offer', name: 'Solo alerts, 30 days', price: T.cc.prices.solo, priceCurrency: T.cc.prices.currency ?? T.cc.currency },
         { '@type': 'Offer', name: 'Multi alerts, 30 days', price: T.cc.prices.multi, priceCurrency: T.cc.prices.currency ?? T.cc.currency }] }];
   // Like InStock Radar: the home IS the live stock of the product people chase most (hardest to find first)
@@ -144,12 +144,11 @@ export async function retailers(env, cc) {
     body: `<div class="answer"><h1>${e(T.idx.retH1)}</h1><p class="lede">${e(T.idx.retLede(stores, online))}</p></div>${retailerGrid(T)}` });
 }
 
-/** Pricing as cards (2026-11-18): Solo highlighted, free daily email next to it, Multi below; each card leads to the alert form. */
+/** Pricing as cards (2026-11-18): Solo highlighted, Multi below (no free plan since 2026-11-18 evening); each card leads to the alert form. */
 function pricingCards(T, cc) {
   const PU = PLAN_UI[T.cc.lang] ?? PLAN_UI.en; const F = fun(T.cc.lang); const href = `/alerts?c=${cc}`;
   return `<p class="plan-why">${e(PU.why)}</p><div class="plans price-cards">
     <div class="plan plan-rec"><span class="plan-badge">${e(PU.badge)}</span><strong>Solo</strong><span class="plan-price">${e(T.f.planMoney(T.cc.prices.solo))} <span class="fine">${e(F.per30)}</span></span><span class="fine">${e(PU.solo)}</span><a class="btn go" href="${href}" data-ev="sheet_open" data-from="pricing_solo">${e(T.cta.btn)}</a></div>
-    <div class="plan"><strong>${e(F.freeName)}</strong><span class="plan-price">${e(T.f.money(0))}</span><span class="fine">${e(PU.free)}</span><a class="btn ghost" href="${href}" data-ev="sheet_open" data-from="pricing_free">${e(F.freeBtn ?? T.cta.btn)}</a></div>
     <div class="plan plan-wide"><strong>Multi · ${e(T.f.planMoney(T.cc.prices.multi))}</strong> <span class="fine">${e(F.per30)}</span><span class="fine">${e(T.pricing.multi)}</span><a class="btn ghost" href="${href}" data-ev="sheet_open" data-from="pricing_multi">${e(T.cta.btn)}</a></div></div>`;
 }
 

@@ -45,7 +45,7 @@ export default {
     statsNote: 'Registriamo ogni restock. Le tendenze migliorano ogni giorno.',
     whenLink: (name) => `Quando torna ${name}?`,
     alertH: 'Avvisami quando torna',
-    alertP: (price, typ) => `Gratis come e-mail giornaliera, o istantaneo da ${price} per 30 giorni.${typ ? ` Qui di solito resta disponibile ${typ}:` : ''} controlliamo giorno e notte e ti avvisiamo subito.`,
+    alertP: (price, typ) => `Avvisi istantanei da ${price} per 30 giorni.${typ ? ` Qui di solito resta disponibile ${typ}:` : ''} controlliamo giorno e notte e ti avvisiamo subito.`,
     alertBtn: 'Avvisami', buy: 'Compra', reserve: 'Prenota', directions: 'Indicazioni', online: 'Online', ships: 'Spedito a te',
     since: (t) => `Disponibile da ${t}`, checking: 'Controllo a breve',
     howH: (name) => `Come avere ${name} oggi`,
@@ -64,7 +64,7 @@ export default {
     faqH: 'Domande',
     faq: (shops, solo) => [
       { q: 'Cos\'è Card Restock Tracker?', a: `Un sito gratuito che controlla ${shops} giorno e notte e mostra dove le carte Pokémon sigillate sono disponibili.` },
-      { q: 'È gratis?', a: `Sì. Guardare è gratis e senza account, e il piano gratuito ti invia una e-mail al giorno per un prodotto. Gli avvisi istantanei costano ${solo} per 30 giorni, disdici in 2 clic.` },
+      { q: 'È gratis?', a: `Guardare è gratis e senza account. Gli avvisi di restock (e-mail e notifica sul telefono, appena vediamo il restock) costano ${solo} per 30 giorni, disdici in 2 clic.` },
       { q: 'Vendete carte?', a: 'No. Ti diciamo solo dove sono; compri dal negozio, al suo prezzo.' },
     ],
   },

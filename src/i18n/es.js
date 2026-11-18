@@ -45,7 +45,7 @@ export default {
     statsNote: 'Registramos cada reposición. Los patrones mejoran cada día.',
     whenLink: (name) => `¿Cuándo vuelve ${name}?`,
     alertH: 'Avísame cuando vuelva',
-    alertP: (price, typ) => `Gratis como e-mail diario, o al instante desde ${price} por 30 días.${typ ? ` Aquí el stock suele durar ${typ}:` : ''} revisamos día y noche y te avisamos al momento.`,
+    alertP: (price, typ) => `Alertas al instante desde ${price} por 30 días.${typ ? ` Aquí el stock suele durar ${typ}:` : ''} revisamos día y noche y te avisamos al momento.`,
     alertBtn: 'Avísame', buy: 'Comprar', reserve: 'Reservar', directions: 'Cómo llegar', online: 'Online', ships: 'Envío a casa',
     since: (t) => `En stock desde ${t}`, checking: 'Revisión en breve',
     howH: (name) => `Cómo conseguir ${name} hoy`,
@@ -64,7 +64,7 @@ export default {
     faqH: 'Preguntas',
     faq: (shops, solo) => [
       { q: '¿Qué es Card Restock Tracker?', a: `Una web gratuita que revisa ${shops} las 24 horas y muestra dónde hay cartas Pokémon selladas en stock.` },
-      { q: '¿Es gratis?', a: `Sí. Mirar es gratis y sin cuenta, y el plan gratuito te envía un e-mail al día sobre un producto. Los avisos instantáneos cuestan ${solo} por 30 días, cancelables en 2 clics.` },
+      { q: '¿Es gratis?', a: `Mirar es gratis y sin cuenta. Los avisos de reposición (e-mail y notificación en el móvil, en cuanto detectamos la reposición) cuestan ${solo} por 30 días, cancelables en 2 clics.` },
       { q: '¿Vendéis cartas?', a: 'No. Solo te decimos dónde están; compras en la tienda, a su precio.' },
     ],
   },

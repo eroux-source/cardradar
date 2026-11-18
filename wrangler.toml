@@ -23,6 +23,7 @@ FREE_GRACE_BEFORE = "1794837600000"   # 2026-11-16 14:00 UTC
 FREE_GRACE_UNTIL = "1795442400000"    # 2026-11-23 14:00 UTC
 GRACE_NOTICE = "1"   # "1" sends the one-off "still free for a week" email once (text approved by Eugène)
 UPSELL_TEXT = "1"   # grace line in instant alerts + upsell daily email (text approved by Eugène 2026-11-18)
+FREE_PLAN = "0"   # no free plan for new alerts since 2026-11-18 (Eugène): free = live stock pages only; existing free alerts keep working
 # "Other amount" tip button: "1" once the Whop API key has the checkout_configuration:create permission
 TIP_OTHER = "0"   # tips removed 2026-11-16
 GA_ID = "G-V4X0V6LLD5"   # Google Analytics 4 (property "Card Restock Tracker")

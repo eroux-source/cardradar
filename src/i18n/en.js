@@ -60,7 +60,7 @@ export default {
     statsNote: 'We log every restock. Patterns get sharper every day.',
     whenLink: (name) => `When does ${name} restock?`,
     alertH: 'Alert me when it lands',
-    alertP: (price, typ) => `Free as a daily email, or instant from ${price} for 30 days.${typ ? ` Here stock usually lasts about ${typ}:` : ''} we check around the clock and ping you instantly.`,
+    alertP: (price, typ) => `Instant alerts from ${price} for 30 days.${typ ? ` Here stock usually lasts about ${typ}:` : ''} we check around the clock and ping you instantly.`,
     alertBtn: 'Alert me', buy: 'Buy', reserve: 'Reserve', directions: 'Directions', online: 'Online', ships: 'Ships to you',
     since: (t) => `In stock since ${t}`, checking: 'Checking soon',
     howH: (name) => `How to get ${name} today`,
@@ -79,7 +79,7 @@ export default {
     faqH: 'Questions',
     faq: (shops, solo) => [
       { q: 'What is Card Restock Tracker?', a: `A free website that checks ${shops} around the clock (sold-out products every hour) and shows where sealed Pokémon cards (Elite Trainer Boxes, booster boxes, bundles, tins) are in stock right now, shop by shop, with prices.` },
-      { q: 'Is it free?', a: `Yes. Checking stock is free, without an account, and the free plan emails you once a day about one product. Instant alerts (email, within seconds) cost ${solo} for 30 days; cancel in 2 clicks.` },
+      { q: 'Is it free?', a: `Checking stock is free, without an account. Restock alerts (email and phone notification, sent as soon as we detect the restock) cost ${solo} for 30 days; cancel in 2 clicks.` },
       { q: 'Do you sell Pokémon cards?', a: 'No. We only tell you where they are. You buy or reserve from the retailer, at the retailer\'s price.' },
     ],
   },
@@ -156,7 +156,7 @@ export default {
     kicker: 'Item card · Restock Alert', item: 'Item', name: 'Restock Alert', flavor: 'Play when stock is scarce. Never miss a restock again.',
     h2: (name) => `Get pinged the second ${name || 'it'} lands`,
     effect: '<strong>Effect:</strong> stock usually lasts minutes. We check every tracked store and shop around the clock and alert you by email, with a direct link to buy.',
-    btn: 'Set up my alert', fine: (price) => `Free as a daily email, or instant from ${price} for 30 days. Cancel in 2 clicks.`,
+    btn: 'Set up my alert', fine: (price) => `From ${price} for 30 days. Cancel in 2 clicks.`,
   },
   facts: {
     h: 'About this tracker',

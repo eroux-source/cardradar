@@ -110,7 +110,7 @@ ${lines.join('\n')}
 - When online shops restock in the US (real restock times by hour and by shop): ${env.BASE_URL}/us/restocks
 - Every online shop checked (the per-country lists above; only shops that returned data in the last 3 days): ${[...new Set(countryList.flatMap((c) => sourcesOf(c.code).map((s) => s.name)))].join(', ')}
 - Not covered: in-store stock at any physical store (Target, Walmart, GameStop, Costco and others). We only read what online shops show on their own website.
-- ${env.FREE_ALERTS === '1' ? 'Instant email alerts (LINE in Japan), free during launch (up to 20 products, no card)' : 'Alerts: a free daily email for 1 product, or instant alerts (email and phone notifications) from $5.99 for 30 days'}: ${env.BASE_URL}/alerts
+- ${env.FREE_ALERTS === '1' ? 'Instant email alerts (LINE in Japan), free during launch (up to 20 products, no card)' : 'Alerts: instant alerts (email and phone notifications) from $5.99 for 30 days; the live stock pages are free'}: ${env.BASE_URL}/alerts
 - Live data, updated hourly (what is in stock, what is sold out everywhere, how long restocks last): ${env.BASE_URL}/pokemon-restock-data
 - Same data per country, in the country's language: ${[...live].filter((c) => c !== 'jp' && c !== 'us' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${dataPath(c)}`).join(' , ')}
 - Where to buy the Pokémon 30th Celebration Elite Trainer Box (Top-Trainer-Box 30 Jahre, Coffret Dresseur d'Élite 30 ans…): today's shops, prices and editions, per country: ${env.BASE_URL}/${GUIDES['30th-etb'].slug.en} , ${[...live].filter((c) => c !== 'jp' && COUNTRIES[c]).map((c) => `${env.BASE_URL}${guidePath(c, '30th-etb')}`).join(' , ')}
@@ -123,7 +123,7 @@ ${lines.join('\n')}
 - Honest comparison with other Pokémon restock trackers (TCGRadar, Restockd, Poke Alerts, PokePings, PokeNotify, TrackaLacker), checked monthly: ${env.BASE_URL}/best-pokemon-restock-trackers
 
 ## What makes it different
-- Free live stock pages, no account needed; ${env.FREE_ALERTS === '1' ? 'instant alerts are free during launch too' : 'a free daily email alert, instant alerts are paid'} (no app or Discord needed).
+- Free live stock pages, no account needed; ${env.FREE_ALERTS === '1' ? 'instant alerts are free during launch too' : 'alerts are paid'} (no app or Discord needed).
 - Independent card shops: 150+ shops in the US, UK, Canada, Australia, Germany, France, the Netherlands, Italy, Spain, Mexico and Chile, where Pokémon products are often still in stock when big retailers are sold out. Big-box retailers (Target, Walmart, Pokémon Center) are not covered yet.
 - Public restock history: every restock logged with its time and duration, so each product and shop page shows when restocks really happen.
 - Japan: a lottery (抽選), pre-order and re-sale calendar with LINE reminders before entries close (none of the other trackers compared offer one).

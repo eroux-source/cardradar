@@ -2,7 +2,7 @@
 // back from the Whop checkout, or the "not convinced?" link), ask why and, if it is the price, how much.
 import { escapeHtml as e } from '../lib/util.js';
 
-export const REASONS = ['price', 'card', 'free_enough', 'looking', 'later', 'trust', 'missing', 'payment_failed', 'other'];
+export const REASONS = ['price', 'card', 'looking', 'later', 'trust', 'missing', 'payment_failed', 'other'];
 export const PAYS = ['paypal', 'apple_pay', 'google_pay', 'bank', 'none'];
 
 const W = {

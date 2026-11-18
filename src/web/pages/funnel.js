@@ -1,4 +1,4 @@
-// The stepped alert funnel (§2: free daily email or paid instant alerts) and the account page.
+// The stepped alert funnel (paid alerts only since 2026-11-18; older free alerts keep the daily email) and the account page.
 // /alerts : 1 email → 2 product (skipped when the product page already chose it) → 3 plan + optional channels → checkout.
 // The email is captured at step 1 (lead), so a visitor who stops still gets one
 // follow-up. Steps run client-side (public/app.js) against /api/funnel/*.
@@ -31,14 +31,14 @@ const PLAN_NEEDED = {
   it: 'Gli avvisi richiedono un piano: scegli Solo o Multi.', es: 'Las alertas necesitan un plan: elige Solo o Multi.', ja: 'プランを選んでください（Solo または Multi）。',
 };
 
-// Plan step (2026-11-18): Solo highlighted next to the free daily email, one line on what "instant" buys you.
+// Plan step (2026-11-18): Solo highlighted, Multi below; the free card shows only if FREE_PLAN != "0".
 export const PLAN_UI = {
-  en: { badge: 'Recommended', why: 'Solo warns you as soon as we spot the restock, so you can buy before it sells out again. Free: one email the next morning.', solo: 'Instant alert · 1 product', free: '1 email a day, the morning after · 1 product' },
-  fr: { badge: 'Recommandé', why: 'Solo vous prévient dès que nous repérons le réassort : vous achetez avant la rupture. Gratuit : un e-mail le lendemain matin.', solo: 'Alerte instantanée · 1 produit', free: '1 e-mail par jour, le lendemain matin · 1 produit' },
-  de: { badge: 'Empfohlen', why: 'Solo meldet sich, sobald wir den Restock sehen: So kaufst du, bevor er wieder ausverkauft ist. Gratis: eine E-Mail am nächsten Morgen.', solo: 'Sofort-Alarm · 1 Produkt', free: '1 E-Mail pro Tag, am Morgen danach · 1 Produkt' },
-  nl: { badge: 'Aanbevolen', why: 'Solo meldt zich zodra we de restock zien, zodat je koopt voordat hij weer uitverkocht is. Gratis: één e-mail de volgende ochtend.', solo: 'Directe melding · 1 product', free: '1 e-mail per dag, de ochtend erna · 1 product' },
-  it: { badge: 'Consigliato', why: 'Solo ti avvisa appena vediamo il restock, così compri prima che si esaurisca di nuovo. Gratis: un\'email la mattina dopo.', solo: 'Avviso istantaneo · 1 prodotto', free: '1 email al giorno, la mattina dopo · 1 prodotto' },
-  es: { badge: 'Recomendado', why: 'Solo te avisa en cuanto detectamos la reposición, para que compres antes de que se agote otra vez. Gratis: un email a la mañana siguiente.', solo: 'Alerta al instante · 1 producto', free: '1 email al día, a la mañana siguiente · 1 producto' },
+  en: { badge: 'Recommended', why: 'Solo warns you as soon as we spot the restock, so you can buy before it sells out again.', solo: 'Instant alert · 1 product', free: '1 email a day, the morning after · 1 product' },
+  fr: { badge: 'Recommandé', why: 'Solo vous prévient dès que nous repérons le réassort : vous achetez avant la rupture.', solo: 'Alerte instantanée · 1 produit', free: '1 e-mail par jour, le lendemain matin · 1 produit' },
+  de: { badge: 'Empfohlen', why: 'Solo meldet sich, sobald wir den Restock sehen: So kaufst du, bevor er wieder ausverkauft ist.', solo: 'Sofort-Alarm · 1 Produkt', free: '1 E-Mail pro Tag, am Morgen danach · 1 Produkt' },
+  nl: { badge: 'Aanbevolen', why: 'Solo meldt zich zodra we de restock zien, zodat je koopt voordat hij weer uitverkocht is.', solo: 'Directe melding · 1 product', free: '1 e-mail per dag, de ochtend erna · 1 product' },
+  it: { badge: 'Consigliato', why: 'Solo ti avvisa appena vediamo il restock, così compri prima che si esaurisca di nuovo.', solo: 'Avviso istantaneo · 1 prodotto', free: '1 email al giorno, la mattina dopo · 1 prodotto' },
+  es: { badge: 'Recomendado', why: 'Solo te avisa en cuanto detectamos la reposición, para que compres antes de que se agote otra vez.', solo: 'Alerta al instante · 1 producto', free: '1 email al día, a la mañana siguiente · 1 producto' },
 };
 
 const EMAIL_OK = {
@@ -127,7 +127,7 @@ export async function alertsPage(env, url, user) {
       ${(() => { const S = SHOPS_UI[T.cc.lang] ?? SHOPS_UI.en; return `<div class="shops-pick" hidden data-all="${e(S.all)}" data-none="${e(S.none)}" data-in="${e(S.in)}"><p class="sub"><strong>${e(S.h)}</strong> · <span class="shops-sum"></span> · <button type="button" class="link shops-toggle">${e(S.pick)}</button></p><div class="shop-list" hidden></div></div>`; })()}
       ${freeMode(env) ? `<input type="hidden" name="plan" value="launch"><p class="lede"><strong>${e(freeWords(T).plan)}</strong> · ${e(freeWords(T).planDesc)}</p>` : `${lottery ? '' : `<p class="plan-why">${e(PU.why)}</p>`}<div class="plans${lottery ? ' plans-jp' : ''}">
       <label class="plan plan-rec"><input type="radio" name="plan" value="solo" checked><span>${lottery ? '' : `<span class="plan-badge">${e(PU.badge)}</span>`}<strong>Solo</strong><span class="plan-price">${e(T.f.planMoney(T.cc.prices.solo))} <span class="fine">${e(F.per30)}</span></span><span class="fine">${e(lottery ? F.solo : PU.solo)}</span></span></label>
-      ${!lottery && F.free ? `<label class="plan"><input type="radio" name="plan" value="free"><span><strong>${e(F.freeName)}</strong><span class="plan-price">${e(T.f.money(0))}</span><span class="fine">${e(PU.free)}</span></span></label>` : ''}
+      ${!lottery && F.free && env.FREE_PLAN !== '0' ? `<label class="plan"><input type="radio" name="plan" value="free"><span><strong>${e(F.freeName)}</strong><span class="plan-price">${e(T.f.money(0))}</span><span class="fine">${e(PU.free)}</span></span></label>` : ''}
       <label class="plan plan-wide"><input type="radio" name="plan" value="multi"><span><strong>Multi · ${e(T.f.planMoney(T.cc.prices.multi))}</strong> ${e(F.per30)}<br><span class="fine">${e(F.multi)}</span></span></label></div>`}
       ${cc === 'jp' ? `<fieldset class="channels"><label class="radio"><input type="checkbox" name="line" value="1" checked> ${e(F.line)} <span class="fine">${e(F.lineFine)}</span></label></fieldset>` : ''}
       ${showPush ? pushOption(T) : ''}

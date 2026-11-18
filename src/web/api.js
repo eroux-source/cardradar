@@ -269,6 +269,8 @@ async function createAlert(env, b, user, guest) {
     return json({ ok: true, next: `/account?free=1&c=${cc}` });
   }
   const free = !pass && b.plan === 'free';
+  // No free plan for new alerts since 2026-11-18 (Eugène): free = the live stock pages only. Existing free alerts keep working.
+  if (free && env.FREE_PLAN === '0') return planBad('Alerts need a plan: pick Solo or Multi.', 'solo');
   if (free && (setId || kind === 'lottery')) return bad('The free plan covers one product. Pick a single product or a paid plan.');
   const effPlan = pass?.plan ?? plan;
   if (!free && (setId || (kind === 'lottery' && !setSlug)) && effPlan !== 'multi') return planBad('"Anything from a set" needs the Multi plan.', 'multi');

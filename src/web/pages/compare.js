@@ -15,7 +15,7 @@ const CHECKED_LABEL = 'November 1, 2026';
 const US = {
   name: 'Card Restock Tracker', url: '/',
   // keep in sync with FREE_ALERTS (wrangler.toml)
-  price: 'Free live stock pages (no account) and a free daily email for 1 product; instant alerts from $5.99 for 30 days (Solo), cancel in 2 clicks',
+  price: 'Free live stock pages (no account); restock alerts from $5.99 for 30 days (Solo), cancel in 2 clicks',
   where: 'United States, UK, Canada, Australia, Germany, France, Netherlands, Italy, Spain, Mexico, Chile (live); Japan lottery calendar',
   inStore: 'No (online stock only for now)',
   online: '150+ independent card shops in the US, UK, Canada, Australia, Germany, France, the Netherlands, Italy, Spain, Mexico and Chile',

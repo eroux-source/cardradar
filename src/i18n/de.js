@@ -45,7 +45,7 @@ export default {
     statsNote: 'Wir erfassen jeden Restock. Die Muster werden täglich genauer.',
     whenLink: (name) => `Wann kommt ${name} wieder?`,
     alertH: 'Benachrichtige mich',
-    alertP: (price, typ) => `Gratis als tägliche E-Mail oder sofort ab ${price} für 30 Tage.${typ ? ` Hier ist es meist ${typ} verfügbar:` : ''} wir prüfen rund um die Uhr und melden uns sofort.`,
+    alertP: (price, typ) => `Sofort-Alarme ab ${price} für 30 Tage.${typ ? ` Hier ist es meist ${typ} verfügbar:` : ''} wir prüfen rund um die Uhr und melden uns sofort.`,
     alertBtn: 'Alarm', buy: 'Kaufen', reserve: 'Reservieren', directions: 'Route', online: 'Online', ships: 'Versand',
     since: (t) => `Lieferbar seit ${t}`, checking: 'Wird gleich geprüft',
     howH: (name) => `So bekommst du ${name} heute`,
@@ -64,7 +64,7 @@ export default {
     faqH: 'Fragen',
     faq: (shops, solo) => [
       { q: 'Was ist Card Restock Tracker?', a: `Eine kostenlose Website, die ${shops} rund um die Uhr prüft und zeigt, wo versiegelte Pokémon-Karten lieferbar sind.` },
-      { q: 'Ist das kostenlos?', a: `Ja. Nachsehen ist kostenlos und ohne Konto, der Gratis-Tarif schickt dir einmal am Tag eine E-Mail zu einem Produkt. Sofort-Alarme kosten ${solo} für 30 Tage, mit 2 Klicks kündbar.` },
+      { q: 'Ist das kostenlos?', a: `Nachsehen ist kostenlos und ohne Konto. Restock-Alarme (E-Mail und Mitteilung aufs Handy, sobald wir den Restock sehen) kosten ${solo} für 30 Tage, mit 2 Klicks kündbar.` },
       { q: 'Verkauft ihr Karten?', a: 'Nein. Wir sagen dir nur, wo sie sind; du kaufst beim Shop zu dessen Preis.' },
     ],
   },

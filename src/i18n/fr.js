@@ -45,7 +45,7 @@ export default {
     statsNote: 'Nous notons chaque réassort. Les tendances s\'affinent chaque jour.',
     whenLink: (name) => `Quand ${name} revient-il ?`,
     alertH: 'Prévenez-moi dès qu\'il revient',
-    alertP: (price, typ) => `Gratuit en e-mail quotidien, ou instantané dès ${price} pour 30 jours.${typ ? ` Ici le stock dure en général ${typ} :` : ''} nous vérifions jour et nuit et vous prévenons tout de suite.`,
+    alertP: (price, typ) => `Alertes instantanées dès ${price} pour 30 jours.${typ ? ` Ici le stock dure en général ${typ} :` : ''} nous vérifions jour et nuit et vous prévenons tout de suite.`,
     alertBtn: 'M\'alerter', buy: 'Acheter', reserve: 'Réserver', directions: 'Itinéraire', online: 'En ligne', ships: 'Livré chez vous',
     since: (t) => `En stock depuis ${t}`, checking: 'Vérification imminente',
     howH: (name) => `Comment avoir ${name} aujourd'hui`,
@@ -64,7 +64,7 @@ export default {
     faqH: 'Questions',
     faq: (shops, solo) => [
       { q: 'Qu\'est-ce que Card Restock Tracker ?', a: `Un site gratuit qui vérifie ${shops} jour et nuit et montre où les cartes Pokémon scellées sont en stock, magasin par magasin.` },
-      { q: 'C\'est gratuit ?', a: `Oui. Consulter le stock est gratuit et sans compte, et la formule gratuite vous envoie un e-mail par jour pour un produit. Les alertes instantanées coûtent ${solo} pour 30 jours, résiliables en 2 clics.` },
+      { q: 'C\'est gratuit ?', a: `Consulter le stock est gratuit et sans compte. Les alertes de réassort (e-mail et notification sur le téléphone, envoyées dès que nous repérons le réassort) coûtent ${solo} pour 30 jours, résiliables en 2 clics.` },
       { q: 'Vous vendez des cartes ?', a: 'Non. Nous vous disons où elles sont ; vous achetez chez l\'enseigne, au prix de l\'enseigne.' },
     ],
   },
@@ -135,7 +135,7 @@ export default {
     kicker: 'Carte Objet · Alerte réassort', item: 'Objet', name: 'Alerte réassort', flavor: 'À jouer quand le stock est rare. Ne ratez plus aucun réassort.',
     h2: (name) => `Soyez prévenu à la seconde où ${name || 'il'} revient`,
     effect: '<strong>Effet :</strong> le stock part souvent en quelques minutes. Nous vérifions chaque magasin et boutique en ligne jour et nuit, et vous prévenons par e-mail, avec un lien direct pour acheter.',
-    btn: 'Créer mon alerte', fine: (price) => `Gratuit en e-mail quotidien, ou instantané dès ${price} pour 30 jours. Résiliable en 2 clics.`,
+    btn: 'Créer mon alerte', fine: (price) => `Dès ${price} pour 30 jours. Résiliable en 2 clics.`,
   },
   facts: {
     h: 'À propos de ce suivi',
