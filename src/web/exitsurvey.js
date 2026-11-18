@@ -39,8 +39,7 @@ export function exitSurvey(T, money, cur, soloPrice) {
   const big = p >= 50; // JPY-like or CLP-like amounts: round steps
   const steps = [0.2, 0.4, 0.6, 0.8].map((f) => (big ? Math.round((p * f) / 10) * 10 : Math.max(1, Math.round(p * f))));
   const chip = (name, v, label) => `<label class="xs-chip"><input type="radio" name="${name}" value="${e(v)}"><span>${e(label)}</span></label>`;
-  return `<p class="xs-link"><button type="button" class="link" data-xs-open="link">${e(S.link)}</button></p>
-<dialog class="exit-survey" id="exit-survey" data-thanks="${e(S.thanks)}" data-pick="${e(S.pick)}" data-cur="${e(cur)}">
+  return `<dialog class="exit-survey" id="exit-survey" data-thanks="${e(S.thanks)}" data-pick="${e(S.pick)}" data-cur="${e(cur)}">
   <form data-form="exit" method="dialog">
     <h2>${e(S.h)}</h2><p class="sub">${e(S.sub)}</p>
     <div class="xs-reasons">${REASONS.map((r) => chip('reason', r, S.r[r])).join('')}</div>
