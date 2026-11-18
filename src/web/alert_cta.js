@@ -21,7 +21,7 @@ const words = (T) => W[T.cc.lang] ?? W.en;
 export function alertBlock(T, href, { title, out = false, from = 'hero' } = {}) {
   const w = words(T); const P = pushWords(T);
   return `<div class="cta-alert${out ? ' is-out' : ''}">
-    <div class="cta-alert-text"><strong>🔔 ${e(title ?? w.home)}</strong><span>${e(w.price(T.f.planMoney(T.cc.prices.solo)))}</span></div>
+    <div class="cta-alert-text"><strong><span class="bell-ico" aria-hidden="true">🔔</span> ${e(title ?? w.home)}</strong><span>${e(w.price(T.f.planMoney(T.cc.prices.solo)))}</span></div>
     <div class="cta-alert-go"><a class="btn go" href="${e(href)}" data-ev="sheet_open" data-from="${e(from)}">${e(T.sv.alertBtn)}</a><button class="btn ghost pwa-install" type="button" data-pwa-install hidden>${e(P.install)}</button></div>
     <p class="cta-ios fine" data-ios-hint hidden>📱 ${e(w.ios)}</p></div>`;
 }
@@ -29,7 +29,7 @@ export function alertBlock(T, href, { title, out = false, from = 'hero' } = {}) 
 /** Bar pinned to the bottom of the screen on phones once the alert block above has scrolled away (product pages). */
 export function stickyAlert(T, href) {
   const w = words(T);
-  return `<div class="sticky-alert" data-sticky-alert hidden><span class="sticky-alert-text"><strong>🔔 ${e(w.short(T.f.planMoney(T.cc.prices.solo)))}</strong><span>${e(w.freeShort)}</span></span><a class="btn go" href="${e(href)}" data-ev="sheet_open" data-from="sticky">${e(T.sv.alertBtn)}</a></div>`;
+  return `<div class="sticky-alert" data-sticky-alert hidden><span class="sticky-alert-text"><strong><span class="bell-ico" aria-hidden="true">🔔</span> ${e(w.short(T.f.planMoney(T.cc.prices.solo)))}</strong><span>${e(w.freeShort)}</span></span><a class="btn go" href="${e(href)}" data-ev="sheet_open" data-from="sticky">${e(T.sv.alertBtn)}</a></div>`;
 }
 
 export const homeAlertTitle = (T) => words(T).home;

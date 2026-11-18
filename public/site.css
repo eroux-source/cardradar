@@ -532,3 +532,14 @@ label.plan.plan-rec:has(input:checked) { border-color: var(--navy); }
 /* header: bell on the Alerts button */
 .site-nav a.cta::before { content: "🔔"; margin-right: 6px; font-size: .95em; }
 @media (max-width: 380px) { .site-nav a.cta::before { margin-right: 3px; } }
+
+/* attention on the alert buttons (2026-11-18): the bell rings every few seconds, the main yellow buttons send out a soft halo.
+   transform / box-shadow only (no layout shift); switched off by the reduced-motion rule above. */
+@keyframes bell-ring { 0%, 76%, 100% { transform: rotate(0); } 80% { transform: rotate(16deg); } 84% { transform: rotate(-14deg); } 88% { transform: rotate(9deg); } 92% { transform: rotate(-5deg); } 96% { transform: rotate(2deg); } }
+@keyframes alert-halo { 0% { box-shadow: 0 0 0 0 rgba(240, 180, 0, .55); } 70% { box-shadow: 0 0 0 12px rgba(240, 180, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(240, 180, 0, 0); } }
+.bell-ico, .site-nav a.cta::before { display: inline-block; transform-origin: 50% 8%; animation: bell-ring 4.5s ease-in-out infinite; }
+.site-nav a.cta::before { animation-delay: 1.5s; }
+.cta-alert .btn.go, .sticky-alert .btn.go, .price-cards .plan-rec .btn.go, .alert-card .btn.go { animation: alert-halo 2.6s ease-out infinite; }
+.cta-alert .btn.go:hover, .sticky-alert .btn.go:hover { transform: translateY(-1px); }
+.sticky-alert:not([hidden]) { animation: sticky-in .35s ease-out; }
+@keyframes sticky-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
