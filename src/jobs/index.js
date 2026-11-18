@@ -6,7 +6,7 @@ import { flushOutbox, queueEmail } from '../email/outbox.js';
 import { heal } from '../alerts/pipeline.js';
 import { announce } from '../crawler/lotteries.js';
 import { alertText } from '../alerts/deliver.js';
-import { langOf, alertEmailText } from '../alerts/words.js';
+import { langOf, alertEmailText, planOf } from '../alerts/words.js';
 import { pushToUser } from '../alerts/channels/push.js';
 import { sourceName } from '../sources/index.js';
 
@@ -208,6 +208,16 @@ export async function hourly(env) {
   }
 }
 
+/** Daily free email, upsell version (UPSELL_TEXT=1): says Solo members got these the minute they landed. */
+function dailyText(env, first, list, lines) {
+  const p = planOf(env, first.country);
+  const fast = list.filter((r) => r.ended_at && r.ended_at - r.started_at < 3 * 3600e3).length;
+  const live = `${env.BASE_URL}/${first.country}/${first.slug}`;
+  return first.country === 'fr'
+    ? `Ton résumé gratuit du jour pour ${first.sku_name} :\n\n${lines.join('\n')}\n\nLes membres Solo ont reçu chacun de ces restocks dès qu'on l'a détecté, par notification et e-mail.${fast ? ` ${fast} étai${fast > 1 ? 'ent' : 't'} déjà épuisé${fast > 1 ? 's' : ''} en moins de 3 h.` : ''}\nAlertes instantanées avec Solo à ${p.solo} pour 30 jours : ${p.link}\n\nStock en direct : ${live}\n${env.BRAND_NAME}`
+    : `Your free daily summary for ${first.sku_name}:\n\n${lines.join('\n')}\n\nSolo members got each of these restocks as soon as we detected it, by notification and email.${fast ? ` ${fast} sold out in under 3 hours.` : ''}\nInstant alerts with Solo at ${p.solo} for 30 days: ${p.link}\n\nLive stock: ${live}\n${env.BRAND_NAME}`;
+}
+
 /** Free plan: one email a day with the restocks the person's free alert matched since the last one. */
 export async function dailyFree(env) {
   const rows = await all(env, `SELECT x.alert_id, x.restock_id, u.id AS user_id, u.email, k.name AS sku_name, k.slug, s.name AS store_name, s.city, s.online, s.source, s.country, r.started_at, r.ended_at
@@ -219,7 +229,7 @@ export async function dailyFree(env) {
     const first = list[0];
     const lines = list.slice(0, 30).map((r) => `- ${new Date(r.started_at).toUTCString().slice(0, 22)} UTC: ${r.online ? `${sourceName(r.source)} online` : `${sourceName(r.source)} ${r.store_name}, ${r.city}`}${r.ended_at ? ` (sold out after ${Math.max(1, Math.round((r.ended_at - r.started_at) / 60e3))} min)` : ''}`);
     await queueEmail(env, { to: first.email, kind: 'digest', subject: `${first.sku_name}: ${list.length} restock${list.length > 1 ? 's' : ''} yesterday`,
-      text: `Your free daily summary for ${first.sku_name}:\n\n${lines.join('\n')}\n\nMost restocks sell out within minutes. Get each one the second it lands (phone notification, Telegram or email): ${env.BASE_URL}/alerts?sku=${first.slug}&c=${first.country}\n\nLive stock: ${env.BASE_URL}/${first.country}/${first.slug}\n${env.BRAND_NAME}` });
+      text: env.UPSELL_TEXT === '1' ? dailyText(env, first, list, lines) : `Your free daily summary for ${first.sku_name}:\n\n${lines.join('\n')}\n\nMost restocks sell out within minutes. Get each one the second it lands (phone notification, Telegram or email): ${env.BASE_URL}/alerts?sku=${first.slug}&c=${first.country}\n\nLive stock: ${env.BASE_URL}/${first.country}/${first.slug}\n${env.BRAND_NAME}` });
     for (const r of list) await run(env, "UPDATE alert_sent SET status = 'sent', channels_ok = 'daily_email' WHERE alert_id = ? AND restock_id = ?", r.alert_id, r.restock_id);
   }
   return byUser.size;

@@ -10,7 +10,7 @@ import { sendTelegram } from './channels/telegram.js';
 import { pushToUser } from './channels/push.js';
 import { sendLine } from './channels/line.js';
 import { queueEmail } from '../email/outbox.js';
-import { alertWords, alertEmailText, langOf } from './words.js';
+import { alertWords, alertEmailText, graceLine, langOf } from './words.js';
 
 /** Alert text in `lang` (the alert's country language, see words.js). */
 export function alertText(env, r, lang = 'en') {
@@ -34,7 +34,8 @@ export async function deliver(env, { alertId, restockId }) {
   // Free alert (no pass): kept for tomorrow's daily email, never sent live
   // Grace week (2026-11-16): alerts created before the paid switch stay instant until FREE_GRACE_UNTIL
   const graced = Number(env.FREE_GRACE_UNTIL) > now() && a.created_at < Number(env.FREE_GRACE_BEFORE);
-  if (a.free && !freeMode(env) && !graced && !(await one(env, "SELECT 1 FROM passes WHERE user_id = ? AND status IN ('active','refunded_kept') AND ends_at > ?", a.user_id, now()))) {
+  const hasPass = a.free && !freeMode(env) ? !!(await one(env, "SELECT 1 FROM passes WHERE user_id = ? AND status IN ('active','refunded_kept') AND ends_at > ?", a.user_id, now())) : true;
+  if (a.free && !freeMode(env) && !graced && !hasPass) {
     await run(env, "UPDATE alert_sent SET status = 'daily' WHERE alert_id = ? AND restock_id = ?", alertId, restockId);
     return;
   }
@@ -58,7 +59,7 @@ export async function deliver(env, { alertId, restockId }) {
     const notBefore = t - lastEmail < 3600e3 ? lastEmail + 3600e3 : t;
     await queueEmail(env, {
       userId: a.user_id, to: a.email, kind: 'alert',
-      subject: msg.title, text: alertEmailText(msg, lang),
+      subject: msg.title, text: alertEmailText(msg, lang, graced && !hasPass && env.UPSELL_TEXT === '1' ? graceLine(env, a.country ?? r.country, lang) : ''),
       notBefore,
     });
     if (notBefore === t) await run(env, 'UPDATE users SET last_email_alert_at = ? WHERE id = ?', t, a.user_id);

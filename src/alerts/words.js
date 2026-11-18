@@ -45,10 +45,25 @@ const W = {
 export const langOf = (cc) => (W[COUNTRIES[cc]?.lang] ? COUNTRIES[cc].lang : 'en');
 export const alertWords = (lang) => W[lang] ?? W.en;
 
+/** Solo price and plans link of a country (JP, MX, CL pay the US plan). */
+export function planOf(env, cc) {
+  const c = cc && COUNTRIES[cc] && cc !== 'jp' && COUNTRIES[cc].prices ? cc : 'us';
+  const C = COUNTRIES[c];
+  return { solo: new Intl.NumberFormat(C.locale, { style: 'currency', currency: C.currency }).format(Number(C.prices.solo)), link: `${env.BASE_URL}${c === 'us' ? '' : `/${c}`}/pricing` };
+}
+
+/** One line in the instant alerts of grace-week accounts (behind UPSELL_TEXT, text approved by Eugène). */
+export const graceLine = (env, cc, lang) => {
+  const p = planOf(env, cc);
+  return lang === 'fr'
+    ? `Gratuit pour toi jusqu'au lundi 23 novembre. Ensuite, garde tes alertes instantanées avec Solo à ${p.solo} pour 30 jours : ${p.link}`
+    : `Free for you until Monday 23 November. After that, keep instant alerts with Solo at ${p.solo} for 30 days: ${p.link}`;
+};
+
 /** Email body of one alert: the digest splits on the closing line, so keep it last. */
-export const alertEmailText = (msg, lang) => {
+export const alertEmailText = (msg, lang, extra = '') => {
   const L = alertWords(lang);
-  return `${msg.line}\n\n${L.buy}: ${msg.url}\n${L.live}: ${msg.page}\n\n${L.foot}`;
+  return `${msg.line}\n\n${L.buy}: ${msg.url}\n${L.live}: ${msg.page}${extra ? `\n\n${extra}` : ''}\n\n${L.foot}`;
 };
 
 /** For the hourly digest: the language of a queued alert email and its text without the closing line. */
