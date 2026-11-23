@@ -175,7 +175,7 @@ export async function homeList(env, T, cc, { live = null, alternates = null, ext
     <p class="lede">${e(inNow.length ? H.lede(inNow.length, shopsN) : H.ledeNone(shopsN))}</p>
     ${checked ? `<p class="asof"><time datetime="${new Date(checked).toISOString()}">${e(T.asOf(T.f.when(checked)))}</time></p>` : ''}
     ${cc === 'jp' ? '' : `<p class="quick-links"><a href="${dataPath(cc)}">${e(words(cc).data)}</a><a href="${thirtyPath(cc)}">${e(words(cc).thirty)}</a><a href="${guidePath(cc, 'delta-reign')}">Delta Reign</a><a href="${guidePath(cc, 'flowing-fists')}">Flowing Fists (ME07)</a><a href="${upcomingPath(cc)}">${e(UPCOMING_LINK[COUNTRIES[cc]?.lang] ?? UPCOMING_LINK.en)}</a></p>`}
-    ${cc === 'jp' || freeMode(env) ? '' : alertBlock(T, `/alerts?c=${cc}`, { out: !inNow.length, from: 'home_top' }) + stickyAlert(T, `/alerts?c=${cc}`)}
+    ${cc === 'jp' || freeMode(env) ? '' : (inNow.length ? alertLine(T, `/alerts?c=${cc}`, 'home_top', { home: true }) : alertBlock(T, `/alerts?c=${cc}`, { out: true, from: 'home_top' })) + stickyAlert(T, `/alerts?c=${cc}`)}
     <form class="find" action="${base(cc)}/search" method="get" role="search">
       <input name="q" list="sku-list" autocomplete="off" placeholder="${e(S.findPh)}" aria-label="${e(S.findPh)}" data-find>
       <datalist id="sku-list">${[...inNow, ...out].slice(0, 200).map((x) => `<option value="${e(x.name)}" data-href="${base(cc)}/${e(x.slug)}"></option>`).join('')}</datalist>

@@ -73,7 +73,9 @@
   if (isIOS && !standalone) $$('[data-ios-hint]').forEach((x) => { x.hidden = false; });
   // Product pages on phones: once the alert block has scrolled away, a bar at the bottom keeps "Alert me" one tap away.
   // Hidden again while the side alert card or the footer is on screen (no double button).
-  const sticky = $('[data-sticky-alert]'); const topBlock = $('.cta-alert');
+  // Product in stock: the big block sits after the shop list, so the bar shows only once the list is passed.
+  // Country homes with stock: only the compact line, so the bar shows once that line has scrolled away.
+  const sticky = $('[data-sticky-alert]'); const topBlock = $('.cta-alert') || $('.cta-line');
   if (sticky && topBlock && 'IntersectionObserver' in window) {
     const seen = new Map(); const others = [$('#alerts'), $('.site-foot')].filter(Boolean);
     const update = () => { const topGone = seen.get(topBlock) === false && topBlock.getBoundingClientRect().bottom < 0; const show = topGone && !others.some((x) => seen.get(x)); sticky.hidden = !show; document.body.classList.toggle('has-sticky', show); };
