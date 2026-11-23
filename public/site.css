@@ -561,4 +561,7 @@ label.plan.plan-rec:has(input:checked) { border-color: var(--navy); }
   .hero2 h1 { margin-bottom: 4px; }
   .layout { margin-top: 12px; }
   .main > h2:first-child { margin-top: 0; }
+  main:has(> .hero2) > .hero2 { margin-bottom: 12px; }
+  main:has(> .hero2) .layout > .main { margin-top: 0; }
+  .cta-line a { font-size: 14px; padding: 7px 12px; }
 }
