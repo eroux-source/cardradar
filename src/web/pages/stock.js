@@ -15,7 +15,7 @@ import * as d from '../data.js';
 import { affiliateBlock } from '../affiliate.js';
 import { page, home as homePath, base, crumbs, answers, hourChart, latestTable, shopsText, productGrid, placeLabel, alertCta } from '../html.js';
 import { factsBlock } from '../facts.js';
-import { alertBlock, stickyAlert } from '../alert_cta.js';
+import { alertBlock, alertLine, stickyAlert } from '../alert_cta.js';
 
 const maps = (s) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([sourceName(s.source), s.address, s.city, s.state, s.zip].filter(Boolean).join(' '))}`;
 
@@ -85,14 +85,15 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
     { q: T.sku.q3(k.name), a: sum.typical ? T.sku.a3yes(T.f.dur(sum.typical), T.f.dur(sum.shortest)) : T.sku.a3no },
   ], S.goodH);
 
+  const alertsOn = !isHome && cc !== 'jp' && !freeMode(env);
   const body = `<section class="hero2">${c.html}
     <div class="hero2-grid"><div>
       <h1>${e(isHome ? (hasStores ? S.homeH1(T.cc.name) : S.homeH1Online(T.cc.name)) : S.skuH1(k.name, metro?.name))}</h1>
-      <p class="lede">${e(S.lede(shops))}</p>
-      <p class="answer-line">${e(answer)}</p>
+      ${isHome ? `<p class="lede">${e(S.lede(shops))}</p><p class="answer-line">${e(answer)}</p>` : ''}
       ${!isHome && cc !== 'jp' && GUIDES['30th-etb'].match(k.name) ? `<p class="quick-links"><a href="${guidePath(cc, '30th-etb')}">${e(words(cc).guide30)}</a></p>` : ''}</div>
       ${k.image ? `<figure class="hero2-photo"><img src="${e(thumb(k.image, 500))}" alt="${e(k.name)}" referrerpolicy="no-referrer"></figure>` : ''}</div>
-    ${!isHome && cc !== 'jp' && !freeMode(env) ? alertBlock(T, alertHref, { title: S.alertH, out: !inNow.length, from: 'product_top' }) + stickyAlert(T, alertHref) : ''}</section>
+    ${isHome ? '' : `<p class="answer-line">${e(answer)}</p>`}
+    ${alertsOn ? (inNow.length ? alertLine(T, alertHref) : alertBlock(T, alertHref, { title: S.alertH, out: true, from: 'product_top' })) + stickyAlert(T, alertHref) : ''}</section>
   <section class="controls" aria-label="${e(S.products)}">
     <form class="find" action="${base(cc)}/search" method="get" role="search">
       <input name="q" list="sku-list" autocomplete="off" placeholder="${e(S.findPh)}" aria-label="${e(S.findPh)}" data-find>
@@ -117,9 +118,11 @@ export async function stockPage(env, T, cc, k, { metro = null, isHome = false, l
     <section class="main" aria-labelledby="now-h">
       <h2 id="now-h">${e(S.nowH(inNow.length))}</h2>
       ${places.length ? `<p class="sub">${e(S.nowSub(places.length))}</p><ul class="places">${places.slice(0, metro ? 200 : 60).map((s) => placeCard(T, cc, s, alertHref, k.slug)).join('')}</ul>` : `<p class="empty">${e(S.asOfNone(k.name))}</p>`}
+      ${alertsOn && inNow.length ? alertBlock(T, alertHref, { title: S.alertH, from: 'product_after_list' }) : ''}
       ${isHome ? '' : affiliateBlock(env, T, cc, k)}
     </section>
   </div>
+  ${isHome ? '' : `<section class="intro-more"><p class="lede">${e(S.lede(shops))}</p></section>`}
   <section class="content"><h2>${e(S.howH(k.name))}</h2><ol class="steps-list">${S.how(k.name).map((x) => `<li>${e(x)}</li>`).join('')}</ol></section>
   <section class="content"><h2>${e(T.sku.when)}</h2>${hourChart(T, sum, k.name)}</section>
   ${latest.length ? `<section class="content"><h2>${e(S.latestH)}</h2>${latestTable(T, latest)}</section>` : ''}

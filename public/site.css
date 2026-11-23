@@ -543,3 +543,22 @@ label.plan.plan-rec:has(input:checked) { border-color: var(--navy); }
 .cta-alert .btn.go:hover, .sticky-alert .btn.go:hover { transform: translateY(-1px); }
 .sticky-alert:not([hidden]) { animation: sticky-in .35s ease-out; }
 @keyframes sticky-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+/* product pages in stock (2026-11-23): shops first. One compact alert line above the list, the big block after it;
+   on phones the search and product pills move under the list so the first "Buy" link is on the first screen. */
+.hero2 > .answer-line { margin-top: 14px; }
+.cta-line { margin: 12px 0 0; }
+.cta-line a { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 8px 14px; border-radius: 999px; background: #fff8dc; box-shadow: inset 0 0 0 1.5px #f3dc8a; color: var(--yellow-ink); font-weight: 700; font-size: 15px; text-decoration: none; }
+.cta-line a:hover { background: #fff1b8; }
+.main .cta-alert { margin-top: 20px; }
+.intro-more .lede { font-size: 16px; color: var(--soft); max-width: 75ch; }
+@media (max-width: 720px) {
+  main:has(> .hero2) { display: flex; flex-direction: column; }
+  main:has(> .hero2) > * { order: 3; }
+  main:has(> .hero2) > .hero2 { order: 0; }
+  main:has(> .hero2) > .layout { order: 1; }
+  main:has(> .hero2) > .controls, main:has(> .hero2) > .intro-more { order: 2; }
+  .hero2 h1 { margin-bottom: 4px; }
+  .layout { margin-top: 12px; }
+  .main > h2:first-child { margin-top: 0; }
+}
