@@ -295,6 +295,7 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
+    if (env.CRAWL_PAUSED === '1') return; // paused to cut the Cloudflare bill (see wrangler.toml)
     setEnv(env);
     ctx.waitUntil(cron(env, event.scheduledTime));
   },
@@ -304,7 +305,7 @@ export default {
     const q = batch.queue;
     for (const msg of batch.messages) {
       try {
-        if (q.endsWith('-crawl')) await runTask(env, msg.body);
+        if (q.endsWith('-crawl')) { if (env.CRAWL_PAUSED !== '1') await runTask(env, msg.body); }
         else if (q.endsWith('-alerts')) await matchRestocks(env, msg.body.restockIds, { late: !!msg.body.late });
         else if (q.endsWith('-deliver')) await deliver(env, msg.body);
         else if (q.endsWith('-dead')) {

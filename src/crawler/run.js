@@ -18,11 +18,14 @@ async function health(env, source, patch) {
     source, patch.status, patch.ok ? t : null, patch.blocked ? t : null, patch.error ?? null, t);
 }
 
-/** Canary (§3.4): the stock row that stayed in stock the longest. If it reads sold out, the source is not empty, it is broken. */
-async function isCanary(env, source, listingId, storeId) {
-  const c = await one(env, `SELECT k.listing_id, k.store_id FROM stock k JOIN stores s ON s.id = k.store_id
+/** Canary (§3.4): the stock row that stayed in stock the longest. If it reads sold out, the source is not empty, it is broken.
+ *  Looked up once per task (it used to run once per sold-out store and scan the whole stock table: ~25B D1 rows read a day). */
+async function canaryOf(env, source) {
+  return one(env, `SELECT k.listing_id, k.store_id, k.in_since FROM stock k JOIN stores s ON s.id = k.store_id
     WHERE s.source = ? AND k.in_stock = 1 AND k.in_since IS NOT NULL ORDER BY k.in_since LIMIT 1`, source);
-  return c && c.listing_id === listingId && c.store_id === storeId && (await one(env, 'SELECT in_since FROM stock WHERE listing_id = ? AND store_id = ?', listingId, storeId))?.in_since < now() - 6 * 3600e3;
+}
+function isCanary(c, listingId, storeId) {
+  return !!c && c.listing_id === listingId && c.store_id === storeId && c.in_since < now() - 6 * 3600e3;
 }
 
 export async function runTask(env, task) {
@@ -56,9 +59,10 @@ export async function runTask(env, task) {
       if (task.t === 'area') {
         const metro = metroById[task.metro];
         const rows = (await src.checkArea(env, l, metro)) ?? [];
+        const canary = rows.some((r) => !r.inStock) ? await canaryOf(env, src.id) : null;
         for (const r of rows) {
           const storeId = await upsertStore(env, src.id, r.store, metro.id);
-          if (!r.inStock && await isCanary(env, src.id, l.id, storeId)) {
+          if (!r.inStock && isCanary(canary, l.id, storeId)) {
             await health(env, src.id, { status: 'stale', error: `canary ${storeId} read sold out` });
             await report(env, 'canary', `${src.name}: the canary store read "sold out"; sold-out reads ignored until the source reads normally again.`);
             break;

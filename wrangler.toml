@@ -11,6 +11,7 @@ binding = "ASSETS"
 run_worker_first = false
 
 [vars]
+CRAWL_PAUSED = "1"   # 2026-11-26 (Eugène, cut the Cloudflare bill): "1" = no cron jobs and crawl tasks are dropped; pages stay up. "0" = normal.
 BRAND_NAME = "Card Restock Tracker"   # domain: cardrestocktracker.com; 'Pokémon' only used descriptively in page titles
 BASE_URL = "http://localhost:8787"   # set to https://<domain> in production
 SUPPORT_EMAIL = "hello@cardrestocktracker.com"
